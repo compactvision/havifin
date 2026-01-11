@@ -5,15 +5,17 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
 Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
+    return Inertia::render('ClientForm');
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
-});
+Route::get('/cashier', function () {
+    return Inertia::render('Cashier');
+})->name('cashier');
 
-require __DIR__.'/settings.php';
+Route::get('/manager', function () {
+    return Inertia::render('Manager');
+})->name('manager');
+
+Route::get('/display', function () {
+    return Inertia::render('Display');
+})->name('display');

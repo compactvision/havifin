@@ -6,6 +6,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
@@ -20,7 +24,9 @@ createInertiaApp({
 
         root.render(
             <StrictMode>
-                <App {...props} />
+                <QueryClientProvider client={queryClient}>
+                    <App {...props} />
+                </QueryClientProvider>
             </StrictMode>,
         );
     },
