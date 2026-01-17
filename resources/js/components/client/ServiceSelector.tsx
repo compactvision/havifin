@@ -1,7 +1,7 @@
 import { Institution } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Building2, Smartphone } from 'lucide-react';
+import { Building2, Globe, Smartphone } from 'lucide-react';
 import React from 'react';
 import InstitutionSelector from './InstitutionSelector';
 
@@ -13,6 +13,7 @@ const categories = [
         color: 'text-emerald-500',
     },
     { id: 'bank', name: 'Banques', icon: Building2, color: 'text-blue-500' },
+    { id: 'other', name: 'Autres', icon: Globe, color: 'text-amber-500' },
 ];
 
 interface ServiceSelectorProps {
@@ -29,7 +30,7 @@ export default function ServiceSelector({
     isLoading,
 }: ServiceSelectorProps) {
     const [activeCategory, setActiveCategory] = React.useState<
-        'mobile_money' | 'bank'
+        'mobile_money' | 'bank' | 'other'
     >('mobile_money');
 
     if (isLoading) {
@@ -51,7 +52,9 @@ export default function ServiceSelector({
                     <button
                         key={cat.id}
                         onClick={() =>
-                            setActiveCategory(cat.id as 'mobile_money' | 'bank')
+                            setActiveCategory(
+                                cat.id as 'mobile_money' | 'bank' | 'other',
+                            )
                         }
                         className={cn(
                             'flex flex-1 items-center justify-center gap-2 rounded-[18px] px-4 py-4 text-sm font-bold transition-all',

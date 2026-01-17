@@ -63,10 +63,29 @@ class InstitutionSeeder extends Seeder
                 'code' => 'fbn_bank',
                 'is_active' => true,
             ],
+            // Others
+            [
+                'name' => 'Western Union',
+                'type' => 'other',
+                'code' => 'western_union',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Ria',
+                'type' => 'other',
+                'code' => 'ria',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'MoneyGram',
+                'type' => 'other',
+                'code' => 'moneygram',
+                'is_active' => true,
+            ],
         ];
 
         foreach ($institutions as $institution) {
-            Institution::create($institution);
+            Institution::updateOrCreate(['code' => $institution['code']], $institution);
         }
     }
 }

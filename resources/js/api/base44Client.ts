@@ -64,7 +64,7 @@ export interface ExchangeRate {
 export interface Institution {
     id: number;
     name: string;
-    type: 'mobile_money' | 'bank';
+    type: 'mobile_money' | 'bank' | 'other';
     code: string;
     logo_url?: string;
     is_active: boolean;

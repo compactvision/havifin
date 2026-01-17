@@ -24,6 +24,7 @@ import {
     ArrowUpCircle,
     Calculator,
     CheckCircle,
+    CreditCard,
     Loader2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -52,6 +53,12 @@ const operationConfig = {
         icon: ArrowRight,
         color: 'text-purple-500',
         action: 'Transférer',
+    },
+    paiement: {
+        label: 'Paiement',
+        icon: CreditCard,
+        color: 'text-pink-500',
+        action: 'Payer',
     },
 };
 

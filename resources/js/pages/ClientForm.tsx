@@ -24,6 +24,8 @@ export default function ClientForm() {
     const [isVerifying, setIsVerifying] = useState(false);
     const [existingClient, setExistingClient] = useState<Client | null>(null);
     const [showRegistration, setShowRegistration] = useState(false);
+    const [offerRegistration, setOfferRegistration] = useState(false);
+    const [isAnonymous, setIsAnonymous] = useState(false);
 
     // Fetch active institutions only
     const { data: institutions = [], isPending: isLoadingInstitutions } =
@@ -61,10 +63,11 @@ export default function ClientForm() {
                             ...prev,
                             phone: formData.phone,
                         }));
+                        setOfferRegistration(false);
                         setShowRegistration(false);
                     } else {
                         setExistingClient(null);
-                        setShowRegistration(true);
+                        setOfferRegistration(true);
                     }
                 } catch (error) {
                     console.error('Phone verification failed:', error);
@@ -122,9 +125,11 @@ export default function ClientForm() {
                 phone: formData.phone,
                 ticket_number: ticket,
                 status: 'waiting',
-                first_name: existingClient?.first_name || data.first_name,
-                last_name: existingClient?.last_name || data.last_name,
-                is_registered: !!existingClient,
+                first_name:
+                    existingClient?.first_name || data.first_name || 'Client',
+                last_name:
+                    existingClient?.last_name || data.last_name || 'Anonyme',
+                is_registered: !!existingClient && !isAnonymous,
             };
             await base44.entities.Client.create(clientData);
             return ticket;
@@ -154,6 +159,7 @@ export default function ClientForm() {
                 );
                 createClientMutation.mutate({
                     ...formData,
+                    operation_type: formData.operation_type,
                     service: inst?.name || '',
                 });
             }
@@ -165,6 +171,8 @@ export default function ClientForm() {
         setTicketNumber(null);
         setExistingClient(null);
         setShowRegistration(false);
+        setOfferRegistration(false);
+        setIsAnonymous(false);
         setFormData({
             phone: '',
             operation_type: '',
@@ -187,7 +195,11 @@ export default function ClientForm() {
             return !!existingClient;
         }
         if (step === 2) {
-            if (formData.operation_type === 'change') return true;
+            if (
+                formData.operation_type === 'change' ||
+                formData.operation_type === 'paiement'
+            )
+                return true;
             return !!(formData.operation_type && formData.institution_id);
         }
         return true;
@@ -220,31 +232,91 @@ export default function ClientForm() {
                         </div>
 
                         <div className="mx-auto max-w-lg space-y-6">
-                            {!existingClient && !showRegistration && (
-                                <div className="group relative">
-                                    <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-blue-500 to-indigo-600 opacity-25 blur transition duration-1000 group-hover:opacity-40 group-hover:duration-200"></div>
-                                    <Input
-                                        type="tel"
-                                        value={formData.phone}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                phone: e.target.value
-                                                    .replace(/\D/g, '')
-                                                    .slice(0, 10),
-                                            })
-                                        }
-                                        placeholder="Entrez votre numéro (10 chiffres)"
-                                        className="relative h-20 rounded-[24px] border-2 border-slate-100 bg-white text-center font-mono text-2xl font-black shadow-lg transition-all focus:border-blue-500 focus:ring-blue-500"
-                                        autoFocus
-                                        disabled={isVerifying}
-                                    />
-                                    {isVerifying && (
-                                        <div className="absolute top-1/2 right-6 -translate-y-1/2">
-                                            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                            {!existingClient &&
+                                !showRegistration &&
+                                !offerRegistration && (
+                                    <div className="group relative">
+                                        <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-blue-500 to-indigo-600 opacity-25 blur transition duration-1000 group-hover:opacity-40 group-hover:duration-200"></div>
+                                        <Input
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    phone: e.target.value
+                                                        .replace(/\D/g, '')
+                                                        .slice(0, 10),
+                                                })
+                                            }
+                                            placeholder="Entrez votre numéro (10 chiffres)"
+                                            className="relative h-20 rounded-[24px] border-2 border-slate-100 bg-white text-center font-mono text-2xl font-black shadow-lg transition-all focus:border-blue-500 focus:ring-blue-500"
+                                            autoFocus
+                                            disabled={isVerifying}
+                                        />
+                                        {isVerifying && (
+                                            <div className="absolute top-1/2 right-6 -translate-y-1/2">
+                                                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                            {offerRegistration && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="space-y-8"
+                                >
+                                    <div className="rounded-[32px] border-2 border-blue-100 bg-blue-50/50 p-8 text-center ring-4 ring-blue-50/20">
+                                        <div className="mb-4 text-sm font-black tracking-widest text-blue-600 uppercase">
+                                            Nouveau Numéro
                                         </div>
-                                    )}
-                                </div>
+                                        <div className="mb-4 font-mono text-4xl font-black text-slate-900">
+                                            {formData.phone}
+                                        </div>
+                                        <p className="text-lg font-medium text-slate-500">
+                                            Souhaitez-vous vous enregistrer pour
+                                            profiter de nos services
+                                            personnalisés ?
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-4">
+                                        <Button
+                                            onClick={() => {
+                                                setOfferRegistration(false);
+                                                setShowRegistration(true);
+                                            }}
+                                            className="h-20 rounded-[24px] bg-blue-600 text-xl font-bold text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700"
+                                        >
+                                            Oui, m'enregistrer
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setOfferRegistration(false);
+                                                setIsAnonymous(true);
+                                                setStep(2);
+                                            }}
+                                            className="h-20 rounded-[24px] border-2 border-slate-200 bg-white text-xl font-bold text-slate-600 hover:bg-slate-50"
+                                        >
+                                            Non, continuer ainsi
+                                        </Button>
+                                        <Button
+                                            variant="link"
+                                            onClick={() => {
+                                                setOfferRegistration(false);
+                                                setFormData({
+                                                    ...formData,
+                                                    phone: '',
+                                                });
+                                            }}
+                                            className="text-slate-400"
+                                        >
+                                            Changer de numéro
+                                        </Button>
+                                    </div>
+                                </motion.div>
                             )}
 
                             {existingClient && (
@@ -308,6 +380,14 @@ export default function ClientForm() {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-4 pt-6"
                                 >
+                                    <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-6 py-4">
+                                        <span className="text-sm font-bold text-slate-500">
+                                            Numéro à enregistrer
+                                        </span>
+                                        <span className="font-mono text-xl font-black text-blue-600">
+                                            {formData.phone}
+                                        </span>
+                                    </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label className="ml-2 font-bold text-slate-600">
@@ -514,7 +594,18 @@ export default function ClientForm() {
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
+                            className="flex flex-col items-center"
                         >
+                            <div className="group relative mb-8">
+                                <div className="absolute -inset-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 opacity-20 blur-3xl transition-opacity group-hover:opacity-30" />
+                                <div className="relative flex h-32 w-32 items-center justify-center rounded-[40px] bg-white p-6 shadow-2xl ring-1 ring-slate-100 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                                    <img
+                                        src="/logo.svg"
+                                        alt="Havifin"
+                                        className="h-full w-full object-contain"
+                                    />
+                                </div>
+                            </div>
                             <h1 className="mb-2 text-5xl font-black tracking-tight text-slate-900">
                                 <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                                     Havifin
@@ -535,7 +626,7 @@ export default function ClientForm() {
                             {renderStep()}
                         </AnimatePresence>
 
-                        {step < 3 && (
+                        {step < 3 && !offerRegistration && (
                             <div className="mt-12 flex justify-center">
                                 <Button
                                     onClick={handleNext}

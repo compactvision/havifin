@@ -1,6 +1,11 @@
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { ArrowDownCircle, ArrowLeftRight, ArrowUpCircle } from 'lucide-react';
+import {
+    ArrowDownCircle,
+    ArrowLeftRight,
+    ArrowUpCircle,
+    CreditCard,
+} from 'lucide-react';
 
 const operations = [
     {
@@ -26,6 +31,14 @@ const operations = [
         description: 'Retirez vos fonds',
         color: 'from-blue-400 to-indigo-600',
         hover: 'shadow-blue-200',
+    },
+    {
+        id: 'paiement',
+        name: 'Paiement',
+        icon: CreditCard,
+        description: 'Payez vos factures et services',
+        color: 'from-purple-400 to-pink-600',
+        hover: 'shadow-purple-200',
     },
 ];
 
