@@ -73,7 +73,7 @@ export default function ProcessModal({
         currency_from: client?.currency_from || 'USD',
         currency_to: client?.currency_to || 'CDF',
         exchange_rate: '',
-        commission: 0,
+        commission: '0',
         notes: '',
     });
     const [calculatedAmount, setCalculatedAmount] = useState(0);
@@ -93,6 +93,7 @@ export default function ProcessModal({
                 currency_to: client.currency_to || 'CDF',
                 amount_given: '',
                 exchange_rate: '',
+                commission: '0',
             }));
         }
     }, [client]);
