@@ -1,60 +1,58 @@
 {
-  "_app-main-BebEPR0-.js": {
-    "file": "assets/app-main-BebEPR0-.js",
+  "_app-main-Bk3V_bri.js": {
+    "file": "assets/app-main-Bk3V_bri.js",
     "name": "app-main",
     "imports": [
       "resources/js/app.tsx",
-      "_createLucideIcon-dTi0n6Eb.js"
+      "_smartphone-DE3gNTVh.js"
     ]
   },
-  "_clock-of5YTFl6.js": {
-    "file": "assets/clock-of5YTFl6.js",
-    "name": "clock",
+  "_moment-BXbNl440.js": {
+    "file": "assets/moment-BXbNl440.js",
+    "name": "moment",
     "imports": [
-      "resources/js/app.tsx",
-      "_createLucideIcon-dTi0n6Eb.js"
+      "_smartphone-DE3gNTVh.js"
     ]
   },
-  "_createLucideIcon-dTi0n6Eb.js": {
-    "file": "assets/createLucideIcon-dTi0n6Eb.js",
-    "name": "createLucideIcon",
+  "_phone-Cj_dQjwi.js": {
+    "file": "assets/phone-Cj_dQjwi.js",
+    "name": "phone",
+    "imports": [
+      "_smartphone-DE3gNTVh.js"
+    ]
+  },
+  "_plus-CYpdgdvc.js": {
+    "file": "assets/plus-CYpdgdvc.js",
+    "name": "plus",
+    "imports": [
+      "_smartphone-DE3gNTVh.js"
+    ]
+  },
+  "_select-BlM_IjGe.js": {
+    "file": "assets/select-BlM_IjGe.js",
+    "name": "select",
+    "imports": [
+      "_smartphone-DE3gNTVh.js",
+      "resources/js/app.tsx",
+      "_app-main-Bk3V_bri.js"
+    ]
+  },
+  "_smartphone-DE3gNTVh.js": {
+    "file": "assets/smartphone-DE3gNTVh.js",
+    "name": "smartphone",
     "imports": [
       "resources/js/app.tsx"
     ]
   },
-  "_moment-CGdtcj-u.js": {
-    "file": "assets/moment-CGdtcj-u.js",
-    "name": "moment",
+  "_trending-up-DnaPZsIE.js": {
+    "file": "assets/trending-up-DnaPZsIE.js",
+    "name": "trending-up",
     "imports": [
-      "resources/js/app.tsx",
-      "_createLucideIcon-dTi0n6Eb.js"
-    ]
-  },
-  "_phone-BxHtm0X4.js": {
-    "file": "assets/phone-BxHtm0X4.js",
-    "name": "phone",
-    "imports": [
-      "_createLucideIcon-dTi0n6Eb.js"
-    ]
-  },
-  "_tabs-WWkkkEoH.js": {
-    "file": "assets/tabs-WWkkkEoH.js",
-    "name": "tabs",
-    "imports": [
-      "resources/js/app.tsx",
-      "_app-main-BebEPR0-.js",
-      "_createLucideIcon-dTi0n6Eb.js"
-    ]
-  },
-  "_volume-2-DXd43bZ3.js": {
-    "file": "assets/volume-2-DXd43bZ3.js",
-    "name": "volume-2",
-    "imports": [
-      "_createLucideIcon-dTi0n6Eb.js"
+      "_smartphone-DE3gNTVh.js"
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-DM1qogzV.css",
+    "file": "assets/app-BNP-sBrn.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -63,7 +61,7 @@
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-6bs8d8QB.js",
+    "file": "assets/app-BVZyAnc5.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -74,74 +72,73 @@
       "resources/js/pages/Manager.tsx"
     ],
     "css": [
-      "assets/app-DM1qogzV.css"
+      "assets/app-BNP-sBrn.css"
     ]
   },
   "resources/js/pages/Cashier.tsx": {
-    "file": "assets/Cashier-BwfMqvFB.js",
+    "file": "assets/Cashier-D2gwWR8C.js",
     "name": "Cashier",
     "src": "resources/js/pages/Cashier.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.tsx",
-      "_createLucideIcon-dTi0n6Eb.js",
-      "_tabs-WWkkkEoH.js",
-      "_app-main-BebEPR0-.js",
-      "_moment-CGdtcj-u.js",
-      "_clock-of5YTFl6.js",
-      "_phone-BxHtm0X4.js",
-      "_volume-2-DXd43bZ3.js"
+      "_smartphone-DE3gNTVh.js",
+      "_app-main-Bk3V_bri.js",
+      "_moment-BXbNl440.js",
+      "_phone-Cj_dQjwi.js",
+      "_select-BlM_IjGe.js"
     ],
     "css": [
-      "assets/app-DM1qogzV.css"
+      "assets/app-BNP-sBrn.css"
     ]
   },
   "resources/js/pages/ClientForm.tsx": {
-    "file": "assets/ClientForm-Bfw-ElDh.js",
+    "file": "assets/ClientForm-q8lqpacE.js",
     "name": "ClientForm",
     "src": "resources/js/pages/ClientForm.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.tsx",
-      "_createLucideIcon-dTi0n6Eb.js",
-      "_app-main-BebEPR0-.js",
-      "_phone-BxHtm0X4.js",
-      "_clock-of5YTFl6.js"
+      "_smartphone-DE3gNTVh.js",
+      "_app-main-Bk3V_bri.js",
+      "_plus-CYpdgdvc.js",
+      "_phone-Cj_dQjwi.js"
     ],
     "css": [
-      "assets/app-DM1qogzV.css"
+      "assets/app-BNP-sBrn.css"
     ]
   },
   "resources/js/pages/Display.tsx": {
-    "file": "assets/Display-C5d36H32.js",
+    "file": "assets/Display-Dmx-Zq0W.js",
     "name": "Display",
     "src": "resources/js/pages/Display.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.tsx",
-      "_createLucideIcon-dTi0n6Eb.js",
-      "_moment-CGdtcj-u.js",
-      "_clock-of5YTFl6.js",
-      "_volume-2-DXd43bZ3.js"
+      "_smartphone-DE3gNTVh.js",
+      "_trending-up-DnaPZsIE.js",
+      "_moment-BXbNl440.js"
     ],
     "css": [
-      "assets/app-DM1qogzV.css"
+      "assets/app-BNP-sBrn.css"
     ]
   },
   "resources/js/pages/Manager.tsx": {
-    "file": "assets/Manager-C0PqN1Pb.js",
+    "file": "assets/Manager-B9UhM1u1.js",
     "name": "Manager",
     "src": "resources/js/pages/Manager.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.tsx",
-      "_createLucideIcon-dTi0n6Eb.js",
-      "_app-main-BebEPR0-.js",
-      "_tabs-WWkkkEoH.js",
-      "_moment-CGdtcj-u.js"
+      "_smartphone-DE3gNTVh.js",
+      "_app-main-Bk3V_bri.js",
+      "_select-BlM_IjGe.js",
+      "_plus-CYpdgdvc.js",
+      "_trending-up-DnaPZsIE.js",
+      "_moment-BXbNl440.js"
     ],
     "css": [
-      "assets/app-DM1qogzV.css"
+      "assets/app-BNP-sBrn.css"
     ]
   }
 }
