@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { base44, Client, ExchangeRate } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -28,17 +28,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-const serviceNames = {
-    mpesa: 'M-Pesa',
-    orange_money: 'Orange Money',
-    airtel_money: 'Airtel Money',
-    afrimoney: 'Afrimoney',
-    rawbank: 'Rawbank',
-    equity_bcdc: 'Equity BCDC',
-    tmb: 'TMB',
-    fbn_bank: 'FBN Bank',
-};
-
 const operationConfig = {
     depot: {
         label: 'Dépôt',
@@ -66,10 +55,20 @@ const operationConfig = {
     },
 };
 
-export default function ProcessModal({ client, open, onClose }) {
+interface ProcessModalProps {
+    client: Client | null;
+    open: boolean;
+    onClose: () => void;
+}
+
+export default function ProcessModal({
+    client,
+    open,
+    onClose,
+}: ProcessModalProps) {
     const queryClient = useQueryClient();
     const [formData, setFormData] = useState({
-        amount_from: client?.amount || '', // Montant de l'opération (ex: montant à déposer)
+        amount_from: client?.amount ? String(client.amount) : '', // Montant de l'opération (ex: montant à déposer)
         amount_given: '', // Montant reçu du client (pour dépôt/transfert)
         currency_from: client?.currency_from || 'USD',
         currency_to: client?.currency_to || 'CDF',
@@ -79,16 +78,17 @@ export default function ProcessModal({ client, open, onClose }) {
     });
     const [calculatedAmount, setCalculatedAmount] = useState(0);
 
-    const { data: rates = [] } = useQuery({
+    const { data: rates = [] } = useQuery<ExchangeRate[]>({
         queryKey: ['rates'],
-        queryFn: () => base44.entities.ExchangeRate.filter({ is_active: true }),
+        queryFn: () =>
+            base44.entities.ExchangeRate.filter({ is_active: true } as any),
     });
 
     useEffect(() => {
         if (client) {
             setFormData((prev) => ({
                 ...prev,
-                amount_from: client.amount || '',
+                amount_from: client.amount ? String(client.amount) : '',
                 currency_from: client.currency_from || 'USD',
                 currency_to: client.currency_to || 'CDF',
                 amount_given: '',
@@ -101,12 +101,17 @@ export default function ProcessModal({ client, open, onClose }) {
     useEffect(() => {
         if (client?.operation_type === 'change') {
             const pair = `${formData.currency_from}_${formData.currency_to}`;
-            const rate = rates.find((r) => r.currency_pair === pair);
+            const rate = rates.find(
+                (r) =>
+                    r.currency_pair === pair ||
+                    (r.currency_from === formData.currency_from &&
+                        r.currency_to === formData.currency_to),
+            );
             if (rate) {
                 setFormData((prev) => ({
                     ...prev,
-                    exchange_rate: rate.buy_rate,
-                })); // Default to buy rate? Need logic
+                    exchange_rate: String(rate.buy_rate || rate.rate),
+                }));
             }
         }
     }, [
@@ -128,7 +133,9 @@ export default function ProcessModal({ client, open, onClose }) {
         if (client?.operation_type === 'change') {
             // Change: Amount * Rate - Commission
             setCalculatedAmount(amount * rate - commission);
-        } else if (['depot', 'transfert'].includes(client?.operation_type)) {
+        } else if (
+            ['depot', 'transfert'].includes(client?.operation_type || '')
+        ) {
             // Depot: Change to return = Given - Deposit
             if (given > 0) {
                 setCalculatedAmount(given - amount - commission);
@@ -148,6 +155,7 @@ export default function ProcessModal({ client, open, onClose }) {
 
     const completeMutation = useMutation({
         mutationFn: async () => {
+            if (!client) return;
             // Create transaction
             await base44.entities.Transaction.create({
                 client_id: client.id,
@@ -177,7 +185,7 @@ export default function ProcessModal({ client, open, onClose }) {
                 status: 'completed',
                 completed_at: new Date().toISOString(),
                 notes: formData.notes,
-            });
+            } as any);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -188,8 +196,8 @@ export default function ProcessModal({ client, open, onClose }) {
 
     if (!client) return null;
 
-    const config =
-        operationConfig[client.operation_type as keyof typeof operationConfig];
+    const opType = client.operation_type as keyof typeof operationConfig;
+    const config = operationConfig[opType] || operationConfig.depot;
     const Icon = config.icon;
 
     return (
@@ -222,7 +230,9 @@ export default function ProcessModal({ client, open, onClose }) {
                                 Service
                             </div>
                             <div className="text-lg font-bold text-slate-800">
-                                {serviceNames[client.service]}
+                                {client.service === 'bureau'
+                                    ? 'Bureau de Change'
+                                    : client.service}
                             </div>
                         </div>
                         {['depot', 'transfert', 'retrait'].includes(
@@ -440,7 +450,7 @@ export default function ProcessModal({ client, open, onClose }) {
                                 completeMutation.isPending ||
                                 !formData.amount_from
                             }
-                            className={`flex-1 text-white ${['depot', 'transfert'].includes(client.operation_type) ? 'bg-green-600 hover:bg-green-700' : client.operation_type === 'retrait' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-500 hover:bg-amber-600'}`}
+                            className={`flex-1 text-white ${client.operation_type === 'depot' || client.operation_type === 'transfert' ? 'bg-green-600 hover:bg-green-700' : client.operation_type === 'retrait' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-500 hover:bg-amber-600'}`}
                         >
                             {completeMutation.isPending ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

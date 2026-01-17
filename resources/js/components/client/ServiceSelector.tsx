@@ -1,81 +1,94 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Smartphone, Building2 } from 'lucide-react';
+import { Institution } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Building2, Smartphone } from 'lucide-react';
+import React from 'react';
+import InstitutionSelector from './InstitutionSelector';
 
-const services = {
-  mobile: [
-    { id: 'mpesa', name: 'M-Pesa', color: 'bg-green-500' },
-    { id: 'orange_money', name: 'Orange Money', color: 'bg-orange-500' },
-    { id: 'airtel_money', name: 'Airtel Money', color: 'bg-red-500' },
-    { id: 'afrimoney', name: 'Afrimoney', color: 'bg-blue-500' },
-  ],
-  banks: [
-    { id: 'rawbank', name: 'Rawbank', color: 'bg-blue-700' },
-    { id: 'equity_bcdc', name: 'Equity BCDC', color: 'bg-purple-600' },
-    { id: 'tmb', name: 'TMB', color: 'bg-teal-600' },
-    { id: 'fbn_bank', name: 'FBN Bank', color: 'bg-indigo-600' },
-  ]
-};
+const categories = [
+    {
+        id: 'mobile_money',
+        name: 'Mobile Money',
+        icon: Smartphone,
+        color: 'text-emerald-500',
+    },
+    { id: 'bank', name: 'Banques', icon: Building2, color: 'text-blue-500' },
+];
 
-export default function ServiceSelector({ selectedService, onSelect }) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Smartphone className="w-5 h-5 text-amber-500" />
-          <h3 className="text-lg font-semibold text-slate-800">Mobile Money</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {services.mobile.map((service) => (
-            <motion.button
-              key={service.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onSelect(service.id)}
-              className={cn(
-                "p-4 rounded-xl border-2 transition-all duration-200 text-left",
-                selectedService === service.id
-                  ? "border-amber-500 bg-amber-50 shadow-lg shadow-amber-100"
-                  : "border-slate-200 bg-white hover:border-slate-300"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div className={cn("w-3 h-3 rounded-full", service.color)} />
-                <span className="font-medium text-slate-700">{service.name}</span>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </div>
+interface ServiceSelectorProps {
+    institutions: Institution[];
+    selectedId?: number;
+    onSelect: (id: number) => void;
+    isLoading?: boolean;
+}
 
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Building2 className="w-5 h-5 text-amber-500" />
-          <h3 className="text-lg font-semibold text-slate-800">Banques</h3>
+export default function ServiceSelector({
+    institutions,
+    selectedId,
+    onSelect,
+    isLoading,
+}: ServiceSelectorProps) {
+    const [activeCategory, setActiveCategory] = React.useState<
+        'mobile_money' | 'bank'
+    >('mobile_money');
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20">
+                <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" />
+                <p className="text-sm font-bold tracking-widest text-slate-400 uppercase">
+                    Récupération des partenaires...
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-8">
+            {/* Category Tabs */}
+            <div className="flex gap-2 rounded-[24px] bg-slate-100 p-1.5">
+                {categories.map((cat) => (
+                    <button
+                        key={cat.id}
+                        onClick={() =>
+                            setActiveCategory(cat.id as 'mobile_money' | 'bank')
+                        }
+                        className={cn(
+                            'flex flex-1 items-center justify-center gap-2 rounded-[18px] px-4 py-4 text-sm font-bold transition-all',
+                            activeCategory === cat.id
+                                ? 'bg-white text-slate-900 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700',
+                        )}
+                    >
+                        <cat.icon
+                            className={cn(
+                                'h-5 w-5',
+                                activeCategory === cat.id
+                                    ? cat.color
+                                    : 'text-slate-400',
+                            )}
+                        />
+                        {cat.name}
+                    </button>
+                ))}
+            </div>
+
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeCategory}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <InstitutionSelector
+                        institutions={institutions}
+                        selectedId={selectedId}
+                        onSelect={onSelect}
+                        type={activeCategory}
+                    />
+                </motion.div>
+            </AnimatePresence>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {services.banks.map((service) => (
-            <motion.button
-              key={service.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onSelect(service.id)}
-              className={cn(
-                "p-4 rounded-xl border-2 transition-all duration-200 text-left",
-                selectedService === service.id
-                  ? "border-amber-500 bg-amber-50 shadow-lg shadow-amber-100"
-                  : "border-slate-200 bg-white hover:border-slate-300"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div className={cn("w-3 h-3 rounded-full", service.color)} />
-                <span className="font-medium text-slate-700">{service.name}</span>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
