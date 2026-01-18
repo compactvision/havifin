@@ -115,6 +115,9 @@ export default function MultiPhoneSelector({
                         </Label>
                         <div className="flex gap-2">
                             <Input
+                                type="tel"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 value={newPhone}
                                 onChange={(e) =>
                                     setNewPhone(

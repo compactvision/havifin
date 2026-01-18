@@ -12,6 +12,20 @@ use App\Http\Controllers\Api\ExchangeRateHistoryController;
 use App\Http\Controllers\Api\CashierActivityController;
 use App\Http\Controllers\Api\HelpRequestController;
 use App\Http\Controllers\Api\AdvertisementController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Api\UserController;
+
+// Authentication Routes - use web middleware for session support
+Route::middleware('web')->group(function () {
+    Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
+    Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
+});
+
+// User Management Routes (Manager only)
+Route::middleware(['auth:sanctum', 'manager'])->group(function () {
+    Route::apiResource('users', UserController::class);
+});
 
 Route::get('/user', function (Request $request) {
     return $request->user();

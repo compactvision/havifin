@@ -216,15 +216,15 @@ export default function ClientForm() {
                         className="space-y-8"
                     >
                         <div className="text-center">
-                            <div className="group mx-auto mb-6 flex h-24 w-24 animate-in items-center justify-center rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-600 shadow-2xl shadow-blue-500/20 duration-500 fade-in zoom-in">
+                            <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/20 bg-gradient-to-br from-cyan-400/20 to-purple-500/20 shadow-xl shadow-purple-500/20 backdrop-blur-xl transition-transform group-hover:scale-110">
                                 <Phone className="h-12 w-12 text-white transition-transform group-hover:rotate-12" />
                             </div>
-                            <h2 className="text-4xl font-black tracking-tight text-slate-900">
+                            <h2 className="text-4xl font-black tracking-tight text-white drop-shadow-lg">
                                 {showRegistration
                                     ? 'Nouvelle Inscription'
                                     : 'Bienvenue chez Havifin'}
                             </h2>
-                            <p className="mt-3 text-lg font-medium text-slate-400">
+                            <p className="mt-3 text-lg font-medium text-white/70">
                                 {showRegistration
                                     ? 'Laissez-nous faire connaissance pour mieux vous servir'
                                     : 'Identifiez-vous pour commencer votre opération'}
@@ -236,9 +236,11 @@ export default function ClientForm() {
                                 !showRegistration &&
                                 !offerRegistration && (
                                     <div className="group relative">
-                                        <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-blue-500 to-indigo-600 opacity-25 blur transition duration-1000 group-hover:opacity-40 group-hover:duration-200"></div>
+                                        <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-cyan-400/40 via-purple-500/40 to-pink-500/40 opacity-60 blur-xl transition duration-1000 group-hover:opacity-100 group-hover:duration-200"></div>
                                         <Input
                                             type="tel"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
                                             value={formData.phone}
                                             onChange={(e) =>
                                                 setFormData({
@@ -249,13 +251,13 @@ export default function ClientForm() {
                                                 })
                                             }
                                             placeholder="Entrez votre numéro (10 chiffres)"
-                                            className="relative h-20 rounded-[24px] border-2 border-slate-100 bg-white text-center font-mono text-2xl font-black shadow-lg transition-all focus:border-blue-500 focus:ring-blue-500"
+                                            className="relative h-20 rounded-[24px] border-2 border-white/30 bg-white/10 text-center font-mono text-2xl font-black text-white shadow-2xl shadow-purple-500/20 backdrop-blur-2xl transition-all placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 focus:ring-4 focus:ring-cyan-400/30"
                                             autoFocus
                                             disabled={isVerifying}
                                         />
                                         {isVerifying && (
                                             <div className="absolute top-1/2 right-6 -translate-y-1/2">
-                                                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                                                <Loader2 className="h-6 w-6 animate-spin text-cyan-300" />
                                             </div>
                                         )}
                                     </div>
@@ -267,14 +269,14 @@ export default function ClientForm() {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-8"
                                 >
-                                    <div className="rounded-[32px] border-2 border-blue-100 bg-blue-50/50 p-8 text-center ring-4 ring-blue-50/20">
-                                        <div className="mb-4 text-sm font-black tracking-widest text-blue-600 uppercase">
+                                    <div className="rounded-[32px] border-2 border-white/30 bg-white/10 p-8 text-center shadow-2xl ring-4 shadow-cyan-500/20 ring-white/10 backdrop-blur-2xl">
+                                        <div className="mb-4 text-sm font-black tracking-widest text-cyan-300 uppercase">
                                             Nouveau Numéro
                                         </div>
-                                        <div className="mb-4 font-mono text-4xl font-black text-slate-900">
+                                        <div className="mb-4 font-mono text-4xl font-black text-white">
                                             {formData.phone}
                                         </div>
-                                        <p className="text-lg font-medium text-slate-500">
+                                        <p className="text-lg font-medium text-white/80">
                                             Souhaitez-vous vous enregistrer pour
                                             profiter de nos services
                                             personnalisés ?
@@ -287,7 +289,7 @@ export default function ClientForm() {
                                                 setOfferRegistration(false);
                                                 setShowRegistration(true);
                                             }}
-                                            className="h-20 rounded-[24px] bg-blue-600 text-xl font-bold text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700"
+                                            className="h-20 rounded-[24px] border border-white/30 bg-gradient-to-r from-cyan-500 to-blue-600 text-xl font-bold text-white shadow-2xl shadow-cyan-500/30 backdrop-blur-xl hover:border-white/50 hover:from-cyan-400 hover:to-blue-500"
                                         >
                                             Oui, m'enregistrer
                                         </Button>
@@ -298,7 +300,7 @@ export default function ClientForm() {
                                                 setIsAnonymous(true);
                                                 setStep(2);
                                             }}
-                                            className="h-20 rounded-[24px] border-2 border-slate-200 bg-white text-xl font-bold text-slate-600 hover:bg-slate-50"
+                                            className="h-20 rounded-[24px] border-2 border-white/30 bg-white/10 text-xl font-bold text-white shadow-xl backdrop-blur-xl hover:bg-white/20"
                                         >
                                             Non, continuer ainsi
                                         </Button>
@@ -311,7 +313,7 @@ export default function ClientForm() {
                                                     phone: '',
                                                 });
                                             }}
-                                            className="text-slate-400"
+                                            className="text-white/60 hover:text-white"
                                         >
                                             Changer de numéro
                                         </Button>
@@ -326,7 +328,7 @@ export default function ClientForm() {
                                     className="space-y-6"
                                 >
                                     <div className="flex items-center justify-between px-2">
-                                        <Label className="text-lg font-black text-slate-800">
+                                        <Label className="text-lg font-black text-white">
                                             Vos numéros
                                         </Label>
                                         <button
@@ -337,7 +339,7 @@ export default function ClientForm() {
                                                     phone: '',
                                                 });
                                             }}
-                                            className="flex items-center gap-1 text-sm font-bold text-blue-500 hover:text-blue-700"
+                                            className="flex items-center gap-1 text-sm font-bold text-cyan-300 hover:text-cyan-200"
                                         >
                                             <ChevronLeft className="h-4 w-4" />{' '}
                                             Changer
@@ -358,14 +360,14 @@ export default function ClientForm() {
                                         isAdding={addPhoneMutation.isPending}
                                     />
 
-                                    <div className="group relative mt-8 overflow-hidden rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-white shadow-xl">
+                                    <div className="group relative mt-8 overflow-hidden rounded-[32px] border border-white/30 bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-pink-500/20 p-8 text-white shadow-2xl shadow-purple-500/20 backdrop-blur-2xl">
                                         <div className="absolute top-0 right-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-white/10 blur-2xl transition-transform duration-700 group-hover:scale-150" />
                                         <div className="relative z-10 text-center">
                                             <p className="mb-1 text-4xl font-black">
                                                 Bonjour{' '}
                                                 {existingClient.first_name} !
                                             </p>
-                                            <p className="font-medium text-blue-100">
+                                            <p className="font-medium text-white/70">
                                                 On continue avec ce numéro de
                                                 téléphone ?
                                             </p>
@@ -380,17 +382,17 @@ export default function ClientForm() {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-4 pt-6"
                                 >
-                                    <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-6 py-4">
-                                        <span className="text-sm font-bold text-slate-500">
+                                    <div className="flex items-center justify-between rounded-2xl border border-white/30 bg-white/10 px-6 py-4 shadow-xl backdrop-blur-xl">
+                                        <span className="text-sm font-bold text-white/70">
                                             Numéro à enregistrer
                                         </span>
-                                        <span className="font-mono text-xl font-black text-blue-600">
+                                        <span className="font-mono text-xl font-black text-cyan-300">
                                             {formData.phone}
                                         </span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label className="ml-2 font-bold text-slate-600">
+                                            <Label className="ml-2 font-bold text-white">
                                                 Prénom
                                             </Label>
                                             <Input
@@ -403,11 +405,11 @@ export default function ClientForm() {
                                                             e.target.value,
                                                     })
                                                 }
-                                                className="h-14 rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-50"
+                                                className="h-14 rounded-2xl border-2 border-white/30 bg-white/10 text-white shadow-xl backdrop-blur-xl placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 focus:ring-4 focus:ring-cyan-400/30"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="ml-2 font-bold text-slate-600">
+                                            <Label className="ml-2 font-bold text-white">
                                                 Nom
                                             </Label>
                                             <Input
@@ -420,12 +422,12 @@ export default function ClientForm() {
                                                             e.target.value,
                                                     })
                                                 }
-                                                className="h-14 rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-50"
+                                                className="h-14 rounded-2xl border-2 border-white/30 bg-white/10 text-white shadow-xl backdrop-blur-xl placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 focus:ring-4 focus:ring-cyan-400/30"
                                             />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="ml-2 font-bold text-slate-600">
+                                        <Label className="ml-2 font-bold text-white">
                                             Email (Optionnel)
                                         </Label>
                                         <Input
@@ -438,11 +440,11 @@ export default function ClientForm() {
                                                     email: e.target.value,
                                                 })
                                             }
-                                            className="h-14 rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-50"
+                                            className="h-14 rounded-2xl border-2 border-white/30 bg-white/10 text-white shadow-xl backdrop-blur-xl placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 focus:ring-4 focus:ring-cyan-400/30"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="ml-2 font-bold text-slate-600">
+                                        <Label className="ml-2 font-bold text-white">
                                             Adresse (Optionnelle)
                                         </Label>
                                         <Input
@@ -454,7 +456,7 @@ export default function ClientForm() {
                                                     address: e.target.value,
                                                 })
                                             }
-                                            className="h-14 rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-50"
+                                            className="h-14 rounded-2xl border-2 border-white/30 bg-white/10 text-white shadow-xl backdrop-blur-xl placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 focus:ring-4 focus:ring-cyan-400/30"
                                         />
                                     </div>
                                     <Button
@@ -582,11 +584,17 @@ export default function ClientForm() {
 
     return (
         <AppMain currentPageName="Client">
-            <div className="relative min-h-screen overflow-hidden bg-slate-50">
-                {/* Background animations */}
-                <div className="pointer-events-none absolute top-0 left-0 h-full w-full overflow-hidden">
-                    <div className="absolute top-[-10%] left-[-10%] h-[40%] w-[40%] animate-pulse rounded-full bg-blue-100 opacity-50 blur-[100px]" />
-                    <div className="absolute right-[-10%] bottom-[-10%] h-[40%] w-[40%] animate-pulse rounded-full bg-purple-100 opacity-50 blur-[100px] delay-1000" />
+            <div className="relative min-h-screen overflow-hidden">
+                {/* Premium Background */}
+                <div className="fixed inset-0 z-0">
+                    <div
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                        style={{
+                            backgroundImage: 'url(/images/background1.png)',
+                        }}
+                    />
+                    {/* Dark overlay for better readability */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-slate-900/20 to-slate-900/40" />
                 </div>
 
                 <div className="relative z-10 mx-auto max-w-3xl px-4 py-12">
@@ -596,32 +604,33 @@ export default function ClientForm() {
                             animate={{ opacity: 1, y: 0 }}
                             className="flex flex-col items-center"
                         >
-                            <div className="group relative mb-8">
-                                <div className="absolute -inset-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 opacity-20 blur-3xl transition-opacity group-hover:opacity-30" />
-                                <div className="relative flex h-32 w-32 items-center justify-center rounded-[40px] bg-white p-6 shadow-2xl ring-1 ring-slate-100 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                            <div className="group relative mb-12">
+                                <div className="absolute -inset-12 rounded-full bg-gradient-to-tr from-cyan-400/30 via-purple-500/30 to-pink-500/30 opacity-60 blur-3xl transition-all duration-700 group-hover:scale-110 group-hover:opacity-100" />
+                                <div className="relative flex h-40 w-40 items-center justify-center rounded-[48px] border border-white/30 bg-white/10 p-8 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-white/50 group-hover:bg-white/20">
                                     <img
-                                        src="/logo.svg"
+                                        src="/logo.png"
                                         alt="Havifin"
-                                        className="h-full w-full object-contain"
+                                        className="h-full w-full object-contain drop-shadow-2xl"
                                     />
+                                    <div className="absolute inset-0 rounded-[48px] bg-gradient-to-tr from-cyan-400/10 via-purple-500/10 to-pink-500/10 opacity-0 transition-opacity group-hover:opacity-100" />
                                 </div>
                             </div>
-                            <h1 className="mb-2 text-5xl font-black tracking-tight text-slate-900">
-                                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                            <h1 className="mb-2 text-5xl font-black tracking-tight drop-shadow-lg">
+                                <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 bg-clip-text text-transparent">
                                     Havifin
                                 </span>
-                                <span className="mx-2 text-slate-200">|</span>
-                                <span className="text-slate-600">
+                                <span className="mx-2 text-white/40">|</span>
+                                <span className="text-white/90">
                                     Smart Ticket
                                 </span>
                             </h1>
-                            <p className="text-lg font-bold tracking-widest text-slate-400 uppercase">
+                            <p className="text-lg font-bold tracking-widest text-white/60 uppercase">
                                 Bureau de Change & Services
                             </p>
                         </motion.div>
                     </div>
 
-                    <div className="rounded-[40px] border border-white/20 bg-white/80 p-8 shadow-2xl shadow-slate-200/50 backdrop-blur-xl md:p-12">
+                    <div className="rounded-[40px] border border-white/20 bg-white/10 p-8 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl md:p-12">
                         <AnimatePresence mode="wait">
                             {renderStep()}
                         </AnimatePresence>
@@ -637,18 +646,18 @@ export default function ClientForm() {
                                         isVerifying
                                     }
                                     size="lg"
-                                    className="h-16 rounded-3xl bg-gradient-to-r from-[#1f61e4] to-[#2000ff] px-16 text-xl font-bold text-white shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                    className="h-16 rounded-3xl border border-white/30 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 px-16 text-xl font-bold text-white shadow-2xl shadow-cyan-500/30 backdrop-blur-xl transition-all hover:scale-[1.02] hover:border-white/50 hover:shadow-cyan-500/50 active:scale-[0.98]"
                                 >
                                     {createClientMutation.isPending ||
                                     registerMutation.isPending ? (
-                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                        <>
+                                            <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                                            Traitement...
+                                        </>
                                     ) : (
                                         <>
-                                            {step === 1 && showRegistration
-                                                ? "S'enregistrer"
-                                                : step === 2
-                                                  ? 'Confirmer'
-                                                  : 'Continuer'}
+                                            {step === 1 && 'Continuer'}
+                                            {step === 2 && 'Confirmer'}
                                             <ArrowRight className="ml-3 h-6 w-6" />
                                         </>
                                     )}

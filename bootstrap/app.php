@@ -22,6 +22,16 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // Exclude auth routes from CSRF verification
+        $middleware->validateCsrfTokens(except: [
+            'api/auth/*',
+        ]);
+
+        $middleware->alias([
+            'manager' => \App\Http\Middleware\EnsureUserIsManager::class,
+            'role' => \App\Http\Middleware\CheckUserRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
