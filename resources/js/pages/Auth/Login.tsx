@@ -10,10 +10,11 @@ export default function Login() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        remember: false,
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+    const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+        {},
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,7 +26,7 @@ export default function Login() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                 },
                 credentials: 'same-origin',
@@ -44,7 +45,7 @@ export default function Login() {
             }
 
             toast.success('Connexion réussie!');
-            
+
             // Redirect based on role
             if (data.role === 'manager') {
                 window.location.href = '/manager';
@@ -66,56 +67,54 @@ export default function Login() {
     return (
         <div className="relative min-h-screen overflow-hidden">
             <div className="fixed inset-0 z-0">
-                <div 
+                <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{ backgroundImage: 'url(/images/background1.png)' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-slate-900/20 to-slate-900/40" />
             </div>
 
-            <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
+            <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-6">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full max-w-md"
                 >
-                    <div className="mb-12 text-center">
+                    <div className="mb-6 text-center">
                         <div className="group relative mx-auto mb-8 inline-block">
-                            <div className="absolute -inset-12 rounded-full bg-gradient-to-tr from-cyan-400/30 via-purple-500/30 to-pink-500/30 opacity-60 blur-3xl transition-all duration-700 group-hover:opacity-100 group-hover:scale-110" />
-                            <div className="relative flex h-32 w-32 items-center justify-center rounded-[40px] border border-white/30 bg-white/10 p-6 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-white/50 group-hover:bg-white/20">
+                            <div className="absolute -inset-12 rounded-full bg-gradient-to-tr from-cyan-400/30 via-purple-500/30 to-pink-500/30 opacity-60 blur-3xl transition-all duration-700 group-hover:scale-110 group-hover:opacity-100" />
+                            <div className="relative flex h-48 w-48 items-center justify-center rounded-[40px] border border-white/30 bg-white/70 p-6 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-white/50 group-hover:bg-white/20">
                                 <img
-                                    src="/logo.png"
+                                    src="/logo-color.png"
                                     alt="Havifin"
                                     className="h-full w-full object-contain drop-shadow-2xl"
                                 />
                             </div>
                         </div>
-                        <h1 className="mb-2 text-4xl font-black tracking-tight drop-shadow-lg">
-                            <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 bg-clip-text text-transparent">
-                                Havifin
-                            </span>
-                        </h1>
-                        <p className="text-lg font-bold tracking-widest text-white/60 uppercase">
-                            Connexion
-                        </p>
                     </div>
 
-                    <div className="rounded-[32px] border border-white/20 bg-white/10 p-8 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl">
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="rounded-[32px] border border-white/20 bg-white/60 p-6 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl">
+                        <p className="bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 bg-clip-text text-transparent">
+                            Connexion
+                        </p>
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label className="ml-2 font-bold text-white">
+                                <Label className="ml-2 font-bold text-slate-800">
                                     Email
                                 </Label>
                                 <div className="relative">
-                                    <Mail className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-white/40" />
+                                    <Mail className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-slate-500" />
                                     <Input
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, email: e.target.value })
+                                            setFormData({
+                                                ...formData,
+                                                email: e.target.value,
+                                            })
                                         }
                                         placeholder="admin@havifin.com"
-                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/10 pl-12 text-white shadow-xl backdrop-blur-xl placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 focus:ring-4 focus:ring-cyan-400/30"
+                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/10 pl-12 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-500 focus:border-cyan-500/50 focus:bg-white/40 focus:ring-4 focus:ring-cyan-500/20"
                                         disabled={isLoading}
                                     />
                                 </div>
@@ -128,19 +127,22 @@ export default function Login() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="ml-2 font-bold text-white">
+                                <Label className="ml-2 font-bold text-slate-800">
                                     Mot de passe
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-white/40" />
+                                    <Lock className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-slate-500" />
                                     <Input
                                         type="password"
                                         value={formData.password}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, password: e.target.value })
+                                            setFormData({
+                                                ...formData,
+                                                password: e.target.value,
+                                            })
                                         }
                                         placeholder="••••••••"
-                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/10 pl-12 text-white shadow-xl backdrop-blur-xl placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 focus:ring-4 focus:ring-cyan-400/30"
+                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/10 pl-12 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-500 focus:border-cyan-500/50 focus:bg-white/40 focus:ring-4 focus:ring-cyan-500/20"
                                         disabled={isLoading}
                                     />
                                 </div>
@@ -150,21 +152,6 @@ export default function Login() {
                                         {errors.password}
                                     </div>
                                 )}
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="remember"
-                                    checked={formData.remember}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, remember: e.target.checked })
-                                    }
-                                    className="h-5 w-5 rounded border-white/30 bg-white/10 text-cyan-500 focus:ring-2 focus:ring-cyan-400/30"
-                                />
-                                <label htmlFor="remember" className="text-sm font-medium text-white/70">
-                                    Se souvenir de moi
-                                </label>
                             </div>
 
                             <Button
@@ -186,15 +173,15 @@ export default function Login() {
                             </Button>
                         </form>
 
-                        <div className="mt-6 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-center text-sm text-cyan-200">
+                        <div className="mt-6 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-center text-sm text-cyan-900">
                             <p className="font-medium">Comptes de test</p>
-                            <p className="mt-1 text-xs text-cyan-300/70">
+                            <p className="mt-1 text-xs text-cyan-800/80">
                                 Manager: admin@havifin.com / password
                             </p>
-                            <p className="text-xs text-cyan-300/70">
+                            <p className="text-xs text-cyan-800/80">
                                 Cashier: cashier@havifin.com / password
                             </p>
-                            <p className="text-xs text-cyan-300/70">
+                            <p className="text-xs text-cyan-800/80">
                                 Client: client@havifin.com / password
                             </p>
                         </div>

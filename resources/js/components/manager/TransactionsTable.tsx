@@ -7,9 +7,7 @@ interface TransactionsTableProps {
     transactions: Transaction[];
 }
 
-export default function TransactionsTable({
-    transactions,
-}: TransactionsTableProps) {
+export function TransactionsTable({ transactions }: TransactionsTableProps) {
     if (transactions.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50/50 p-20">

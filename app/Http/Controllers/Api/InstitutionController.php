@@ -34,13 +34,16 @@ class InstitutionController extends Controller
     /**
      * Store a newly created institution.
      */
+    /**
+     * Store a newly created institution.
+     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'type' => 'required|in:mobile_money,bank',
             'code' => 'required|string|max:255|unique:institutions,code',
-            'logo_url' => 'nullable|string|max:500',
+            'logo' => 'nullable|image|max:2048', // Allow image upload
             'is_active' => 'boolean',
         ]);
 
@@ -51,7 +54,14 @@ class InstitutionController extends Controller
             ], 422);
         }
 
-        $institution = Institution::create($request->all());
+        $data = $request->except('logo');
+
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('institutions', 'public');
+            $data['logo_url'] = '/storage/' . $path;
+        }
+
+        $institution = Institution::create($data);
 
         return response()->json($institution, 201);
     }
@@ -69,12 +79,16 @@ class InstitutionController extends Controller
      */
     public function update(Request $request, Institution $institution)
     {
+        // For multipart/form-data requests in Laravel (PUT/PATCH), we often use POST with _method field.
+        // We need to parse boolean properly from string if coming from FormData.
+        $logoValidation = $request->hasFile('logo') ? 'sometimes|image|max:2048' : 'nullable';
+
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|in:mobile_money,bank',
             'code' => 'sometimes|required|string|max:255|unique:institutions,code,' . $institution->id,
-            'logo_url' => 'nullable|string|max:500',
-            'is_active' => 'boolean',
+            'logo' => $logoValidation,
+            'is_active' => 'sometimes', // Can be boolean or "1"/"0" string from FormData
         ]);
 
         if ($validator->fails()) {
@@ -84,7 +98,25 @@ class InstitutionController extends Controller
             ], 422);
         }
 
-        $institution->update($request->all());
+        $data = $request->except(['logo', '_method']);
+
+        // Handle boolean conversion for FormData
+        if ($request->has('is_active')) {
+            $data['is_active'] = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($institution->logo_url) {
+                $oldPath = str_replace('/storage/', '', $institution->logo_url);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+
+            $path = $request->file('logo')->store('institutions', 'public');
+            $data['logo_url'] = '/storage/' . $path;
+        }
+
+        $institution->update($data);
 
         return response()->json($institution);
     }

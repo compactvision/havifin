@@ -40,7 +40,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-export default function UserManagement() {
+export function UserManagement() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const queryClient = useQueryClient();

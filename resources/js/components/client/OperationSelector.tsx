@@ -50,7 +50,7 @@ export default function OperationSelector({
     onSelect: (id: string) => void;
 }) {
     return (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
             {operations.map((op) => {
                 const Icon = op.icon;
                 const isSelected = selectedOperation === op.id;

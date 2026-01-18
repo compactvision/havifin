@@ -1,8 +1,8 @@
 import { base44 } from '@/api/base44Client';
 import InstitutionManager from '@/components/manager/InstitutionManager';
 import RatesManager from '@/components/manager/RatesManager';
-import StatsCard from '@/components/manager/StatsCard';
-import TransactionsTable from '@/components/manager/TransactionsTable';
+import { StatsCard } from '@/components/manager/StatsCard';
+import { TransactionsTable } from '@/components/manager/TransactionsTable';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';

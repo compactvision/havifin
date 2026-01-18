@@ -49,6 +49,7 @@ export interface Transaction {
     operation_type?: string;
     service?: string;
     client_phone?: string;
+    client_name?: string;
 }
 
 export interface ExchangeRate {

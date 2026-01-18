@@ -9,6 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import axios from '@/lib/axios';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -16,6 +17,7 @@ import {
     Building2,
     Landmark,
     Loader2,
+    Pencil,
     Plus,
     RefreshCw,
     Save,
@@ -30,10 +32,17 @@ import { toast } from 'sonner';
 export default function InstitutionManager() {
     const queryClient = useQueryClient();
     const [showAddForm, setShowAddForm] = useState(false);
-    const [newInstitution, setNewInstitution] = useState({
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [newInstitution, setNewInstitution] = useState<{
+        name: string;
+        type: 'bank' | 'mobile_money';
+        code: string;
+        logo: File | null;
+    }>({
         name: '',
-        type: 'bank' as 'bank' | 'mobile_money',
+        type: 'bank',
         code: '',
+        logo: null,
     });
 
     const { data: institutions = [], isLoading } = useQuery({
@@ -42,16 +51,83 @@ export default function InstitutionManager() {
     });
 
     const createMutation = useMutation({
-        mutationFn: (data: Partial<Institution>) =>
-            base44.entities.Institution.create(data),
+        mutationFn: (data: typeof newInstitution) => {
+            const formData = new FormData();
+            formData.append('name', data.name);
+            formData.append('type', data.type);
+            formData.append('code', data.code);
+            if (data.logo) {
+                formData.append('logo', data.logo);
+            }
+            // Need to pass FormData, modifying base44 client might be needed or using fetch directly here for custom FormData
+            // Given base44 client likely expects JSON, we might need a custom request here or check if base44 supports FormData.
+            // Assuming base44 client can handle it or we use raw fetch for this specific case to be safe.
+            // But to keep consistency, let's assume we need to use a custom axios/fetch call or if base44 has a method.
+            // Since I cannot see base44 implementation fully for 'create', I will trust standard axios behavior if used,
+            // but for safety with file uploads, explicit implementation is better.
+            // However, to stick to the pattern, let's see if we can just pass FormData to the underlying call.
+            // If base44.entities.Institution.create expects an object, we might need to cast or ensure it handles FormData.
+            // Let's assume for now we can pass it, if not I'll fix.
+            // BUT: base44Client likely sends JSON.
+            // Plan B: Use a direct fetch/axios call here for the upload to ensure multipart/form-data.
+
+            return axios.post('/api/institutions', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['institutions'] });
-            setNewInstitution({ name: '', type: 'bank', code: '' });
-            setShowAddForm(false);
+            resetForm();
             toast.success('Institution ajoutée avec succès');
         },
         onError: () => toast.error("Erreur lors de l'ajout de l'institution"),
     });
+
+    const updateMutation = useMutation({
+        mutationFn: ({
+            id,
+            data,
+        }: {
+            id: number;
+            data: typeof newInstitution;
+        }) => {
+            const formData = new FormData();
+            formData.append('_method', 'PUT'); // Spoof PUT for Laravel multipart
+            formData.append('name', data.name);
+            formData.append('type', data.type);
+            formData.append('code', data.code);
+            if (data.logo) {
+                formData.append('logo', data.logo);
+            }
+
+            return axios.post(`/api/institutions/${id}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['institutions'] });
+            resetForm();
+            toast.success('Institution mise à jour avec succès');
+        },
+        onError: () => toast.error('Erreur lors de la mise à jour'),
+    });
+
+    const resetForm = () => {
+        setNewInstitution({ name: '', type: 'bank', code: '', logo: null });
+        setEditingId(null);
+        setShowAddForm(false);
+    };
+
+    const handleEdit = (inst: Institution) => {
+        setNewInstitution({
+            name: inst.name,
+            type: inst.type as 'bank' | 'mobile_money',
+            code: inst.code,
+            logo: null,
+        });
+        setEditingId(inst.id);
+        setShowAddForm(true);
+    };
 
     const deleteMutation = useMutation({
         mutationFn: (id: number) => base44.entities.Institution.delete(id),
@@ -119,7 +195,9 @@ export default function InstitutionManager() {
 
                             <h5 className="mb-8 flex items-center gap-3 text-xl font-black tracking-tight">
                                 <Landmark className="h-6 w-6 text-indigo-400" />
-                                Configurer un nouveau partenaire
+                                {editingId
+                                    ? "Modifier l'institution"
+                                    : 'Configurer un nouveau partenaire'}
                             </h5>
 
                             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -189,20 +267,73 @@ export default function InstitutionManager() {
                                 </div>
                             </div>
 
+                            <div className="mt-6 space-y-2">
+                                <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                    Logo de l'institution (Optionnel)
+                                </Label>
+                                <div className="flex items-center gap-4">
+                                    <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                                        {newInstitution.logo ? (
+                                            <img
+                                                src={URL.createObjectURL(
+                                                    newInstitution.logo,
+                                                )}
+                                                alt="Preview"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <Building2 className="h-6 w-6 text-white/20" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1">
+                                        <Input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                if (
+                                                    e.target.files &&
+                                                    e.target.files[0]
+                                                ) {
+                                                    setNewInstitution({
+                                                        ...newInstitution,
+                                                        logo: e.target.files[0],
+                                                    });
+                                                }
+                                            }}
+                                            className="h-12 w-full cursor-pointer rounded-xl border-white/10 bg-white/5 pt-2 text-sm font-bold text-white file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:px-4 file:py-1 file:text-xs file:font-bold file:text-white hover:file:bg-indigo-700"
+                                        />
+                                        <p className="mt-2 text-xs text-slate-400">
+                                            Format recommandé: PNG ou JPG, fond
+                                            transparent. Max 2MB.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="mt-10 flex justify-end gap-3">
                                 <Button
                                     variant="ghost"
-                                    onClick={() => setShowAddForm(false)}
+                                    onClick={resetForm}
                                     className="h-12 rounded-xl px-8 text-xs font-black tracking-widest text-slate-400 uppercase hover:bg-white/5 hover:text-white"
                                 >
                                     Annuler
                                 </Button>
                                 <Button
-                                    onClick={() =>
-                                        createMutation.mutate(newInstitution)
-                                    }
+                                    onClick={() => {
+                                        if (editingId) {
+                                            updateMutation.mutate({
+                                                id: editingId,
+                                                data: newInstitution,
+                                            });
+                                        } else {
+                                            createMutation.mutate(
+                                                newInstitution,
+                                            );
+                                        }
+                                    }}
                                     disabled={
                                         createMutation.isPending ||
+                                        updateMutation.isPending ||
                                         !newInstitution.name ||
                                         !newInstitution.code
                                     }
@@ -213,7 +344,9 @@ export default function InstitutionManager() {
                                     ) : (
                                         <>
                                             <Save className="mr-2 h-4 w-4" />
-                                            Enregistrer Partenaire
+                                            {editingId
+                                                ? 'Mettre à jour'
+                                                : 'Enregistrer Partenaire'}
                                         </>
                                     )}
                                 </Button>
@@ -240,7 +373,13 @@ export default function InstitutionManager() {
                                         : 'bg-emerald-500 text-white shadow-emerald-500/10',
                                 )}
                             >
-                                {inst.type === 'bank' ? (
+                                {inst.logo_url ? (
+                                    <img
+                                        src={inst.logo_url}
+                                        alt={inst.name}
+                                        className="h-9 w-9 object-contain"
+                                    />
+                                ) : inst.type === 'bank' ? (
                                     <Building2 className="h-7 w-7" />
                                 ) : (
                                     <Smartphone className="h-7 w-7" />
@@ -275,6 +414,14 @@ export default function InstitutionManager() {
                                     className="h-10 w-10 rounded-xl text-slate-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
                                 >
                                     <Trash2 className="h-5 w-5" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEdit(inst)}
+                                    className="h-10 w-10 rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-indigo-50 hover:text-indigo-600"
+                                >
+                                    <Pencil className="h-5 w-5" />
                                 </Button>
                             </div>
                         </div>

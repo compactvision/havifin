@@ -66,7 +66,7 @@ const colorConfigs = {
     },
 };
 
-export default function StatsCard({
+export function StatsCard({
     title,
     value,
     subtitle,
