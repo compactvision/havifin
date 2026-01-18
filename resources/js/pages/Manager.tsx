@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 
 export default function Manager() {
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState('overview'); // overview, rates, users
 
     // Data Fetching
     const { data: clients = [], isLoading: loadingClients } = useQuery({
@@ -201,6 +201,11 @@ export default function Manager() {
                                                 icon: Settings,
                                             },
                                             {
+                                                id: 'users',
+                                                label: 'Utilisateurs',
+                                                icon: Users,
+                                            },
+                                            {
                                                 id: 'institutions',
                                                 label: 'Banques & Partenaires',
                                                 icon: Landmark,
@@ -359,6 +364,12 @@ export default function Manager() {
                                         {activeTab === 'institutions' && (
                                             <div className="animate-in duration-300 fade-in">
                                                 <InstitutionManager />
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'users' && (
+                                            <div className="animate-in duration-300 fade-in">
+                                                <UserManagement />
                                             </div>
                                         )}
 
