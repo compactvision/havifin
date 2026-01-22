@@ -25,7 +25,9 @@ class CheckUserRole
         }
 
         // If user doesn't have required role, redirect based on their role
-        if ($request->user()->hasRole('client')) {
+        if ($request->user()->hasRole('super-admin')) {
+            return redirect('/admin/shops');
+        } elseif ($request->user()->hasRole('client')) {
             return redirect('/clientform');
         } elseif ($request->user()->hasRole('cashier')) {
             return redirect('/cashier');

@@ -15,7 +15,7 @@ class EnsureUserIsManager
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user() || !$request->user()->isManager()) {
+        if (!$request->user() || (!$request->user()->isManager() && !$request->user()->isSuperAdmin())) {
             return response()->json([
                 'message' => 'Accès refusé. Seuls les managers peuvent accéder à cette ressource.',
             ], 403);

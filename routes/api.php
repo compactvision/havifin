@@ -14,22 +14,29 @@ use App\Http\Controllers\Api\HelpRequestController;
 use App\Http\Controllers\Api\AdvertisementController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ShopController;
 
-// Authentication Routes - use web middleware for session support
+// Authentication & Session-Based API Routes
 Route::middleware('web')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
     Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
-});
 
-// User Management Routes (Manager only)
-Route::middleware(['auth:sanctum', 'manager'])->group(function () {
-    Route::apiResource('users', UserController::class);
-});
+    Route::middleware(['auth'])->group(function () {
+        // User Management Routes (Manager only)
+        Route::middleware(['manager'])->group(function () {
+            Route::apiResource('users', UserController::class);
+        });
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+        // Shop Management Routes
+        Route::apiResource('shops', ShopController::class);
+        Route::post('/shops/{shop}/assign-users', [ShopController::class, 'assignUsers']);
+
+        Route::get('/user', function (Request $request) {
+            return $request->user();
+        });
+    });
+});
 
 // Existing routes
 Route::apiResource('clients', ClientController::class);

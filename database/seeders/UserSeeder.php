@@ -18,6 +18,7 @@ class UserSeeder extends Seeder
         $managerRole = Role::firstOrCreate(['name' => 'manager']);
         $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
         $clientRole = Role::firstOrCreate(['name' => 'client']);
+        $superAdminRole = Role::firstOrCreate(['name' => 'super-admin']);
 
         // Create default manager account
         $manager = User::updateOrCreate(
@@ -29,6 +30,17 @@ class UserSeeder extends Seeder
             ]
         );
         $manager->syncRoles([$managerRole]);
+
+        // Create default super-admin account
+        $superAdmin = User::updateOrCreate(
+            ['email' => 'superadmin@havifin.com'],
+            [
+                'name' => 'Super Administrator',
+                'password' => Hash::make('password'),
+                'is_active' => true,
+            ]
+        );
+        $superAdmin->syncRoles([$superAdminRole]);
 
         // Create a sample cashier account for testing
         $cashier = User::updateOrCreate(

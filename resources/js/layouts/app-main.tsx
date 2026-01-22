@@ -1,38 +1,72 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-    ChevronRight,
     LayoutDashboard,
     LogOut,
     Menu,
     Monitor,
+    ShieldCheck,
     User,
     Wallet,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 const navigation = [
-    { name: 'Client', label: 'Client', icon: User, color: 'text-[#00e2f6]' },
-    { name: 'Display', label: 'Ecran', icon: Monitor, color: 'text-[#bf15cf]' },
+    {
+        name: 'Client',
+        label: 'Client',
+        icon: User,
+        color: 'text-[#00e2f6]',
+        bg: 'bg-[#00e2f6]/10',
+    },
+    {
+        name: 'Display',
+        label: 'Ecran',
+        icon: Monitor,
+        color: 'text-[#bf15cf]',
+        bg: 'bg-[#bf15cf]/10',
+    },
     {
         name: 'Cashier',
         label: 'Caissier',
         icon: Wallet,
         color: 'text-[#ff55ba]',
+        bg: 'bg-[#ff55ba]/10',
     },
     {
         name: 'Manager',
         label: 'Manager',
         icon: LayoutDashboard,
         color: 'text-[#1f61e4]',
+        bg: 'bg-[#1f61e4]/10',
+    },
+    {
+        name: 'Admin',
+        label: 'Super Admin',
+        icon: ShieldCheck,
+        color: 'text-[#4f46e5]',
+        bg: 'bg-[#4f46e5]/10',
     },
 ];
 
 export default function AppMain({ children, currentPageName }) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { auth } = usePage().props as any;
+    const userRole = auth.user?.role;
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Filter navigation based on user role
+    const filteredNavigation = useMemo(() => {
+        return navigation.filter((item) => {
+            if (item.name === 'Admin') return userRole === 'super-admin';
+            if (item.name === 'Manager')
+                return userRole === 'manager' || userRole === 'super-admin';
+            return true;
+        });
+    }, [userRole]);
+
     const hideNav = currentPageName === 'Display';
 
     const handleLogout = async () => {
@@ -45,182 +79,133 @@ export default function AppMain({ children, currentPageName }) {
                 },
                 credentials: 'same-origin',
             });
-
-            // Redirect to login page
             window.location.href = '/login';
         } catch (error) {
             console.error('Logout error:', error);
-            // Redirect anyway
             window.location.href = '/login';
         }
     };
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#1f61e4] selection:text-white">
-            {/* Sidebar Navigation - Desktop */}
-            {/* Sidebar Navigation - Desktop (Fixed on XL) */}
+            {/* Main Content Area - No Margin/Padding for Sidebar */}
+            <main className="min-h-screen w-full">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="h-full"
+                >
+                    {children}
+                </motion.div>
+            </main>
+
+            {/* Floating Action Button (FAB) */}
             {!hideNav && (
-                <aside className="fixed top-0 left-0 z-40 hidden h-screen w-20 flex-col items-center justify-between border-r border-[#1f61e4]/10 bg-white/80 py-8 backdrop-blur-xl xl:flex">
-                    <Link href="/" className="mb-8">
-                        <motion.div
-                            whileHover={{ scale: 1.1, rotate: 5 }}
-                            transition={{
-                                type: 'spring',
-                                stiffness: 400,
-                                damping: 10,
-                            }}
-                            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-100"
-                        >
-                            <img
-                                src="/logo.png"
-                                alt="Havifin"
-                                className="h-full w-full object-contain"
-                            />
-                        </motion.div>
-                    </Link>
-
-                    <nav className="flex flex-col gap-6">
-                        {navigation.map((item) => {
-                            const isActive = currentPageName === item.name;
-                            return (
-                                <Link
-                                    key={item.name}
-                                    href={
-                                        item.name === 'Client'
-                                            ? '/'
-                                            : `/${item.name.toLowerCase()}`
-                                    }
-                                    className="group relative flex items-center justify-center"
-                                >
-                                    {isActive && (
-                                        <motion.div
-                                            layoutId="activeNavDesktop"
-                                            className="absolute inset-0 rounded-2xl bg-[#1f61e4]/10"
-                                            initial={false}
-                                            transition={{
-                                                type: 'spring',
-                                                stiffness: 500,
-                                                damping: 30,
-                                            }}
-                                        />
-                                    )}
-                                    <div
-                                        className={cn(
-                                            'relative z-10 rounded-2xl p-3 transition-all duration-300',
-                                            isActive
-                                                ? item.color
-                                                : 'text-slate-400 group-hover:scale-110 group-hover:text-[#1f61e4]',
-                                        )}
-                                    >
-                                        <item.icon
-                                            className="h-6 w-6"
-                                            strokeWidth={isActive ? 2.5 : 2}
-                                        />
-                                    </div>
-
-                                    {/* Tooltip */}
-                                    <span className="absolute left-16 z-50 ml-2 rounded-lg bg-slate-900 px-2 py-1 text-xs font-semibold whitespace-nowrap text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-                                        {item.label}
-                                    </span>
-                                </Link>
-                            );
-                        })}
-                    </nav>
-
-                    <button
-                        onClick={handleLogout}
-                        className="rounded-xl p-3 text-slate-400 transition-colors duration-300 hover:bg-red-50 hover:text-[#dd281c]"
-                    >
-                        <LogOut className="h-5 w-5" />
-                    </button>
-                </aside>
-            )}
-
-            {/* Floating Menu Button - Tablet/Mobile */}
-            {!hideNav && (
-                <div className="fixed top-6 right-6 z-50 xl:hidden">
+                <div className="fixed right-6 bottom-6 z-50">
                     <motion.button
+                        whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1f61e4] text-white shadow-lg shadow-blue-500/30"
+                        onClick={() => setIsMenuOpen(true)}
+                        className="group relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-[#1f61e4] to-[#00e2f6] text-white shadow-lg shadow-blue-500/40 transition-all duration-300 hover:shadow-blue-500/60"
                     >
-                        {isSidebarOpen ? <X /> : <Menu />}
+                        {/* Pulse Effect */}
+                        <div className="absolute inset-0 -z-10 rounded-full bg-blue-500 opacity-20 blur-lg transition-all duration-500 group-hover:opacity-40" />
+
+                        <Menu className="h-8 w-8" />
                     </motion.button>
                 </div>
             )}
 
-            {/* Slide-over Overlay */}
+            {/* Full Screen Menu Overlay */}
             <AnimatePresence>
-                {isSidebarOpen && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsSidebarOpen(false)}
-                            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+                {isMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xl"
+                    >
+                        {/* Close Button Area - Click outside to close */}
+                        <div
+                            className="absolute inset-0"
+                            onClick={() => setIsMenuOpen(false)}
                         />
-                        <motion.aside
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
+
+                        {/* Menu Card */}
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             transition={{
                                 type: 'spring',
                                 damping: 25,
-                                stiffness: 200,
+                                stiffness: 300,
                             }}
-                            className="fixed top-0 right-0 z-50 h-screen w-80 border-l border-[#1f61e4]/10 bg-white p-8 shadow-2xl xl:hidden"
+                            className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white/90 p-8 shadow-2xl ring-1 ring-white/50 backdrop-blur-xl"
                         >
-                            <div className="mb-12 flex items-center gap-4">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-100">
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setIsMenuOpen(false)}
+                                className="absolute top-4 right-4 rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-slate-200"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+
+                            <div className="mb-8 flex flex-col items-center">
+                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-100">
                                     <img
                                         src="/logo.png"
                                         alt="Havifin"
                                         className="h-full w-full object-contain"
                                     />
                                 </div>
-                                <div>
-                                    <h2 className="text-xl font-black text-slate-900">
-                                        Havifin
-                                    </h2>
-                                    <p className="text-[10px] font-black tracking-widest text-[#1f61e4] uppercase">
-                                        Navigation
-                                    </p>
-                                </div>
+                                <h2 className="text-2xl font-black text-slate-900">
+                                    Navigation
+                                </h2>
+                                <p className="text-sm font-medium text-slate-500">
+                                    Menu Principal
+                                </p>
                             </div>
 
-                            <nav className="flex flex-col gap-4">
-                                {navigation.map((item) => {
+                            <div className="grid grid-cols-2 gap-4">
+                                {filteredNavigation.map((item, index) => {
                                     const isActive =
                                         currentPageName === item.name;
                                     return (
-                                        <Link
+                                        <motion.div
                                             key={item.name}
-                                            href={
-                                                item.name === 'Client'
-                                                    ? '/'
-                                                    : `/${item.name.toLowerCase()}`
-                                            }
-                                            onClick={() =>
-                                                setIsSidebarOpen(false)
-                                            }
-                                            className={cn(
-                                                'group relative flex items-center justify-between rounded-2xl border p-4 transition-all duration-300',
-                                                isActive
-                                                    ? 'border-blue-500 bg-blue-50 shadow-sm'
-                                                    : 'border-transparent hover:bg-slate-50',
-                                            )}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.1 }}
                                         >
-                                            <div className="flex items-center gap-4">
+                                            <Link
+                                                href={
+                                                    item.name === 'Client'
+                                                        ? '/'
+                                                        : item.name === 'Admin'
+                                                          ? '/admin/shops'
+                                                          : `/${item.name.toLowerCase()}`
+                                                }
+                                                onClick={() =>
+                                                    setIsMenuOpen(false)
+                                                }
+                                                className={cn(
+                                                    'group flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all duration-300 hover:scale-[1.02]',
+                                                    isActive
+                                                        ? 'border-blue-500 bg-blue-50/50 shadow-inner'
+                                                        : 'border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-lg',
+                                                )}
+                                            >
                                                 <div
                                                     className={cn(
-                                                        'rounded-xl p-2',
+                                                        'rounded-xl p-3 transition-colors',
                                                         isActive
                                                             ? 'bg-blue-500 text-white'
-                                                            : 'bg-slate-100 text-slate-400',
+                                                            : `${item.bg} ${item.color} group-hover:bg-blue-500 group-hover:text-white`,
                                                     )}
                                                 >
-                                                    <item.icon className="h-5 w-5" />
+                                                    <item.icon className="h-6 w-6" />
                                                 </div>
                                                 <span
                                                     className={cn(
@@ -232,116 +217,31 @@ export default function AppMain({ children, currentPageName }) {
                                                 >
                                                     {item.label}
                                                 </span>
-                                            </div>
-                                            {isActive && (
-                                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white">
-                                                    <ChevronRight className="h-4 w-4" />
-                                                </div>
-                                            )}
-                                        </Link>
+                                            </Link>
+                                        </motion.div>
                                     );
                                 })}
-                            </nav>
+                            </div>
 
-                            <div className="absolute right-8 bottom-10 left-8">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="mt-8 border-t border-slate-100 pt-6"
+                            >
                                 <Button
-                                    variant="outline"
-                                    className="h-14 w-full rounded-2xl border-red-100 font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
+                                    variant="ghost"
+                                    onClick={handleLogout}
+                                    className="w-full justify-center gap-2 rounded-xl py-6 font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
                                 >
-                                    <LogOut className="mr-3 h-5 w-5" />
+                                    <LogOut className="h-5 w-5" />
                                     Déconnexion
                                 </Button>
-                            </div>
-                        </motion.aside>
-                    </>
+                            </motion.div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* Main Content Area */}
-            <main
-                className={cn(
-                    'min-h-screen transition-all duration-300',
-                    !hideNav && 'xl:pl-20',
-                )}
-            >
-                {/* Mobile Header - Visible only on small screens */}
-                {!hideNav && (
-                    <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#1f61e4]/10 bg-white/80 px-6 py-4 backdrop-blur-md md:hidden">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white p-1.5 shadow-md ring-1 shadow-blue-500/5 ring-slate-100">
-                            <img
-                                src="/logo.svg"
-                                alt="Havifin"
-                                className="h-full w-full object-contain"
-                            />
-                        </div>
-                        <button className="rounded-full bg-[#1f61e4]/5 p-2 text-[#1f61e4]">
-                            <LayoutDashboard className="h-5 w-5" />
-                        </button>
-                    </div>
-                )}
-
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
-                    className="h-full"
-                >
-                    {children}
-                </motion.div>
-
-                {/* Mobile Bottom Navigation */}
-                {!hideNav && (
-                    <div className="fixed right-4 bottom-4 left-4 z-40 md:hidden">
-                        <nav className="flex items-center justify-around rounded-3xl border border-white/20 bg-white/90 p-2 shadow-2xl shadow-indigo-500/10 backdrop-blur-xl">
-                            {navigation.map((item) => {
-                                const isActive = currentPageName === item.name;
-                                return (
-                                    <Link
-                                        key={item.name}
-                                        href={
-                                            item.name === 'Client'
-                                                ? '/'
-                                                : `/${item.name.toLowerCase()}`
-                                        }
-                                        className="relative flex flex-1 flex-col items-center justify-center p-2"
-                                    >
-                                        {isActive && (
-                                            <motion.div
-                                                layoutId="activeNavMobile"
-                                                className="absolute inset-0 rounded-2xl bg-[#1f61e4]/10"
-                                                initial={false}
-                                                transition={{
-                                                    type: 'spring',
-                                                    stiffness: 500,
-                                                    damping: 30,
-                                                }}
-                                            />
-                                        )}
-                                        <item.icon
-                                            className={cn(
-                                                'relative z-10 h-6 w-6 transition-colors duration-300',
-                                                isActive
-                                                    ? item.color
-                                                    : 'text-slate-400',
-                                            )}
-                                        />
-                                        <span
-                                            className={cn(
-                                                'relative z-10 mt-1 text-[10px] font-medium transition-colors duration-300',
-                                                isActive
-                                                    ? 'text-slate-900'
-                                                    : 'text-slate-400',
-                                            )}
-                                        >
-                                            {item.label}
-                                        </span>
-                                    </Link>
-                                );
-                            })}
-                        </nav>
-                    </div>
-                )}
-            </main>
         </div>
     );
 }

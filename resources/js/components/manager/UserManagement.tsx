@@ -3,6 +3,7 @@ import {
     type CreateUserPayload,
     type User,
 } from '@/api/authClient';
+import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { usePage } from '@inertiajs/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Edit,
@@ -41,16 +43,28 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 export function UserManagement() {
+    const { auth } = usePage().props as any;
+    const isSuperAdmin = auth.user?.role === 'super-admin';
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const queryClient = useQueryClient();
 
-    const [formData, setFormData] = useState<CreateUserPayload>({
+    const [formData, setFormData] = useState<
+        CreateUserPayload & { shop_ids?: number[] }
+    >({
         name: '',
         email: '',
         password: '',
-        role: 'cashier',
+        role: isSuperAdmin ? 'manager' : 'cashier',
         is_active: true,
+        shop_ids: [],
+    });
+
+    // Fetch shops for assignment (Super Admin only)
+    const { data: allShops } = useQuery({
+        queryKey: ['shops'],
+        queryFn: base44.entities.Shop.list,
+        enabled: isSuperAdmin,
     });
 
     // Fetch users
@@ -107,7 +121,7 @@ export function UserManagement() {
 
     // Delete user mutation
     const deleteMutation = useMutation({
-        mutationFn: authClient.deleteUser,
+        mutationFn: (id: number) => authClient.deleteUser(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             toast.success('Utilisateur supprimé avec succès');
@@ -186,7 +200,7 @@ export function UserManagement() {
                             name: '',
                             email: '',
                             password: '',
-                            role: 'cashier',
+                            role: isSuperAdmin ? 'manager' : 'cashier',
                             is_active: true,
                         });
                         setIsCreateModalOpen(true);
@@ -194,7 +208,7 @@ export function UserManagement() {
                     className="bg-[#1f61e4] hover:bg-[#1f61e4]/90"
                 >
                     <Plus className="mr-2 h-4 w-4" />
-                    Nouvel utilisateur
+                    {isSuperAdmin ? 'Nouvel utilisateur' : 'Nouveau Caissier'}
                 </Button>
             </div>
 
@@ -204,6 +218,7 @@ export function UserManagement() {
                         <TableRow>
                             <TableHead>Nom</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Boutique</TableHead>
                             <TableHead>Rôle</TableHead>
                             <TableHead>Statut</TableHead>
                             <TableHead className="text-right">
@@ -222,12 +237,34 @@ export function UserManagement() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            users?.map((user) => (
+                            (users as User[])?.map((user) => (
                                 <TableRow key={user.id}>
                                     <TableCell className="font-medium">
                                         {user.name}
                                     </TableCell>
                                     <TableCell>{user.email}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-wrap gap-1">
+                                            {(user as any).shops &&
+                                            (user as any).shops.length > 0 ? (
+                                                (user as any).shops.map(
+                                                    (shop: any) => (
+                                                        <Badge
+                                                            key={shop.id}
+                                                            variant="outline"
+                                                            className="py-0 text-[10px]"
+                                                        >
+                                                            {shop.name}
+                                                        </Badge>
+                                                    ),
+                                                )
+                                            ) : (
+                                                <span className="text-[10px] text-slate-400 italic">
+                                                    Aucune
+                                                </span>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                         {getRoleBadge(user.role)}
                                     </TableCell>
@@ -344,23 +381,73 @@ export function UserManagement() {
                                 onValueChange={(value: any) =>
                                     setFormData({ ...formData, role: value })
                                 }
+                                disabled={!isSuperAdmin}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sélectionner un rôle" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="manager">
-                                        Manager
-                                    </SelectItem>
+                                    {isSuperAdmin && (
+                                        <SelectItem value="manager">
+                                            Manager
+                                        </SelectItem>
+                                    )}
                                     <SelectItem value="cashier">
                                         Caissier
                                     </SelectItem>
-                                    <SelectItem value="client">
-                                        Client
-                                    </SelectItem>
+                                    {isSuperAdmin && (
+                                        <SelectItem value="client">
+                                            Client
+                                        </SelectItem>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {isSuperAdmin && (
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                    Assigner aux Boutiques
+                                </Label>
+                                <div className="grid max-h-32 grid-cols-2 gap-2 overflow-y-auto rounded-lg border p-1">
+                                    {(allShops as any[])?.map((shop) => (
+                                        <div
+                                            key={shop.id}
+                                            onClick={() => {
+                                                const current =
+                                                    formData.shop_ids || [];
+                                                const next = current.includes(
+                                                    shop.id,
+                                                )
+                                                    ? current.filter(
+                                                          (id: number) =>
+                                                              id !== shop.id,
+                                                      )
+                                                    : [...current, shop.id];
+                                                setFormData({
+                                                    ...formData,
+                                                    shop_ids: next,
+                                                });
+                                            }}
+                                            className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-colors ${
+                                                formData.shop_ids?.includes(
+                                                    shop.id,
+                                                )
+                                                    ? 'border-indigo-200 bg-indigo-50'
+                                                    : 'bg-white hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <div
+                                                className={`h-3 w-3 rounded-sm border ${formData.shop_ids?.includes(shop.id) ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'}`}
+                                            />
+                                            <span className="text-xs font-bold">
+                                                {shop.name}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {editingUser && (
                             <div className="flex items-center gap-2">
                                 <input

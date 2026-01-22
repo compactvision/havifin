@@ -14,11 +14,21 @@ class UserController extends Controller
     /**
      * Display a listing of users.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roles')->orderBy('created_at', 'desc')->get();
+        $user = $request->user();
+        
+        $query = User::with(['roles', 'shops'])->orderBy('created_at', 'desc');
 
-        return response()->json($users);
+        // If not super-admin, filter by shops the manager is assigned to
+        if (!$user->isSuperAdmin()) {
+            $shopIds = $user->shops->pluck('id');
+            $query->whereHas('shops', function($q) use ($shopIds) {
+                $q->whereIn('shops.id', $shopIds);
+            });
+        }
+
+        return response()->json($query->get());
     }
 
     /**
@@ -38,10 +48,24 @@ class UserController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'is_active' => true,
+            'role' => $validated['role'],
         ]);
 
         // Assign role using Spatie
         $user->assignRole($validated['role']);
+
+        // Handle shop association
+        $creator = $request->user();
+        if ($creator->isSuperAdmin()) {
+            // Super admin can specify shop_ids or leave it to be assigned later
+            if ($request->has('shop_ids')) {
+                $user->shops()->sync($request->shop_ids);
+            }
+        } else {
+            // Manager: auto-assign to the manager's shop(s)
+            $shopIds = $creator->shops->pluck('id');
+            $user->shops()->sync($shopIds);
+        }
 
         return response()->json([
             'user' => $user->load('roles'),

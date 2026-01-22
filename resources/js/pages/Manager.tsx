@@ -1,11 +1,14 @@
 import { base44 } from '@/api/base44Client';
 import InstitutionManager from '@/components/manager/InstitutionManager';
 import RatesManager from '@/components/manager/RatesManager';
+import ShopManager from '@/components/manager/ShopManager';
 import { StatsCard } from '@/components/manager/StatsCard';
 import { TransactionsTable } from '@/components/manager/TransactionsTable';
+import { UserManagement } from '@/components/manager/UserManagement';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
+import { usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Activity,
@@ -19,6 +22,7 @@ import {
     Search,
     Settings,
     ShieldCheck,
+    Store,
     TrendingUp,
     Users,
 } from 'lucide-react';
@@ -27,8 +31,13 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function Manager() {
+    const { auth } = usePage().props as any;
+    const userRole = auth.user?.role;
+    const isSuperAdmin = userRole === 'super-admin';
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState('overview'); // overview, rates, users
+    const [activeTab, setActiveTab] = useState(
+        isSuperAdmin ? 'shops' : 'overview',
+    ); // overview, rates, users, shops
 
     // Data Fetching
     const { data: clients = [], isLoading: loadingClients } = useQuery({
@@ -82,7 +91,7 @@ export default function Manager() {
     };
 
     return (
-        <AppMain currentPageName="Administration">
+        <AppMain currentPageName="Manager">
             <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-[#f8fafc]">
                 {/* Manager Header */}
                 <header className="z-20 flex h-24 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
@@ -100,8 +109,14 @@ export default function Manager() {
                                 </span>
                             </div>
                             <p className="mt-2 flex items-center gap-2 text-[11px] font-black tracking-[0.2em] text-slate-400 uppercase">
-                                <Activity className="h-3 w-3 text-indigo-500" />
                                 Supervision & Reporting Financier
+                                {auth.user?.shops?.[0] && (
+                                    <>
+                                        <span className="mx-2">•</span>
+                                        <Store className="mr-1 h-3 w-3 text-indigo-500" />
+                                        Manager de : {auth.user.shops[0].name}
+                                    </>
+                                )}
                             </p>
                         </div>
                     </div>
@@ -215,6 +230,15 @@ export default function Manager() {
                                                 label: 'Journal Activité',
                                                 icon: Activity,
                                             },
+                                            ...(isSuperAdmin
+                                                ? [
+                                                      {
+                                                          id: 'shops',
+                                                          label: 'Gestion Boutiques',
+                                                          icon: Store,
+                                                      },
+                                                  ]
+                                                : []),
                                         ].map((item) => (
                                             <button
                                                 key={item.id}
@@ -370,6 +394,12 @@ export default function Manager() {
                                         {activeTab === 'users' && (
                                             <div className="animate-in duration-300 fade-in">
                                                 <UserManagement />
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'shops' && (
+                                            <div className="animate-in duration-300 fade-in">
+                                                <ShopManager />
                                             </div>
                                         )}
 

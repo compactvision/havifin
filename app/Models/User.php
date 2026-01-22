@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'is_active',
+        'role',
     ];
 
     /**
@@ -63,6 +64,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is a super admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('super-admin');
+    }
+
+    /**
      * Check if user is a cashier.
      */
     public function isCashier(): bool
@@ -84,5 +93,13 @@ class User extends Authenticatable
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Get the shops assigned to this user.
+     */
+    public function shops()
+    {
+        return $this->belongsToMany(Shop::class);
     }
 }

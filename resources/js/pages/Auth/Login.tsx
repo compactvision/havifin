@@ -47,7 +47,9 @@ export default function Login() {
             toast.success('Connexion réussie!');
 
             // Redirect based on role
-            if (data.role === 'manager') {
+            if (data.role === 'super-admin') {
+                window.location.href = '/admin/shops';
+            } else if (data.role === 'manager') {
                 window.location.href = '/manager';
             } else if (data.role === 'cashier') {
                 window.location.href = '/cashier';
@@ -176,13 +178,13 @@ export default function Login() {
                         <div className="mt-6 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-center text-sm text-cyan-900">
                             <p className="font-medium">Comptes de test</p>
                             <p className="mt-1 text-xs text-cyan-800/80">
+                                SuperAdmin: superadmin@havifin.com / password
+                            </p>
+                            <p className="text-xs text-cyan-800/80">
                                 Manager: admin@havifin.com / password
                             </p>
                             <p className="text-xs text-cyan-800/80">
                                 Cashier: cashier@havifin.com / password
-                            </p>
-                            <p className="text-xs text-cyan-800/80">
-                                Client: client@havifin.com / password
                             </p>
                         </div>
                     </div>

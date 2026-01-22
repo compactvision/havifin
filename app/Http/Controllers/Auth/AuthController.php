@@ -35,15 +35,34 @@ class AuthController extends Controller
             ]);
         }
 
+        // Restrict Manager login if not assigned to any shop
+        if ($user->hasRole('manager') && $user->shops()->count() === 0) {
+            throw ValidationException::withMessages([
+                'email' => ['Accès refusé. Vous n\'êtes assigné à aucune boutique.'],
+            ]);
+        }
+
         // Login user with web guard (session-based)
         Auth::login($user, $request->boolean('remember'));
 
         // Load roles for frontend
         $user->load('roles');
+        
+        // Get primary role
+        $role = 'cashier';
+        if ($user->hasRole('super-admin')) {
+            $role = 'super-admin';
+        } elseif ($user->hasRole('manager')) {
+            $role = 'manager';
+        } elseif ($user->hasRole('cashier')) {
+            $role = 'cashier';
+        } elseif ($user->hasRole('client')) {
+            $role = 'client';
+        }
 
         return response()->json([
             'user' => $user,
-            'role' => $user->roles->first()?->name ?? 'cashier',
+            'role' => $role,
             'message' => 'Connexion réussie',
         ]);
     }

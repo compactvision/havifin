@@ -128,6 +128,25 @@ export interface Advertisement {
     is_active: boolean;
 }
 
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    role: 'cashier' | 'manager' | 'super-admin' | 'client';
+    is_active: boolean;
+    shops?: Shop[];
+}
+
+export interface Shop {
+    id: number;
+    name: string;
+    slug: string;
+    address?: string;
+    counter_count: number;
+    is_active: boolean;
+    users?: User[];
+}
+
 const handleResponse = <T>(response: any): T => response.data;
 
 export const base44 = {
@@ -359,6 +378,37 @@ export const base44 = {
                 axios
                     .delete(`/api/advertisements/${id}`)
                     .then(handleResponse<void>),
+        },
+        User: {
+            list: () =>
+                axios.get<User[]>('/api/users').then(handleResponse<User[]>),
+            create: (data: Partial<User>) =>
+                axios.post<User>('/api/users', data).then(handleResponse<User>),
+            update: (id: number, data: Partial<User>) =>
+                axios
+                    .put<User>(`/api/users/${id}`, data)
+                    .then(handleResponse<User>),
+            delete: (id: number) =>
+                axios.delete(`/api/users/${id}`).then(handleResponse<void>),
+        },
+        Shop: {
+            list: () =>
+                axios.get<Shop[]>('/api/shops').then(handleResponse<Shop[]>),
+            create: (data: Partial<Shop> & { user_ids?: number[] }) =>
+                axios.post<Shop>('/api/shops', data).then(handleResponse<Shop>),
+            update: (
+                id: number,
+                data: Partial<Shop> & { user_ids?: number[] },
+            ) =>
+                axios
+                    .put<Shop>(`/api/shops/${id}`, data)
+                    .then(handleResponse<Shop>),
+            delete: (id: number) =>
+                axios.delete(`/api/shops/${id}`).then(handleResponse<void>),
+            assignUsers: (id: number, user_ids: number[]) =>
+                axios
+                    .post<Shop>(`/api/shops/${id}/assign-users`, { user_ids })
+                    .then(handleResponse<Shop>),
         },
     },
 };
