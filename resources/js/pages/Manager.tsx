@@ -10,6 +10,7 @@ import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
 import { usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import {
     Activity,
     ArrowLeftRight,
@@ -21,7 +22,6 @@ import {
     RefreshCw,
     Search,
     Settings,
-    ShieldCheck,
     Store,
     TrendingUp,
     Users,
@@ -92,31 +92,36 @@ export default function Manager() {
 
     return (
         <AppMain currentPageName="Manager">
-            <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-[#f8fafc]">
+            <div className="flex flex-col overflow-hidden bg-[#f8fafc]">
                 {/* Manager Header */}
                 <header className="z-20 flex h-24 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                    <div className="flex items-center gap-5">
-                        <div className="group flex h-14 w-14 rotate-3 cursor-pointer items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-500/30 transition-transform hover:rotate-0">
-                            <ShieldCheck className="h-8 w-8 text-white" />
-                        </div>
+                    <div className="flex items-center gap-6">
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            className="relative flex h-16 w-38 items-center justify-center px-4"
+                        >
+                            <img
+                                src="/logo-color.png"
+                                alt="Havifin"
+                                className="h-full w-full object-contain"
+                            />
+                        </motion.div>
+                        <div className="h-10 w-[1px] bg-slate-100" />
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-3xl leading-none font-black tracking-tight text-slate-900">
-                                    Console Manager
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                                    Console{' '}
+                                    <span className="text-indigo-600">
+                                        Manager
+                                    </span>
                                 </h1>
-                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black tracking-widest text-emerald-600 uppercase">
-                                    Live API
+                                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black tracking-widest text-emerald-600 uppercase">
+                                    Live
                                 </span>
                             </div>
-                            <p className="mt-2 flex items-center gap-2 text-[11px] font-black tracking-[0.2em] text-slate-400 uppercase">
-                                Supervision & Reporting Financier
-                                {auth.user?.shops?.[0] && (
-                                    <>
-                                        <span className="mx-2">•</span>
-                                        <Store className="mr-1 h-3 w-3 text-indigo-500" />
-                                        Manager de : {auth.user.shops[0].name}
-                                    </>
-                                )}
+                            <p className="mt-1 flex items-center gap-2 text-[10px] font-black tracking-[0.15em] text-slate-400 uppercase">
+                                {auth.user.role} •{' '}
+                                {auth.user.shop || 'Supervision & Reporting'}
                             </p>
                         </div>
                     </div>

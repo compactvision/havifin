@@ -20,48 +20,104 @@ class UserSeeder extends Seeder
         $clientRole = Role::firstOrCreate(['name' => 'client']);
         $superAdminRole = Role::firstOrCreate(['name' => 'super-admin']);
 
-        // Create default manager account
-        $manager = User::updateOrCreate(
-            ['email' => 'admin@havifin.com'],
+        // ==========================================
+        // SUPER ADMIN 1 ENVIRONMENT
+        // ==========================================
+        $sa1 = User::updateOrCreate(
+            ['email' => 'superadmin1@havifin.com'],
             [
-                'name' => 'Administrator',
+                'name' => 'Super Admin 1',
                 'password' => Hash::make('password'),
                 'is_active' => true,
+                'role' => 'super-admin',
             ]
         );
-        $manager->syncRoles([$managerRole]);
+        $sa1->syncRoles([$superAdminRole]);
 
-        // Create default super-admin account
-        $superAdmin = User::updateOrCreate(
-            ['email' => 'superadmin@havifin.com'],
-            [
-                'name' => 'Super Administrator',
-                'password' => Hash::make('password'),
-                'is_active' => true,
-            ]
-        );
-        $superAdmin->syncRoles([$superAdminRole]);
+        // SA1 Shop
+        $shop1 = \App\Models\Shop::create([
+            'name' => 'Boutique Paris (SA1)',
+            'slug' => 'boutique-paris-sa1',
+            'address' => '10 Rue de Paris',
+            'counter_count' => 3,
+            'is_active' => true,
+            'owner_id' => $sa1->id,
+        ]);
 
-        // Create a sample cashier account for testing
-        $cashier = User::updateOrCreate(
-            ['email' => 'cashier@havifin.com'],
-            [
-                'name' => 'Cashier Demo',
-                'password' => Hash::make('password'),
-                'is_active' => true,
-            ]
-        );
-        $cashier->syncRoles([$cashierRole]);
+        // SA1 Manager
+        $manager1 = User::create([
+            'name' => 'Manager SA1',
+            'email' => 'manager1@havifin.com',
+            'password' => Hash::make('password'),
+            'role' => 'manager',
+            'is_active' => true,
+            'owner_id' => $sa1->id,
+        ]);
+        $manager1->syncRoles([$managerRole]);
+        $manager1->shops()->attach($shop1->id);
 
-        // Create a sample client account for testing
-        $client = User::updateOrCreate(
-            ['email' => 'client@havifin.com'],
+        // SA1 Cashier
+        $cashier1 = User::create([
+            'name' => 'Cashier SA1',
+            'email' => 'cashier1@havifin.com',
+            'password' => Hash::make('password'),
+            'role' => 'cashier',
+            'is_active' => true,
+            'owner_id' => $sa1->id,
+        ]);
+        $cashier1->syncRoles([$cashierRole]);
+        $cashier1->shops()->attach($shop1->id);
+
+        // SA1 Advertisement
+        \App\Models\Advertisement::create([
+            'title' => 'Promo SA1',
+            'image_url' => 'https://via.placeholder.com/1920x1080/0000FF/808080?text=Promo+SA1',
+            'is_active' => true,
+            'owner_id' => $sa1->id,
+        ]);
+
+        // ==========================================
+        // SUPER ADMIN 2 ENVIRONMENT
+        // ==========================================
+        $sa2 = User::updateOrCreate(
+            ['email' => 'superadmin2@havifin.com'],
             [
-                'name' => 'Client Demo',
+                'name' => 'Super Admin 2',
                 'password' => Hash::make('password'),
                 'is_active' => true,
+                'role' => 'super-admin',
             ]
         );
-        $client->syncRoles([$clientRole]);
+        $sa2->syncRoles([$superAdminRole]);
+
+        // SA2 Shop
+        $shop2 = \App\Models\Shop::create([
+            'name' => 'Boutique Lyon (SA2)',
+            'slug' => 'boutique-lyon-sa2',
+            'address' => '20 Rue de Lyon',
+            'counter_count' => 5,
+            'is_active' => true,
+            'owner_id' => $sa2->id,
+        ]);
+
+        // SA2 Manager
+        $manager2 = User::create([
+            'name' => 'Manager SA2',
+            'email' => 'manager2@havifin.com',
+            'password' => Hash::make('password'),
+            'role' => 'manager',
+            'is_active' => true,
+            'owner_id' => $sa2->id,
+        ]);
+        $manager2->syncRoles([$managerRole]);
+        $manager2->shops()->attach($shop2->id);
+
+        // SA2 Advertisement
+        \App\Models\Advertisement::create([
+            'title' => 'Promo SA2',
+            'image_url' => 'https://via.placeholder.com/1920x1080/FF0000/FFFFFF?text=Promo+SA2',
+            'is_active' => true,
+            'owner_id' => $sa2->id,
+        ]);
     }
 }

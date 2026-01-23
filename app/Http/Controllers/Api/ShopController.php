@@ -37,6 +37,10 @@ class ShopController extends Controller
 
         $validated['slug'] = Str::slug($validated['name']);
         
+        // Assign owner_id
+        $creator = $request->user();
+        $validated['owner_id'] = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+
         $shop = Shop::create($validated);
 
         if (isset($validated['user_ids'])) {

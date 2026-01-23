@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\Builder;
+
 class Advertisement extends Model
 {
     protected $fillable = [
@@ -11,6 +13,7 @@ class Advertisement extends Model
         'image_url',
         'display_order',
         'is_active',
+        'owner_id',
     ];
 
     protected $casts = [
@@ -32,5 +35,31 @@ class Advertisement extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('display_order');
+    }
+
+    /**
+     * Get the owner of this advertisement.
+     */
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::addGlobalScope('owner', function (Builder $query) {
+            $user = auth()->user();
+            if ($user) {
+                $table = $query->getModel()->getTable();
+                if ($user->role === 'super-admin') {
+                    $query->where($table . '.owner_id', $user->id);
+                } elseif (in_array($user->role, ['manager', 'cashier'])) {
+                    $query->where($table . '.owner_id', $user->owner_id);
+                }
+            }
+        });
     }
 }

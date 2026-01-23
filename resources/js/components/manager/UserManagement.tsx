@@ -1,8 +1,4 @@
-import {
-    authClient,
-    type CreateUserPayload,
-    type User,
-} from '@/api/authClient';
+import { type CreateUserPayload, type User } from '@/api/authClient';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -70,12 +66,12 @@ export function UserManagement() {
     // Fetch users
     const { data: users, isLoading } = useQuery({
         queryKey: ['users'],
-        queryFn: authClient.getUsers,
+        queryFn: base44.entities.User.list,
     });
 
     // Create user mutation
     const createMutation = useMutation({
-        mutationFn: authClient.createUser,
+        mutationFn: base44.entities.User.create,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             setIsCreateModalOpen(false);
@@ -88,8 +84,8 @@ export function UserManagement() {
             });
             toast.success('Utilisateur créé avec succès');
         },
-        onError: (error: Error) => {
-            toast.error(error.message);
+        onError: (error: any) => {
+            toast.error(error.message || 'Erreur lors de la création');
         },
     });
 
@@ -101,7 +97,7 @@ export function UserManagement() {
         }: {
             id: number;
             data: Partial<CreateUserPayload>;
-        }) => authClient.updateUser(id, data),
+        }) => base44.entities.User.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             setEditingUser(null);
@@ -114,20 +110,20 @@ export function UserManagement() {
             });
             toast.success('Utilisateur mis à jour avec succès');
         },
-        onError: (error: Error) => {
-            toast.error(error.message);
+        onError: (error: any) => {
+            toast.error(error.message || 'Erreur lors de la mise à jour');
         },
     });
 
     // Delete user mutation
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => authClient.deleteUser(id),
+        mutationFn: (id: number) => base44.entities.User.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             toast.success('Utilisateur supprimé avec succès');
         },
-        onError: (error: Error) => {
-            toast.error(error.message);
+        onError: (error: any) => {
+            toast.error(error.message || 'Erreur lors de la suppression');
         },
     });
 
@@ -381,7 +377,7 @@ export function UserManagement() {
                                 onValueChange={(value: any) =>
                                     setFormData({ ...formData, role: value })
                                 }
-                                disabled={!isSuperAdmin}
+                                disabled={false}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sélectionner un rôle" />
@@ -395,11 +391,9 @@ export function UserManagement() {
                                     <SelectItem value="cashier">
                                         Caissier
                                     </SelectItem>
-                                    {isSuperAdmin && (
-                                        <SelectItem value="client">
-                                            Client
-                                        </SelectItem>
-                                    )}
+                                    <SelectItem value="client">
+                                        Client
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

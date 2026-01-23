@@ -61,6 +61,15 @@ class InstitutionController extends Controller
             $data['logo_url'] = '/storage/' . $path;
         }
 
+        // Assign owner_id
+        $creator = $request->user();
+        
+        if (!$creator) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $data['owner_id'] = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+
         $institution = Institution::create($data);
 
         return response()->json($institution, 201);

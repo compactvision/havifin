@@ -27,8 +27,8 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { useInitials } from '@/hooks/use-initials';
 import { useActiveUrl } from '@/hooks/use-active-url';
+import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
@@ -162,7 +162,8 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                             href={item.href}
                                             className={cn(
                                                 navigationMenuTriggerStyle(),
-                                                urlIsActive(item.href) && activeItemStyles,
+                                                urlIsActive(item.href) &&
+                                                    activeItemStyles,
                                                 'h-9 cursor-pointer px-3',
                                             )}
                                         >
@@ -225,6 +226,36 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                 ))}
                             </div>
                         </div>
+                        <div className="mr-2 hidden flex-col items-end text-right md:flex">
+                            <div className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                {auth.user.name}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
+                                <span className="capitalize">
+                                    {auth.user.role}
+                                </span>
+                                {auth.user.shop && (
+                                    <>
+                                        <span className="mx-1 opacity-50">
+                                            •
+                                        </span>
+                                        <span>{auth.user.shop}</span>
+                                    </>
+                                )}
+                                {auth.user.role === 'cashier' &&
+                                    auth.user.counter && (
+                                        <>
+                                            <span className="mx-1 opacity-50">
+                                                •
+                                            </span>
+                                            <span className="font-medium text-primary">
+                                                Guichet: {auth.user.counter}
+                                            </span>
+                                        </>
+                                    )}
+                            </div>
+                        </div>
+
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

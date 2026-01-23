@@ -4,14 +4,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import AppMain from '@/layouts/app-main';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import {
     ArrowLeft,
     Mail,
     MapPin,
+    Search,
     Smartphone,
     Store,
     Trash2,
@@ -26,10 +29,12 @@ interface ShopDetailProps {
 }
 
 export default function ShopDetail({ id }: ShopDetailProps) {
+    const { auth } = usePage().props as any;
     const shopId = parseInt(id);
     const queryClient = useQueryClient();
     const [isAddingUser, setIsAddingUser] = useState(false);
     const [isCreatingManager, setIsCreatingManager] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Fetch shop details
     const { data: shop, isLoading: isLoadingShop } = useQuery({
@@ -105,59 +110,63 @@ export default function ShopDetail({ id }: ShopDetailProps) {
             <Head title={`Détails - ${shop?.name || ''}`} />
 
             <div className="min-h-screen bg-[#f8fafc] px-6 py-8 md:px-10">
-                {/* Header Section */}
-                <div className="mb-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+                <header className="sticky top-0 z-50 mb-10 flex h-24 w-full flex-col gap-6 border-b border-white/20 bg-white/70 px-6 py-4 shadow-sm backdrop-blur-xl md:flex-row md:items-center md:justify-between md:px-10">
                     <div className="flex items-center gap-4">
                         <Link href="/admin/shops">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-12 w-12 rounded-2xl bg-white shadow-sm hover:bg-slate-50"
-                            >
-                                <ArrowLeft className="h-5 w-5 text-slate-600" />
-                            </Button>
-                        </Link>
-                        <div className="h-12 w-[1px] bg-slate-200" />
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-3xl font-black tracking-tight text-slate-900">
-                                    {shop.name}
-                                </h1>
-                                <Badge
-                                    className={`rounded-full px-3 py-1 text-[9px] font-black tracking-widest uppercase ${
-                                        shop.is_active
-                                            ? 'bg-emerald-100 text-emerald-600'
-                                            : 'bg-slate-100 text-slate-400'
-                                    }`}
+                            <motion.div whileHover={{ x: -4 }}>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-12 w-12 rounded-2xl border border-white/40 bg-white/50 shadow-sm backdrop-blur-md hover:bg-white/80"
                                 >
-                                    {shop.is_active ? 'Active' : 'Inactive'}
-                                </Badge>
-                            </div>
-                            <p className="mt-1 text-sm font-medium text-slate-500">
-                                Boutique ID: #{shop.id} • Crée le{' '}
-                                {new Date().toLocaleDateString()}
-                            </p>
-                        </div>
+                                    <ArrowLeft className="h-5 w-5 text-indigo-600" />
+                                </Button>
+                            </motion.div>
+                        </Link>
+                        <div className="h-10 w-[1px] bg-slate-200" />
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            className="relative flex h-16 w-38 items-center justify-center p-2"
+                        >
+                            <img
+                                src="/logo-color.png"
+                                alt="Havifin"
+                                className="h-full w-full object-contain"
+                            />
+                        </motion.div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <Button
-                            onClick={() => setIsCreatingManager(true)}
-                            variant="outline"
-                            className="h-12 rounded-2xl border-slate-200 bg-white px-6 text-xs font-black tracking-widest text-slate-600 uppercase shadow-sm transition-all hover:bg-slate-50"
-                        >
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Nouveau Manager
-                        </Button>
-                        <Button
-                            onClick={() => setIsAddingUser(true)}
-                            className="h-12 rounded-2xl bg-indigo-600 px-6 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-95"
-                        >
-                            <Users className="mr-2 h-4 w-4" />
-                            Assigner Personnel
-                        </Button>
+                    <div className="flex items-center gap-6">
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={() => setIsCreatingManager(true)}
+                                variant="outline"
+                                className="h-12 rounded-2xl border-white/40 bg-white/50 px-6 text-xs font-black tracking-widest text-slate-600 uppercase shadow-sm backdrop-blur-md transition-all hover:bg-slate-50"
+                            >
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Nouveau Manager
+                            </Button>
+                            <Button
+                                onClick={() => setIsAddingUser(true)}
+                                className="h-12 rounded-2xl bg-indigo-600 px-6 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-95"
+                            >
+                                <Users className="mr-2 h-4 w-4" />
+                                Assigner Personnel
+                            </Button>
+                        </div>
+
+                        <div className="flex items-center gap-4 border-l border-slate-200/50 pl-6">
+                            <div className="flex flex-col items-end text-right">
+                                <div className="text-sm leading-none font-black text-slate-900">
+                                    {auth.user.name}
+                                </div>
+                                <div className="mt-1 text-[9px] font-black tracking-widest text-slate-400 uppercase">
+                                    {auth.user.role}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </header>
 
                 <ManagerModal
                     isOpen={isCreatingManager}
@@ -356,12 +365,32 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                 Sélectionnez les membres à ajouter à{' '}
                                 {shop?.name}
                             </p>
-                        </div>
 
+                            {/* Search Input */}
+                            <div className="relative mt-6">
+                                <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <Input
+                                    placeholder="Rechercher un manager..."
+                                    value={searchQuery}
+                                    onChange={(e) =>
+                                        setSearchQuery(e.target.value)
+                                    }
+                                    className="h-12 rounded-xl border-slate-200 pl-11 font-bold focus:border-indigo-500"
+                                />
+                            </div>
+                        </div>
                         <div className="custom-scrollbar max-h-[50vh] overflow-y-auto p-8 pr-4">
                             <div className="space-y-3">
                                 {(allUsers as User[])
-                                    ?.filter((u) => u.role !== 'client')
+                                    ?.filter(
+                                        (u) =>
+                                            u.role === 'manager' &&
+                                            u.name
+                                                .toLowerCase()
+                                                .includes(
+                                                    searchQuery.toLowerCase(),
+                                                ),
+                                    )
                                     .map((user) => (
                                         <label
                                             key={user.id}
@@ -402,7 +431,6 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                     ))}
                             </div>
                         </div>
-
                         <div className="flex justify-end border-t border-slate-100 p-8">
                             <Button
                                 onClick={() => setIsAddingUser(false)}

@@ -165,6 +165,21 @@ export default function ProcessModal({
         mutationFn: async () => {
             if (!client) return;
             // Create transaction
+            const finalCalculatedAmount = isNaN(calculatedAmount)
+                ? 0
+                : calculatedAmount;
+            const finalExchangeRate =
+                client.operation_type === 'change'
+                    ? parseFloat(formData.exchange_rate) || 0
+                    : 1;
+
+            if (
+                isNaN(finalExchangeRate) ||
+                (client.operation_type === 'change' && finalExchangeRate === 0)
+            ) {
+                throw new Error('Taux de change invalide');
+            }
+
             await base44.entities.Transaction.create({
                 client_id: client.id,
                 ticket_number: client.ticket_number,
@@ -174,16 +189,13 @@ export default function ProcessModal({
                 currency_to:
                     client.operation_type === 'change'
                         ? formData.currency_to
-                        : formData.currency_from, // Same currency for non-change
-                amount_from: parseFloat(formData.amount_from),
+                        : formData.currency_from,
+                amount_from: parseFloat(formData.amount_from) || 0,
                 amount_to:
                     client.operation_type === 'change'
-                        ? calculatedAmount
-                        : parseFloat(formData.amount_from),
-                exchange_rate:
-                    client.operation_type === 'change'
-                        ? parseFloat(formData.exchange_rate)
-                        : 1,
+                        ? finalCalculatedAmount
+                        : parseFloat(formData.amount_from) || 0,
+                exchange_rate: finalExchangeRate,
                 commission: parseFloat(formData.commission) || 0,
                 client_phone: client.phone,
             });

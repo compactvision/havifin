@@ -8,6 +8,7 @@ import {
     Menu,
     Monitor,
     ShieldCheck,
+    Store,
     User,
     Wallet,
     X,
@@ -44,6 +45,14 @@ const navigation = [
         bg: 'bg-[#1f61e4]/10',
     },
     {
+        name: 'ManagerShops',
+        label: 'Mes Boutiques',
+        icon: Store,
+        color: 'text-[#10b981]',
+        bg: 'bg-[#10b981]/10',
+        roles: ['manager', 'super-admin'],
+    },
+    {
         name: 'Admin',
         label: 'Super Admin',
         icon: ShieldCheck,
@@ -52,19 +61,31 @@ const navigation = [
     },
 ];
 
-export default function AppMain({ children, currentPageName }) {
+export default function AppMain({ children, currentPageName }: any) {
     const { auth } = usePage().props as any;
     const userRole = auth.user?.role;
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     // Filter navigation based on user role
     const filteredNavigation = useMemo(() => {
-        return navigation.filter((item) => {
-            if (item.name === 'Admin') return userRole === 'super-admin';
-            if (item.name === 'Manager')
-                return userRole === 'manager' || userRole === 'super-admin';
-            return true;
-        });
+        if (userRole === 'super-admin') {
+            return navigation;
+        }
+
+        if (userRole === 'manager') {
+            return navigation.filter((item) => item.name !== 'Admin');
+        }
+
+        if (userRole === 'cashier') {
+            return navigation.filter((item) =>
+                ['Cashier', 'Display'].includes(item.name),
+            );
+        }
+
+        // Default / Client role
+        return navigation.filter((item) =>
+            ['Client', 'Display'].includes(item.name),
+        );
     }, [userRole]);
 
     const hideNav = currentPageName === 'Display';
@@ -185,7 +206,10 @@ export default function AppMain({ children, currentPageName }) {
                                                         ? '/'
                                                         : item.name === 'Admin'
                                                           ? '/admin/shops'
-                                                          : `/${item.name.toLowerCase()}`
+                                                          : item.name ===
+                                                              'ManagerShops'
+                                                            ? '/manager/shops'
+                                                            : `/${item.name.toLowerCase()}`
                                                 }
                                                 onClick={() =>
                                                     setIsMenuOpen(false)

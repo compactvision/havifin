@@ -147,6 +147,16 @@ export interface Shop {
     users?: User[];
 }
 
+export interface Counter {
+    id: number;
+    shop_id: number;
+    counter_number: number;
+    name: string;
+    cashier_id?: number;
+    cashier?: User;
+    is_active: boolean;
+}
+
 const handleResponse = <T>(response: any): T => response.data;
 
 export const base44 = {
@@ -409,6 +419,22 @@ export const base44 = {
                 axios
                     .post<Shop>(`/api/shops/${id}/assign-users`, { user_ids })
                     .then(handleResponse<Shop>),
+        },
+        Counter: {
+            list: (shopId: number) =>
+                axios
+                    .get<Counter[]>(`/api/shops/${shopId}/counters`)
+                    .then(handleResponse<Counter[]>),
+            create: (shopId: number, data: Partial<Counter>) =>
+                axios
+                    .post<Counter>(`/api/shops/${shopId}/counters`, data)
+                    .then(handleResponse<Counter>),
+            update: (id: number, data: Partial<Counter>) =>
+                axios
+                    .put<Counter>(`/api/counters/${id}`, data)
+                    .then(handleResponse<Counter>),
+            delete: (id: number) =>
+                axios.delete(`/api/counters/${id}`).then(handleResponse<void>),
         },
     },
 };

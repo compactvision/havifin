@@ -34,7 +34,7 @@ class AdvertisementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'image_url' => 'required|string|max:500',
+            'image_url' => 'required|string', // Removed max to support Data URLs
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
@@ -46,7 +46,13 @@ class AdvertisementController extends Controller
             ], 422);
         }
 
-        $advertisement = Advertisement::create($request->all());
+        $data = $request->all();
+        
+        // Assign owner_id
+        $creator = $request->user();
+        $data['owner_id'] = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+
+        $advertisement = Advertisement::create($data);
 
         return response()->json($advertisement, 201);
     }
@@ -66,7 +72,7 @@ class AdvertisementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
-            'image_url' => 'sometimes|required|string|max:500',
+            'image_url' => 'sometimes|required|string', // Removed max to support Data URLs
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);

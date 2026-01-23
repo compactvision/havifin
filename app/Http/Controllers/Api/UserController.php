@@ -40,8 +40,12 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => ['required', Rule::in(['cashier', 'manager'])],
+            'role' => ['required', Rule::in(['cashier', 'manager', 'client'])],
         ]);
+
+        // Determine owner_id
+        $creator = $request->user();
+        $ownerId = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
 
         $user = User::create([
             'name' => $validated['name'],
@@ -49,13 +53,13 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
             'is_active' => true,
             'role' => $validated['role'],
+            'owner_id' => $ownerId,
         ]);
 
         // Assign role using Spatie
         $user->assignRole($validated['role']);
 
         // Handle shop association
-        $creator = $request->user();
         if ($creator->isSuperAdmin()) {
             // Super admin can specify shop_ids or leave it to be assigned later
             if ($request->has('shop_ids')) {
@@ -82,7 +86,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'sometimes|string|min:8',
-            'role' => ['sometimes', Rule::in(['cashier', 'manager'])],
+            'role' => ['sometimes', Rule::in(['cashier', 'manager', 'client'])],
             'is_active' => 'sometimes|boolean',
         ]);
 

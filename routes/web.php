@@ -17,7 +17,7 @@ Route::get('/login', function () {
         if ($user->hasRole('super-admin')) {
             return redirect('/admin/shops');
         } elseif ($user->hasRole('manager')) {
-            return redirect('/manager');
+            return redirect('/manager/shops');
         } elseif ($user->hasRole('cashier')) {
             return redirect('/cashier');
         } elseif ($user->hasRole('client')) {
@@ -47,6 +47,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/manager', function () {
         return Inertia::render('Manager');
     })->middleware(['role:manager,super-admin'])->name('manager');
+    
+    // Manager Shop Selection & Management
+    Route::get('/manager/shops', function () {
+        return Inertia::render('Manager/ManagerShops');
+    })->middleware(['role:manager,super-admin'])->name('manager.shops');
+    
+    Route::get('/manager/shops/{id}', function ($id) {
+        return Inertia::render('Manager/ManagerShopDetail', [
+            'id' => $id
+        ]);
+    })->middleware(['role:manager,super-admin'])->name('manager.shops.show');
 
     // Super Admin dedicated shop management
     Route::get('/admin/shops', function () {

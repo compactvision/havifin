@@ -28,6 +28,7 @@ class Client extends Model
         'cashier_id',
         'counter_number',
         'notes',
+        'shop_id',
     ];
 
     protected $casts = [
@@ -71,5 +72,11 @@ class Client extends Model
     {
         return !empty($this->first_name) && !empty($this->last_name);
     }
-
+    /**
+     * Get the shop that this client ticket belongs to.
+     */
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
+    }
 }

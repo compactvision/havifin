@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->api(append: [
+            \App\Http\Middleware\EnsureTenantScope::class,
+        ]);
+
         // Exclude auth routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'api/auth/*',

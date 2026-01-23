@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('advertisements', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('image_url');
+            $table->text('image_url'); // Changed to text to support Data URLs
             $table->integer('display_order')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();

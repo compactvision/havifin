@@ -1,13 +1,19 @@
 import { base44 } from '@/api/base44Client';
+import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import React from 'react';
 
-export default function AdCarousel() {
+interface AdCarouselProps {
+    isDarkMode?: boolean;
+}
+
+export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
     const { data: ads = [] } = useQuery({
         queryKey: ['active-ads'],
         queryFn: () => base44.entities.Advertisement.active(),
-        refetchInterval: 60000, // Refresh ads list every minute
+        refetchInterval: 60000,
     });
 
     const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -17,15 +23,50 @@ export default function AdCarousel() {
 
         const timer = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % ads.length);
-        }, 8000); // Change ad every 8 seconds
+        }, 8000);
 
         return () => clearInterval(timer);
     }, [ads.length]);
 
-    if (ads.length === 0) return null;
+    if (ads.length === 0) {
+        return (
+            <div
+                className={cn(
+                    'relative flex h-full w-full items-center justify-center overflow-hidden rounded-[2.5rem] border shadow-2xl backdrop-blur-xl',
+                    isDarkMode
+                        ? 'border-white/10 bg-gradient-to-br from-indigo-900/20 to-purple-900/20'
+                        : 'border-slate-200 bg-gradient-to-br from-indigo-100/50 to-purple-100/50',
+                )}
+            >
+                <div className="text-center">
+                    <Sparkles
+                        className={cn(
+                            'mx-auto mb-4 h-12 w-12',
+                            isDarkMode ? 'text-indigo-400' : 'text-indigo-600',
+                        )}
+                    />
+                    <p
+                        className={cn(
+                            'text-xl font-black tracking-wider uppercase',
+                            isDarkMode ? 'text-slate-400' : 'text-slate-600',
+                        )}
+                    >
+                        Espace Publicitaire
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="relative h-full w-full overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
+        <div
+            className={cn(
+                'relative h-full w-full overflow-hidden rounded-[2.5rem] border shadow-2xl backdrop-blur-xl',
+                isDarkMode
+                    ? 'border-white/10 bg-white/5'
+                    : 'border-slate-200 bg-white/60',
+            )}
+        >
             <AnimatePresence mode="wait">
                 <motion.div
                     key={ads[currentIndex].id}

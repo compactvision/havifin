@@ -10,6 +10,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+use Illuminate\Database\Eloquent\Builder;
+
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -26,6 +28,7 @@ class User extends Authenticatable
         'password',
         'is_active',
         'role',
+        'owner_id',
     ];
 
     /**
@@ -80,6 +83,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is a client (kiosk).
+     */
+    public function isClient(): bool
+    {
+        return $this->hasRole('client');
+    }
+
+    /**
      * Check if user account is active.
      */
     public function isActive(): bool
@@ -101,5 +112,59 @@ class User extends Authenticatable
     public function shops()
     {
         return $this->belongsToMany(Shop::class);
+    }
+
+    /**
+     * Get the owner of this user (the super-admin).
+     */
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Get the users owned by this user (if super-admin).
+     */
+    public function ownedUsers()
+    {
+        return $this->hasMany(User::class, 'owner_id');
+    }
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::addGlobalScope('owner', function (Builder $query) {
+            // Prevent infinite recursion: only apply scope if user is already authenticated/loaded
+            if (!auth()->hasUser()) {
+                return;
+            }
+
+            $user = auth()->user();
+            if ($user) {
+                $table = $query->getModel()->getTable();
+                if ($user->role === 'super-admin') {
+                    // Super-admin sees their own data (based on owner_id matching their ID)
+                    // OR records where they ARE the owner (for users table self-reference)
+                    // AND themselves
+                    $query->where(function ($q) use ($user, $table) {
+                        $q->where($table . '.owner_id', $user->id)
+                          ->orWhere($table . '.id', $user->id);
+                    });
+                } elseif (in_array($user->role, ['manager', 'cashier', 'client'])) {
+                    // Manager/Cashier/Client sees data belonging to their owner
+                    $query->where($table . '.owner_id', $user->owner_id);
+                }
+            }
+        });
+    }
+
+    /**
+     * Get the counter assigned to this user (if cashier).
+     */
+    public function counter()
+    {
+        return $this->hasOne(Counter::class, 'cashier_id');
     }
 }

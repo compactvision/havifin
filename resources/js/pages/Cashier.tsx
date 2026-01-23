@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
+import { usePage } from '@inertiajs/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
     CheckCircle2,
     Clock,
-    LayoutDashboard,
     PhoneCall,
     RefreshCw,
     Search,
@@ -23,6 +23,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function Cashier() {
+    const { auth } = usePage().props as any;
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
     const [processModalOpen, setProcessModalOpen] = useState(false);
     const [helpModalOpen, setHelpModalOpen] = useState(false);
@@ -65,9 +66,9 @@ export default function Cashier() {
         return waitingClients.filter(
             (c) =>
                 c.ticket_number
-                    .toLowerCase()
+                    ?.toLowerCase()
                     .includes(searchQuery.toLowerCase()) ||
-                c.phone.includes(searchQuery),
+                c.phone?.includes(searchQuery),
         );
     }, [waitingClients, searchQuery]);
 
@@ -75,9 +76,9 @@ export default function Cashier() {
         return calledClients.filter(
             (c) =>
                 c.ticket_number
-                    .toLowerCase()
+                    ?.toLowerCase()
                     .includes(searchQuery.toLowerCase()) ||
-                c.phone.includes(searchQuery),
+                c.phone?.includes(searchQuery),
         );
     }, [calledClients, searchQuery]);
 
@@ -135,20 +136,26 @@ export default function Cashier() {
 
     return (
         <AppMain currentPageName="Tableau de Bord Caissier">
-            <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-slate-50">
+            <div className="flex flex-col overflow-hidden bg-slate-50">
                 {/* Dashboard Header */}
                 <header className="z-20 flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                    <div className="flex items-center gap-4">
-                        <div className="rounded-2xl bg-blue-600 p-3 shadow-lg shadow-blue-500/20">
-                            <LayoutDashboard className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl leading-none font-black tracking-tight text-slate-900">
-                                Gestion 
+                    <div className="flex items-center gap-6">
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            className="relative flex h-16 w-36 items-center justify-center px-4"
+                        >
+                            <img
+                                src="/logo-color.png"
+                                alt="Havifin"
+                                className="h-full w-full object-contain"
+                            />
+                        </motion.div>
+                        <div className="h-10 w-[1px] bg-slate-100" />
+                        <div className="hidden md:block">
+                            <h1 className="text-lg font-black tracking-tighter text-slate-800 uppercase">
+                                Terminal{' '}
+                                <span className="text-blue-600">Caisse</span>
                             </h1>
-                            <p className="mt-1.5 flex items-center gap-1.5 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
-                                <span className="pulse-soft h-2 w-2 rounded-full bg-emerald-500" />
-                            </p>
                         </div>
                     </div>
 
@@ -187,13 +194,27 @@ export default function Cashier() {
                             </div>
                             <div>
                                 <div className="text-[10px] font-black tracking-wider text-slate-400 uppercase">
-                                    Caissier
+                                    {auth.user.role}{' '}
+                                    {auth.user.shop
+                                        ? `• ${auth.user.shop}`
+                                        : ''}
                                 </div>
                                 <div className="text-xs font-bold text-slate-700">
-                                    Havifin Team
+                                    {auth.user.name}
                                 </div>
                             </div>
                         </div>
+
+                        {auth.user.counter && (
+                            <div className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 font-bold text-blue-600">
+                                <span className="text-[10px] tracking-widest uppercase">
+                                    Guichet
+                                </span>
+                                <span className="text-sm">
+                                    {auth.user.counter}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </header>
 
