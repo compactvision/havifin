@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppMain from '@/layouts/app-main';
+import { usePage } from '@inertiajs/react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, ChevronLeft, Loader2, Phone, Search } from 'lucide-react';
@@ -19,6 +20,7 @@ const generateTicketNumber = () => {
 };
 
 export default function ClientForm() {
+    const { auth } = usePage().props as any;
     const [step, setStep] = useState(1);
     const [ticketNumber, setTicketNumber] = useState<string | null>(null);
     const [isVerifying, setIsVerifying] = useState(false);
@@ -324,7 +326,10 @@ export default function ClientForm() {
                                     ? 'Nouvelle Inscription'
                                     : 'Bienvenue chez Havifin'}
                             </h2>
-                            <p className="mt-3 text-lg font-medium text-slate-600">
+                            <p className="mt-3 text-lg font-bold tracking-[0.2em] text-blue-600 uppercase">
+                                {auth.user?.shop}
+                            </p>
+                            <p className="mt-2 text-lg font-medium text-slate-600">
                                 {showRegistration
                                     ? 'Laissez-nous faire connaissance pour mieux vous servir'
                                     : 'Identifiez-vous pour commencer votre opération'}
