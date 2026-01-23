@@ -35,6 +35,30 @@ class Transaction extends Model
     ];
 
     /**
+     * Get the client associated with the transaction.
+     */
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Get the shop where the transaction occurred.
+     */
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
+    }
+
+    /**
+     * Get the owner of this transaction.
+     */
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
      * The "booted" method of the model.
      */
     protected static function booted()
