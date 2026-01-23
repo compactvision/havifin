@@ -21,6 +21,11 @@ class ExchangeRateController extends Controller
             'sell_rate' => 'required|numeric',
         ]);
 
+        $user = $request->user();
+        if ($user) {
+            $validated['owner_id'] = $user->role === 'super-admin' ? $user->id : $user->owner_id;
+        }
+
         return ExchangeRate::create($validated);
     }
     

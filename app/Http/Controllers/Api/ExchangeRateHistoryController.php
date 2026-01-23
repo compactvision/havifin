@@ -71,6 +71,9 @@ class ExchangeRateHistoryController extends Controller
                 ->update(['effective_to' => $effectiveFrom]);
 
             // Create new rate
+            $user = $request->user();
+            $ownerId = $user ? ($user->role === 'super-admin' ? $user->id : $user->owner_id) : 1;
+
             $rate = ExchangeRateHistory::create([
                 'currency_from' => $request->currency_from,
                 'currency_to' => $request->currency_to,
@@ -79,6 +82,7 @@ class ExchangeRateHistoryController extends Controller
                 'effective_to' => null,
                 'created_by' => Auth::id() ?? 1,
                 'session_id' => $request->session_id,
+                'owner_id' => $ownerId,
             ]);
 
             DB::commit();

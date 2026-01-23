@@ -56,7 +56,7 @@ class Advertisement extends Model
                 $table = $query->getModel()->getTable();
                 if ($user->role === 'super-admin') {
                     $query->where($table . '.owner_id', $user->id);
-                } elseif (in_array($user->role, ['manager', 'cashier'])) {
+                } elseif (in_array($user->role, ['manager', 'cashier', 'client'])) {
                     $query->where($table . '.owner_id', $user->owner_id);
                 }
             }
