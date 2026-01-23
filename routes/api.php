@@ -46,18 +46,20 @@ Route::middleware('web')->group(function () {
         // Institutions
         Route::get('/institutions/active', [InstitutionController::class, 'active']);
         Route::apiResource('institutions', InstitutionController::class);
+
+        // Client Verification & Registration
+        Route::post('/clients/verify-phone', [ClientVerificationController::class, 'verifyPhone']);
+        Route::post('/clients/register', [ClientVerificationController::class, 'register']);
+        Route::post('/clients/add-phone', [ClientVerificationController::class, 'addPhone']);
+
+        // Clients
+        Route::apiResource('clients', ClientController::class);
+        
+        // Existing routes (moved inside auth to ensure session/identity)
+        Route::apiResource('transactions', TransactionController::class);
+        Route::apiResource('exchange-rates', ExchangeRateController::class);
     });
 });
-
-// Existing routes
-Route::apiResource('clients', ClientController::class);
-Route::apiResource('transactions', TransactionController::class);
-Route::apiResource('exchange-rates', ExchangeRateController::class);
-
-// Client Verification & Registration
-Route::post('/clients/verify-phone', [ClientVerificationController::class, 'verifyPhone']);
-Route::post('/clients/register', [ClientVerificationController::class, 'register']);
-Route::post('/clients/add-phone', [ClientVerificationController::class, 'addPhone']);
 
 // Sessions
 Route::get('/sessions/current', [SessionController::class, 'current']);

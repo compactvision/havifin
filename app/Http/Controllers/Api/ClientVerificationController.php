@@ -99,6 +99,11 @@ class ClientVerificationController extends Controller
                 ], 409);
             }
 
+            // Assign owner and shop
+            $creator = $request->user();
+            $ownerId = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+            $shopId = $creator->shops()->first()?->id;
+
             // Create or update client
             $client = Client::updateOrCreate(
                 ['phone' => $request->phone],
@@ -108,6 +113,8 @@ class ClientVerificationController extends Controller
                     'email' => $request->email,
                     'address' => $request->address,
                     'is_registered' => true,
+                    'owner_id' => $ownerId,
+                    'shop_id' => $shopId,
                 ]
             );
 
@@ -119,6 +126,8 @@ class ClientVerificationController extends Controller
                 ],
                 [
                     'is_primary' => true,
+                    'owner_id' => $ownerId,
+                    'shop_id' => $shopId,
                 ]
             );
 
@@ -174,10 +183,16 @@ class ClientVerificationController extends Controller
                 ], 409);
             }
 
+            $creator = $request->user();
+            $ownerId = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+            $shopId = $creator->shops()->first()?->id;
+
             $phone = ClientPhone::create([
                 'client_id' => $request->client_id,
                 'phone_number' => $request->phone_number,
                 'is_primary' => false,
+                'owner_id' => $ownerId,
+                'shop_id' => $shopId,
             ]);
 
             return response()->json([

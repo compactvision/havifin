@@ -11,18 +11,8 @@ class ClientController extends Controller
     {
         $query = Client::query();
 
-        $user = $request->user();
-
         if ($request->has('status')) {
             $query->where('status', $request->status);
-        }
-
-        // Filter by shop if user is cashier or client
-        if ($user && ($user->isCashier() || $user->isClient())) {
-            $shopId = $user->shops()->first()?->id;
-            if ($shopId) {
-                $query->where('shop_id', $shopId);
-            }
         }
 
         if ($request->has('created_date')) {
@@ -64,11 +54,14 @@ class ClientController extends Controller
             'status' => 'string',
         ]);
 
-        $user = $request->user();
-        if ($user && $user->isClient()) {
-            $shopId = $user->shops()->first()?->id;
-            if ($shopId) {
-                $validated['shop_id'] = $shopId;
+        if ($user) {
+            $validated['owner_id'] = $user->role === 'super-admin' ? $user->id : $user->owner_id;
+            
+            if ($user->isClient() || $user->isCashier()) {
+                $shopId = $user->shops()->first()?->id;
+                if ($shopId) {
+                    $validated['shop_id'] = $shopId;
+                }
             }
         }
 
