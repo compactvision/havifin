@@ -84,8 +84,20 @@ class InstitutionSeeder extends Seeder
             ],
         ];
 
-        foreach ($institutions as $institution) {
-            Institution::updateOrCreate(['code' => $institution['code']], $institution);
+        $owners = \App\Models\User::where('role', 'super-admin')->get();
+
+        foreach ($owners as $owner) {
+            foreach ($institutions as $inst) {
+                $inst['owner_id'] = $owner->id;
+                // Use a combined unique check or just updateOrCreate
+                Institution::updateOrCreate(
+                    [
+                        'code' => $inst['code'], 
+                        'owner_id' => $owner->id
+                    ], 
+                    $inst
+                );
+            }
         }
     }
 }

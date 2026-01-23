@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name'); // Mpesa, Orange Money, Equity BCDC, etc.
             $table->enum('type', ['mobile_money', 'bank']);
-            $table->string('code')->unique(); // mpesa, orange_money, equity_bcdc, etc.
+            $table->string('code'); // mpesa, orange_money, equity_bcdc, etc.
             $table->string('logo_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

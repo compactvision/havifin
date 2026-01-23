@@ -27,6 +27,7 @@ return new class extends Migration
         Schema::table('institutions', function (Blueprint $table) {
             $table->foreignId('owner_id')->nullable()->after('id')->constrained('users')->onDelete('cascade');
             $table->index('owner_id');
+            $table->unique(['code', 'owner_id']);
         });
 
         // Add owner_id to advertisements table

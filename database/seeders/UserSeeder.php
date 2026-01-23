@@ -36,9 +36,9 @@ class UserSeeder extends Seeder
 
         // SA1 Shop
         $shop1 = \App\Models\Shop::create([
-            'name' => 'Boutique Paris (SA1)',
-            'slug' => 'boutique-paris-sa1',
-            'address' => '10 Rue de Paris',
+            'name' => 'Havifin Gombe',
+            'slug' => 'havifin-gombe',
+            'address' => 'Boulevard du 30 Juin, Kinshasa/Gombe',
             'counter_count' => 3,
             'is_active' => true,
             'owner_id' => $sa1->id,
@@ -92,9 +92,9 @@ class UserSeeder extends Seeder
 
         // SA2 Shop
         $shop2 = \App\Models\Shop::create([
-            'name' => 'Boutique Lyon (SA2)',
-            'slug' => 'boutique-lyon-sa2',
-            'address' => '20 Rue de Lyon',
+            'name' => 'Havifin Limete',
+            'slug' => 'havifin-limete',
+            'address' => 'Boulevard Lumumba, Kinshasa/Limete',
             'counter_count' => 5,
             'is_active' => true,
             'owner_id' => $sa2->id,
