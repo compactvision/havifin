@@ -69,6 +69,9 @@ export interface Institution {
     code: string;
     logo_url?: string;
     is_active: boolean;
+    settings?: {
+        required_fields: string[];
+    };
 }
 
 export interface Session {
@@ -123,9 +126,17 @@ export interface HelpRequest {
 export interface Advertisement {
     id: number;
     title: string;
+    type: 'image' | 'video';
     image_url: string;
     display_order: number;
     is_active: boolean;
+}
+
+export interface News {
+    id: number;
+    content: string;
+    is_active: boolean;
+    display_order: number;
 }
 
 export interface User {
@@ -388,6 +399,22 @@ export const base44 = {
                 axios
                     .delete(`/api/advertisements/${id}`)
                     .then(handleResponse<void>),
+        },
+        News: {
+            list: () =>
+                axios.get<News[]>('/api/news').then(handleResponse<News[]>),
+            active: () =>
+                axios
+                    .get<News[]>('/api/news/active')
+                    .then(handleResponse<News[]>),
+            create: (data: Partial<News>) =>
+                axios.post<News>('/api/news', data).then(handleResponse<News>),
+            update: (id: number, data: Partial<News>) =>
+                axios
+                    .put<News>(`/api/news/${id}`, data)
+                    .then(handleResponse<News>),
+            delete: (id: number) =>
+                axios.delete(`/api/news/${id}`).then(handleResponse<void>),
         },
         User: {
             list: () =>

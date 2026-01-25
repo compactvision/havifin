@@ -15,10 +15,12 @@ class Institution extends Model
         'logo_url',
         'is_active',
         'owner_id',
+        'settings',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'settings' => 'array',
     ];
 
     /**

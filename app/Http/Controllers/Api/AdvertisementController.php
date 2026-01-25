@@ -34,6 +34,7 @@ class AdvertisementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
+            'type' => 'required|in:image,video',
             'image_url' => 'required|string', // Removed max to support Data URLs
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
@@ -72,6 +73,7 @@ class AdvertisementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
+            'type' => 'sometimes|required|in:image,video',
             'image_url' => 'sometimes|required|string', // Removed max to support Data URLs
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',

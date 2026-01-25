@@ -76,11 +76,22 @@ export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
                     transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
                     className="absolute inset-0"
                 >
-                    <img
-                        src={ads[currentIndex].image_url}
-                        alt={ads[currentIndex].title}
-                        className="h-full w-full object-cover"
-                    />
+                    {ads[currentIndex].type === 'video' ? (
+                        <video
+                            src={ads[currentIndex].image_url}
+                            className="h-full w-full object-cover"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                        />
+                    ) : (
+                        <img
+                            src={ads[currentIndex].image_url}
+                            alt={ads[currentIndex].title}
+                            className="h-full w-full object-cover"
+                        />
+                    )}
 
                     {/* Gradient Overlay for Text Readability */}
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />

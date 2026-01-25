@@ -4,27 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-use Illuminate\Database\Eloquent\Builder;
-
-class Advertisement extends Model
+class News extends Model
 {
     protected $fillable = [
-        'title',
-        'type',
-        'image_url',
-        'display_order',
+        'content',
         'is_active',
+        'display_order',
         'owner_id',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'display_order' => 'integer',
-        'type' => 'string',
     ];
 
     /**
-     * Scope to get only active advertisements.
+     * Scope to get only active news.
      */
     public function scopeActive($query)
     {
@@ -32,19 +27,11 @@ class Advertisement extends Model
     }
 
     /**
-     * Scope to get advertisements ordered by display order.
+     * Scope to get news ordered by display order.
      */
     public function scopeOrdered($query)
     {
         return $query->orderBy('display_order');
-    }
-
-    /**
-     * Get the owner of this advertisement.
-     */
-    public function owner()
-    {
-        return $this->belongsTo(User::class, 'owner_id');
     }
 
     /**

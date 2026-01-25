@@ -15,12 +15,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     Building2,
+    CheckCircle2,
     Landmark,
     Loader2,
     Pencil,
     Plus,
     RefreshCw,
     Save,
+    Settings,
     ShieldCheck,
     Smartphone,
     Trash2,
@@ -33,6 +35,7 @@ export default function InstitutionManager() {
     const queryClient = useQueryClient();
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [configId, setConfigId] = useState<number | null>(null);
     const [newInstitution, setNewInstitution] = useState<{
         name: string;
         type: 'bank' | 'mobile_money';
@@ -110,6 +113,33 @@ export default function InstitutionManager() {
             toast.success('Institution mise à jour avec succès');
         },
         onError: () => toast.error('Erreur lors de la mise à jour'),
+    });
+
+    const toggleFieldMutation = useMutation({
+        mutationFn: ({
+            institution,
+            field,
+        }: {
+            institution: Institution;
+            field: string;
+        }) => {
+            const currentSettings = institution.settings || {
+                required_fields: [],
+            };
+            const currentFields = currentSettings.required_fields || [];
+            const newFields = currentFields.includes(field)
+                ? currentFields.filter((f: string) => f !== field)
+                : [...currentFields, field];
+
+            return axios.post(`/api/institutions/${institution.id}`, {
+                _method: 'PUT',
+                settings: { ...currentSettings, required_fields: newFields },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['institutions'] });
+            toast.success('Configuration mise à jour');
+        },
     });
 
     const resetForm = () => {
@@ -418,6 +448,14 @@ export default function InstitutionManager() {
                                 <Button
                                     variant="ghost"
                                     size="icon"
+                                    onClick={() => setConfigId(inst.id)}
+                                    className="h-10 w-10 rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                                >
+                                    <Settings className="h-5 w-5" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
                                     onClick={() => handleEdit(inst)}
                                     className="h-10 w-10 rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-indigo-50 hover:text-indigo-600"
                                 >
@@ -436,6 +474,14 @@ export default function InstitutionManager() {
                                         Inactif
                                     </span>
                                 )}
+                                {inst.settings?.required_fields &&
+                                    inst.settings.required_fields.length >
+                                        0 && (
+                                        <div className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[8px] font-black tracking-widest text-emerald-600 uppercase">
+                                            <CheckCircle2 className="h-2 w-2" />
+                                            Configuré
+                                        </div>
+                                    )}
                             </div>
                             <div className="mt-1 flex items-center gap-3">
                                 <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
@@ -477,6 +523,111 @@ export default function InstitutionManager() {
                     <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
                 </div>
             )}
+
+            {/* Configuration Modal */}
+            <AnimatePresence>
+                {configId && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+                        onClick={() => setConfigId(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="w-full max-w-md overflow-hidden rounded-[2.5rem] bg-white shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="relative bg-slate-900 p-8 text-white">
+                                <div className="absolute top-0 right-0 h-32 w-32 bg-indigo-500/10 blur-3xl" />
+                                <h3 className="flex items-center gap-3 text-xl font-black tracking-tight">
+                                    <Settings className="h-6 w-6 text-indigo-400" />
+                                    Champs Requis
+                                </h3>
+                                <p className="mt-2 text-xs font-medium text-slate-400">
+                                    Configurez les informations obligatoires
+                                    pour{' '}
+                                    <span className="text-white">
+                                        {
+                                            institutions.find(
+                                                (i) => i.id === configId,
+                                            )?.name
+                                        }
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div className="p-8">
+                                <div className="space-y-3">
+                                    {[
+                                        {
+                                            id: 'account_number',
+                                            label: 'Numéro de Compte',
+                                        },
+                                        {
+                                            id: 'beneficiary',
+                                            label: 'Nom du Bénéficiaire',
+                                        },
+                                        {
+                                            id: 'beneficiary_number',
+                                            label: 'Numéro du Bénéficiaire',
+                                        },
+                                        {
+                                            id: 'reason',
+                                            label: 'Motif / Raison',
+                                        },
+                                    ].map((field) => {
+                                        const inst = institutions.find(
+                                            (i) => i.id === configId,
+                                        );
+                                        const isRequired = (
+                                            (inst as any)?.settings
+                                                ?.required_fields || []
+                                        ).includes(field.id);
+
+                                        return (
+                                            <button
+                                                key={field.id}
+                                                onClick={() =>
+                                                    toggleFieldMutation.mutate({
+                                                        institution: inst!,
+                                                        field: field.id,
+                                                    })
+                                                }
+                                                className={cn(
+                                                    'flex w-full items-center justify-between rounded-2xl border-2 p-5 transition-all',
+                                                    isRequired
+                                                        ? 'border-indigo-100 bg-indigo-50/50 text-indigo-900 shadow-sm'
+                                                        : 'border-slate-100 bg-slate-50/50 text-slate-500 hover:border-slate-200',
+                                                )}
+                                            >
+                                                <span className="text-sm font-black tracking-tight">
+                                                    {field.label}
+                                                </span>
+                                                {isRequired ? (
+                                                    <CheckCircle2 className="h-6 w-6 text-indigo-600" />
+                                                ) : (
+                                                    <div className="h-6 w-6 rounded-full border-2 border-slate-200 bg-white" />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <Button
+                                    onClick={() => setConfigId(null)}
+                                    className="mt-8 h-14 w-full rounded-2xl bg-slate-900 text-sm font-black tracking-widest text-white uppercase transition-all hover:bg-slate-800"
+                                >
+                                    Terminer
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -45,6 +45,7 @@ class InstitutionController extends Controller
             'code' => 'required|string|max:255|unique:institutions,code',
             'logo' => 'nullable|image|max:2048', // Allow image upload
             'is_active' => 'boolean',
+            'settings' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -98,6 +99,7 @@ class InstitutionController extends Controller
             'code' => 'sometimes|required|string|max:255|unique:institutions,code,' . $institution->id,
             'logo' => $logoValidation,
             'is_active' => 'sometimes', // Can be boolean or "1"/"0" string from FormData
+            'settings' => 'sometimes|nullable|array',
         ]);
 
         if ($validator->fails()) {

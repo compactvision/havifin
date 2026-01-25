@@ -24,6 +24,7 @@ import { motion } from 'framer-motion';
 import {
     ArrowLeft,
     Image as ImageIcon,
+    Newspaper,
     Plus,
     Store,
     Trash2,
@@ -203,11 +204,14 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     const [isCreatingAd, setIsCreatingAd] = useState(false);
     const [adForm, setAdForm] = useState({
         title: '',
+        type: 'image' as 'image' | 'video',
         image_url: '',
         display_order: 1,
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>('');
+    const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [videoPreview, setVideoPreview] = useState<string>('');
 
     // Fetch advertisements
     const { data: advertisements = [] } = useQuery({
@@ -215,33 +219,14 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
         queryFn: base44.entities.Advertisement.list,
     });
 
-    // Create advertisement mutation
-    const createAdMutation = useMutation({
-        mutationFn: async (data: any) => {
-            // In a real app, you'd upload the image to a server first
-            // For now, we'll use a placeholder or data URL
-            return base44.entities.Advertisement.create({
-                title: data.title,
-                image_url: data.image_url || imagePreview,
-                display_order: data.display_order,
-                is_active: true,
-            });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['advertisements'] });
-            toast.success('Publicité créée avec succès');
-            setIsCreatingAd(false);
-            setAdForm({ title: '', image_url: '', display_order: 1 });
-            setImageFile(null);
-            setImagePreview('');
-        },
-        onError: (error: any) => {
-            toast.error(
-                error.response?.data?.message ||
-                    'Erreur lors de la création de la publicité',
-            );
-        },
-    });
+    const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setVideoFile(file);
+            const url = URL.createObjectURL(file);
+            setVideoPreview(url);
+        }
+    };
 
     // Update advertisement mutation
     const updateAdMutation = useMutation({
@@ -279,6 +264,112 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
             reader.readAsDataURL(file);
         }
     };
+
+    // News Management
+    const [isCreatingNews, setIsCreatingNews] = useState(false);
+    const [newsForm, setNewsForm] = useState({
+        content: '',
+        display_order: 1,
+    });
+
+    // Fetch news
+    const { data: allNews = [] } = useQuery({
+        queryKey: ['news'],
+        queryFn: base44.entities.News.list,
+    });
+
+    // Create news mutation
+    const createNewsMutation = useMutation({
+        mutationFn: (data: any) => base44.entities.News.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['news'] });
+            toast.success('Information ajoutée au défilé');
+            setIsCreatingNews(false);
+            setNewsForm({ content: '', display_order: 1 });
+        },
+        onError: () => {
+            toast.error("Erreur lors de la création de l'information");
+        },
+    });
+
+    // Update news mutation
+    const updateNewsMutation = useMutation({
+        mutationFn: ({ id, data }: { id: number; data: any }) =>
+            base44.entities.News.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['news'] });
+            toast.success('Information mise à jour');
+        },
+        onError: () => {
+            toast.error('Erreur lors de la mise à jour');
+        },
+    });
+
+    // Delete news mutation
+    const deleteNewsMutation = useMutation({
+        mutationFn: (id: number) => base44.entities.News.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['news'] });
+            toast.success('Information supprimée');
+        },
+        onError: () => {
+            toast.error('Erreur lors de la suppression');
+        },
+    });
+
+    const handleCreateNews = (e: React.FormEvent) => {
+        e.preventDefault();
+        createNewsMutation.mutate(newsForm);
+    };
+
+    const toggleNewsStatus = (news: any) => {
+        updateNewsMutation.mutate({
+            id: news.id,
+            data: { is_active: !news.is_active },
+        });
+    };
+
+    const handleDeleteNews = (news: any) => {
+        if (confirm('Supprimer cette information du défilé ?')) {
+            deleteNewsMutation.mutate(news.id);
+        }
+    };
+
+    // Create advertisement mutation
+    const createAdMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const mediaUrl =
+                data.type === 'video' ? videoPreview : imagePreview;
+            return base44.entities.Advertisement.create({
+                title: data.title,
+                type: data.type,
+                image_url: data.image_url || mediaUrl,
+                display_order: data.display_order,
+                is_active: true,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['advertisements'] });
+            toast.success('Publicité créée avec succès');
+            setIsCreatingAd(false);
+            setAdForm({
+                title: '',
+                type: 'image',
+                image_url: '',
+                display_order: 1,
+            });
+            setImageFile(null);
+            setImagePreview('');
+            setVideoFile(null);
+            setVideoPreview('');
+        },
+        onError: (error: any) => {
+            toast.error(
+                error.response?.data?.message ||
+                    'Erreur lors de la création de la publicité',
+            );
+        },
+    });
 
     const handleCreateAd = (e: React.FormEvent) => {
         e.preventDefault();
@@ -621,14 +712,33 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                     transition={{ delay: index * 0.05 }}
                                     className="group relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white shadow-sm transition-all hover:shadow-lg"
                                 >
-                                    {/* Image Preview */}
+                                    {/* Media Preview */}
                                     <div className="relative h-48 overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100">
                                         {ad.image_url ? (
-                                            <img
-                                                src={ad.image_url}
-                                                alt={ad.title}
-                                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                            />
+                                            ad.type === 'video' ? (
+                                                <video
+                                                    src={ad.image_url}
+                                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                    muted
+                                                    loop
+                                                    onMouseOver={(e) =>
+                                                        (
+                                                            e.target as HTMLVideoElement
+                                                        ).play()
+                                                    }
+                                                    onMouseOut={(e) =>
+                                                        (
+                                                            e.target as HTMLVideoElement
+                                                        ).pause()
+                                                    }
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={ad.image_url}
+                                                    alt={ad.title}
+                                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                />
+                                            )
                                         ) : (
                                             <div className="flex h-full items-center justify-center">
                                                 <ImageIcon className="h-16 w-16 text-indigo-300" />
@@ -704,332 +814,557 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                             </Button>
                         </div>
                     )}
-                </div>
-            </div>
-
-            {/* Create Advertisement Modal */}
-            <Dialog open={isCreatingAd} onOpenChange={setIsCreatingAd}>
-                <DialogContent className="rounded-3xl sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">
-                            Nouvelle Publicité
-                        </DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateAd} className="space-y-6">
-                        <div className="space-y-2">
-                            <Label>Titre de la publicité</Label>
-                            <Input
-                                value={adForm.title}
-                                onChange={(e) =>
-                                    setAdForm({
-                                        ...adForm,
-                                        title: e.target.value,
-                                    })
-                                }
-                                placeholder="ex: Promotion Spéciale"
-                                className="rounded-xl"
-                                required
-                            />
+                    {/* News Ticker Section */}
+                    <div className="mt-20 mb-20">
+                        <div className="mb-8 flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-2xl font-black text-slate-900">
+                                        Défilé d'Informations (Ticker)
+                                    </h2>
+                                    <Badge className="bg-indigo-100 text-[10px] font-black tracking-widest text-indigo-600 uppercase">
+                                        Nouveau
+                                    </Badge>
+                                </div>
+                                <p className="text-sm text-slate-500">
+                                    Gérez les messages qui défilent en bas de
+                                    l'écran TV
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => setIsCreatingNews(true)}
+                                className="h-12 rounded-2xl bg-indigo-600 px-6 font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl"
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Ajouter une info
+                            </Button>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label>Image</Label>
-                            <div className="space-y-4">
-                                <Input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="rounded-xl"
-                                />
-                                {imagePreview && (
-                                    <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50 p-4">
-                                        <img
-                                            src={imagePreview}
-                                            alt="Preview"
-                                            className="h-48 w-full rounded-xl object-cover"
-                                        />
-                                    </div>
-                                )}
-                                {!imagePreview && (
-                                    <div className="flex h-48 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
-                                        <div className="text-center">
-                                            <ImageIcon className="mx-auto mb-2 h-12 w-12 text-slate-300" />
-                                            <p className="text-sm text-slate-500">
-                                                Aucune image sélectionnée
+                        {allNews && allNews.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {allNews.map((news, index) => (
+                                    <motion.div
+                                        key={news.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
+                                    >
+                                        <div className="mb-4">
+                                            <div className="mb-2 flex items-center justify-between">
+                                                <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                                    Message #{index + 1}
+                                                </span>
+                                                <Badge
+                                                    className={cn(
+                                                        'rounded-full px-2 py-0.5 text-[9px] font-black uppercase',
+                                                        news.is_active
+                                                            ? 'bg-emerald-100 text-emerald-600'
+                                                            : 'bg-slate-100 text-slate-400',
+                                                    )}
+                                                >
+                                                    {news.is_active
+                                                        ? 'Visible'
+                                                        : 'Masqué'}
+                                                </Badge>
+                                            </div>
+                                            <p className="line-clamp-3 text-sm font-bold text-slate-700">
+                                                {news.content}
                                             </p>
                                         </div>
+
+                                        <div className="flex gap-2">
+                                            <Button
+                                                onClick={() =>
+                                                    toggleNewsStatus(news)
+                                                }
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1 rounded-xl text-xs font-black"
+                                            >
+                                                {news.is_active
+                                                    ? 'Masquer'
+                                                    : 'Afficher'}
+                                            </Button>
+                                            <Button
+                                                onClick={() =>
+                                                    handleDeleteNews(news)
+                                                }
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-9 w-9 rounded-xl p-0 text-red-500 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 p-12 text-center">
+                                <Newspaper className="mb-4 h-12 w-12 text-slate-300" />
+                                <h3 className="text-lg font-black text-slate-900">
+                                    Aucun message défilant
+                                </h3>
+                                <p className="mb-6 text-sm text-slate-500">
+                                    Ajoutez des informations ou des promotions
+                                    qui défileront en bas de l'écran.
+                                </p>
+                                <Button
+                                    onClick={() => setIsCreatingNews(true)}
+                                    className="rounded-xl bg-indigo-600 px-6 font-bold"
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Créer le premier message
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Create Advertisement Modal */}
+                <Dialog open={isCreatingAd} onOpenChange={setIsCreatingAd}>
+                    <DialogContent className="rounded-3xl sm:max-w-[600px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-black">
+                                Nouvelle Publicité
+                            </DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateAd} className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Titre de la publicité</Label>
+                                    <Input
+                                        value={adForm.title}
+                                        onChange={(e) =>
+                                            setAdForm({
+                                                ...adForm,
+                                                title: e.target.value,
+                                            })
+                                        }
+                                        placeholder="ex: Promotion Spéciale"
+                                        className="rounded-xl"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Type de contenu</Label>
+                                    <Select
+                                        value={adForm.type}
+                                        onValueChange={(value: any) =>
+                                            setAdForm({
+                                                ...adForm,
+                                                type: value,
+                                            })
+                                        }
+                                    >
+                                        <SelectTrigger className="rounded-xl">
+                                            <SelectValue placeholder="Choisir le type" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="image">
+                                                Image
+                                            </SelectItem>
+                                            <SelectItem value="video">
+                                                Vidéo
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>
+                                    {adForm.type === 'image'
+                                        ? 'Image'
+                                        : 'Vidéo'}
+                                </Label>
+                                <div className="space-y-4">
+                                    <Input
+                                        type="file"
+                                        accept={
+                                            adForm.type === 'image'
+                                                ? 'image/*'
+                                                : 'video/*'
+                                        }
+                                        onChange={
+                                            adForm.type === 'image'
+                                                ? handleImageChange
+                                                : handleVideoChange
+                                        }
+                                        className="rounded-xl"
+                                    />
+
+                                    {adForm.type === 'image' &&
+                                        imagePreview && (
+                                            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50 p-4">
+                                                <img
+                                                    src={imagePreview}
+                                                    alt="Preview"
+                                                    className="h-48 w-full rounded-xl object-cover"
+                                                />
+                                            </div>
+                                        )}
+
+                                    {adForm.type === 'video' &&
+                                        videoPreview && (
+                                            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50 p-4">
+                                                <video
+                                                    src={videoPreview}
+                                                    className="h-48 w-full rounded-xl object-cover"
+                                                    controls
+                                                />
+                                            </div>
+                                        )}
+
+                                    {!imagePreview && !videoPreview && (
+                                        <div className="flex h-48 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
+                                            <div className="text-center">
+                                                <ImageIcon className="mx-auto mb-2 h-12 w-12 text-slate-300" />
+                                                <p className="text-sm text-slate-500">
+                                                    Aucun fichier sélectionné
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsCreatingAd(false)}
+                                    className="rounded-xl"
+                                >
+                                    Annuler
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="rounded-xl bg-purple-600"
+                                    disabled={
+                                        createAdMutation.isPending ||
+                                        (!imagePreview && !videoPreview)
+                                    }
+                                >
+                                    {createAdMutation.isPending
+                                        ? 'Création...'
+                                        : 'Créer la publicité'}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Create News Modal */}
+                <Dialog open={isCreatingNews} onOpenChange={setIsCreatingNews}>
+                    <DialogContent className="rounded-3xl sm:max-w-[500px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-black">
+                                Ajouter une Information
+                            </DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateNews} className="space-y-6">
+                            <div className="space-y-2">
+                                <Label>Message à faire défiler</Label>
+                                <div className="relative">
+                                    <textarea
+                                        value={newsForm.content}
+                                        onChange={(e) =>
+                                            setNewsForm({
+                                                ...newsForm,
+                                                content: e.target.value,
+                                            })
+                                        }
+                                        placeholder="ex: Bienvenue chez Havifin ! Profitez de nos taux exceptionnels aujourd'hui."
+                                        className="min-h-[120px] w-full rounded-2xl border border-slate-200 p-4 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                                        required
+                                    />
+                                    <div className="absolute top-4 right-4 text-slate-300">
+                                        <Newspaper className="h-5 w-5" />
                                     </div>
-                                )}
+                                </div>
+                                <p className="text-[10px] font-bold text-slate-400">
+                                    Ce message apparaîtra dans la barre
+                                    défilante en bas de l'écran TV.
+                                </p>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsCreatingNews(false)}
+                                    className="rounded-xl"
+                                >
+                                    Annuler
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="rounded-xl bg-indigo-600"
+                                    disabled={
+                                        createNewsMutation.isPending ||
+                                        !newsForm.content
+                                    }
+                                >
+                                    {createNewsMutation.isPending
+                                        ? 'Ajout...'
+                                        : 'Ajouter au défilé'}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Create Cashier Modal */}
+                <Dialog
+                    open={isCreatingCashier}
+                    onOpenChange={setIsCreatingCashier}
+                >
+                    <DialogContent className="rounded-3xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-black">
+                                Nouveau Caissier
+                            </DialogTitle>
+                        </DialogHeader>
+                        <form
+                            onSubmit={handleCreateCashier}
+                            className="space-y-4"
+                        >
+                            <div className="space-y-2">
+                                <Label>Nom complet</Label>
+                                <Input
+                                    value={cashierForm.name}
+                                    onChange={(e) =>
+                                        setCashierForm({
+                                            ...cashierForm,
+                                            name: e.target.value,
+                                        })
+                                    }
+                                    placeholder="ex: Jean Dupont"
+                                    className="rounded-xl"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Email</Label>
+                                <Input
+                                    type="email"
+                                    value={cashierForm.email}
+                                    onChange={(e) =>
+                                        setCashierForm({
+                                            ...cashierForm,
+                                            email: e.target.value,
+                                        })
+                                    }
+                                    placeholder="jean.dupont@example.com"
+                                    className="rounded-xl"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Mot de passe</Label>
+                                <Input
+                                    type="password"
+                                    value={cashierForm.password}
+                                    onChange={(e) =>
+                                        setCashierForm({
+                                            ...cashierForm,
+                                            password: e.target.value,
+                                        })
+                                    }
+                                    className="rounded-xl"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Assigner à un guichet (optionnel)</Label>
+                                <Select
+                                    value={cashierForm.counter_id}
+                                    onValueChange={(value) =>
+                                        setCashierForm({
+                                            ...cashierForm,
+                                            counter_id:
+                                                value === 'none' ? '' : value,
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger className="rounded-xl">
+                                        <SelectValue placeholder="Choisir un guichet (optionnel)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">
+                                            Ne pas assigner pour le moment
+                                        </SelectItem>
+                                        {counters?.map((counter) => (
+                                            <SelectItem
+                                                key={counter.id}
+                                                value={counter.id.toString()}
+                                                disabled={!!counter.cashier_id}
+                                                className={
+                                                    counter.cashier_id
+                                                        ? 'text-slate-400'
+                                                        : ''
+                                                }
+                                            >
+                                                {counter.counter_number} -{' '}
+                                                {counter.name}
+                                                {counter.cashier_id
+                                                    ? ' (Occupé)'
+                                                    : ' (Libre)'}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-slate-500">
+                                    Seuls les guichets libres peuvent être
+                                    sélectionnés.
+                                </p>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsCreatingCashier(false)}
+                                    className="rounded-xl"
+                                >
+                                    Annuler
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="rounded-xl bg-indigo-600"
+                                    disabled={createCashierMutation.isPending}
+                                >
+                                    {createCashierMutation.isPending
+                                        ? 'Création...'
+                                        : 'Créer le caissier'}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Create Counter Modal */}
+                <Dialog
+                    open={isCreatingCounter}
+                    onOpenChange={setIsCreatingCounter}
+                >
+                    <DialogContent className="rounded-3xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-black">
+                                Nouveau Guichet
+                            </DialogTitle>
+                        </DialogHeader>
+                        <form
+                            onSubmit={handleCreateCounter}
+                            className="space-y-4"
+                        >
+                            <div className="space-y-2">
+                                <Label>Numéro du Guichet</Label>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    value={counterForm.counter_number}
+                                    onChange={(e) =>
+                                        setCounterForm({
+                                            ...counterForm,
+                                            counter_number: parseInt(
+                                                e.target.value,
+                                            ),
+                                        })
+                                    }
+                                    className="rounded-xl"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Nom du Guichet</Label>
+                                <Input
+                                    value={counterForm.name}
+                                    onChange={(e) =>
+                                        setCounterForm({
+                                            ...counterForm,
+                                            name: e.target.value,
+                                        })
+                                    }
+                                    placeholder="ex: Guichet Principal"
+                                    className="rounded-xl"
+                                    required
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsCreatingCounter(false)}
+                                    className="rounded-xl"
+                                >
+                                    Annuler
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="rounded-xl bg-indigo-600"
+                                    disabled={createCounterMutation.isPending}
+                                >
+                                    {createCounterMutation.isPending
+                                        ? 'Création...'
+                                        : 'Créer'}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Assign Cashier Modal */}
+                <Dialog
+                    open={isAssigningCashier}
+                    onOpenChange={setIsAssigningCashier}
+                >
+                    <DialogContent className="rounded-3xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-black">
+                                Assigner un Caissier
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Sélectionner un caissier</Label>
+                                <Select
+                                    value={
+                                        selectedCounter?.cashier_id?.toString() ||
+                                        ''
+                                    }
+                                    onValueChange={(value) =>
+                                        handleAssignCashier(
+                                            value && value !== 'unassign'
+                                                ? parseInt(value)
+                                                : null,
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger className="rounded-xl">
+                                        <SelectValue placeholder="Choisir un caissier" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="unassign">
+                                            Aucun (désassigner)
+                                        </SelectItem>
+                                        {availableCashiers?.map((cashier) => (
+                                            <SelectItem
+                                                key={cashier.id}
+                                                value={cashier.id.toString()}
+                                            >
+                                                {cashier.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
-
-                        <div className="flex justify-end gap-3 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsCreatingAd(false)}
-                                className="rounded-xl"
-                            >
-                                Annuler
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="rounded-xl bg-purple-600"
-                                disabled={
-                                    createAdMutation.isPending || !imagePreview
-                                }
-                            >
-                                {createAdMutation.isPending
-                                    ? 'Création...'
-                                    : 'Créer la publicité'}
-                            </Button>
-                        </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            {/* Create Cashier Modal */}
-            <Dialog
-                open={isCreatingCashier}
-                onOpenChange={setIsCreatingCashier}
-            >
-                <DialogContent className="rounded-3xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">
-                            Nouveau Caissier
-                        </DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateCashier} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Nom complet</Label>
-                            <Input
-                                value={cashierForm.name}
-                                onChange={(e) =>
-                                    setCashierForm({
-                                        ...cashierForm,
-                                        name: e.target.value,
-                                    })
-                                }
-                                placeholder="ex: Jean Dupont"
-                                className="rounded-xl"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Email</Label>
-                            <Input
-                                type="email"
-                                value={cashierForm.email}
-                                onChange={(e) =>
-                                    setCashierForm({
-                                        ...cashierForm,
-                                        email: e.target.value,
-                                    })
-                                }
-                                placeholder="jean.dupont@example.com"
-                                className="rounded-xl"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Mot de passe</Label>
-                            <Input
-                                type="password"
-                                value={cashierForm.password}
-                                onChange={(e) =>
-                                    setCashierForm({
-                                        ...cashierForm,
-                                        password: e.target.value,
-                                    })
-                                }
-                                className="rounded-xl"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Assigner à un guichet (optionnel)</Label>
-                            <Select
-                                value={cashierForm.counter_id}
-                                onValueChange={(value) =>
-                                    setCashierForm({
-                                        ...cashierForm,
-                                        counter_id:
-                                            value === 'none' ? '' : value,
-                                    })
-                                }
-                            >
-                                <SelectTrigger className="rounded-xl">
-                                    <SelectValue placeholder="Choisir un guichet (optionnel)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">
-                                        Ne pas assigner pour le moment
-                                    </SelectItem>
-                                    {counters?.map((counter) => (
-                                        <SelectItem
-                                            key={counter.id}
-                                            value={counter.id.toString()}
-                                            disabled={!!counter.cashier_id}
-                                            className={
-                                                counter.cashier_id
-                                                    ? 'text-slate-400'
-                                                    : ''
-                                            }
-                                        >
-                                            {counter.counter_number} -{' '}
-                                            {counter.name}
-                                            {counter.cashier_id
-                                                ? ' (Occupé)'
-                                                : ' (Libre)'}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <p className="text-xs text-slate-500">
-                                Seuls les guichets libres peuvent être
-                                sélectionnés.
-                            </p>
-                        </div>
-
-                        <div className="flex justify-end gap-3 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsCreatingCashier(false)}
-                                className="rounded-xl"
-                            >
-                                Annuler
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="rounded-xl bg-indigo-600"
-                                disabled={createCashierMutation.isPending}
-                            >
-                                {createCashierMutation.isPending
-                                    ? 'Création...'
-                                    : 'Créer le caissier'}
-                            </Button>
-                        </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            {/* Create Counter Modal */}
-            <Dialog
-                open={isCreatingCounter}
-                onOpenChange={setIsCreatingCounter}
-            >
-                <DialogContent className="rounded-3xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">
-                            Nouveau Guichet
-                        </DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateCounter} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Numéro du Guichet</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                value={counterForm.counter_number}
-                                onChange={(e) =>
-                                    setCounterForm({
-                                        ...counterForm,
-                                        counter_number: parseInt(
-                                            e.target.value,
-                                        ),
-                                    })
-                                }
-                                className="rounded-xl"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Nom du Guichet</Label>
-                            <Input
-                                value={counterForm.name}
-                                onChange={(e) =>
-                                    setCounterForm({
-                                        ...counterForm,
-                                        name: e.target.value,
-                                    })
-                                }
-                                placeholder="ex: Guichet Principal"
-                                className="rounded-xl"
-                                required
-                            />
-                        </div>
-                        <div className="flex justify-end gap-3 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsCreatingCounter(false)}
-                                className="rounded-xl"
-                            >
-                                Annuler
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="rounded-xl bg-indigo-600"
-                                disabled={createCounterMutation.isPending}
-                            >
-                                {createCounterMutation.isPending
-                                    ? 'Création...'
-                                    : 'Créer'}
-                            </Button>
-                        </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            {/* Assign Cashier Modal */}
-            <Dialog
-                open={isAssigningCashier}
-                onOpenChange={setIsAssigningCashier}
-            >
-                <DialogContent className="rounded-3xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">
-                            Assigner un Caissier
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Sélectionner un caissier</Label>
-                            <Select
-                                value={
-                                    selectedCounter?.cashier_id?.toString() ||
-                                    ''
-                                }
-                                onValueChange={(value) =>
-                                    handleAssignCashier(
-                                        value && value !== 'unassign'
-                                            ? parseInt(value)
-                                            : null,
-                                    )
-                                }
-                            >
-                                <SelectTrigger className="rounded-xl">
-                                    <SelectValue placeholder="Choisir un caissier" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="unassign">
-                                        Aucun (désassigner)
-                                    </SelectItem>
-                                    {availableCashiers?.map((cashier) => (
-                                        <SelectItem
-                                            key={cashier.id}
-                                            value={cashier.id.toString()}
-                                        >
-                                            {cashier.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+                    </DialogContent>
+                </Dialog>
+            </div>
         </AppMain>
     );
 }

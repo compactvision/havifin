@@ -16,6 +16,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\CounterController;
+use App\Http\Controllers\Api\NewsController;
 
 // Authentication & Session-Based API Routes
 Route::middleware('web')->group(function () {

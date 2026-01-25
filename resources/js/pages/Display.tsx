@@ -722,7 +722,10 @@ export default function Display() {
             </main>
 
             {/* Daily Rates Ticker */}
-            <RateTicker isDarkMode={isDarkMode} />
+            <div className="relative z-10 w-full">
+                <RateTicker isDarkMode={isDarkMode} />
+                <NewsTicker />
+            </div>
 
             {/* Ambient Background Overlay (Vignette) */}
             <div className="bg-radial-vignette pointer-events-none absolute inset-0 z-50 opacity-40" />

@@ -285,9 +285,27 @@ export default function ClientForm() {
                 const inst = institutions.find(
                     (i) => i.id === formData.institution_id,
                 );
-                // Motif is now optional
                 const hasAmount = !!formData.amount;
 
+                // Dynamic validation based on institution settings
+                const settings = (inst as any)?.settings;
+                if (settings?.required_fields) {
+                    const required = settings.required_fields;
+                    const checks: boolean[] = [hasAmount];
+
+                    if (required.includes('account_number'))
+                        checks.push(!!formData.account_number);
+                    if (required.includes('beneficiary'))
+                        checks.push(!!formData.beneficiary);
+                    if (required.includes('beneficiary_number'))
+                        checks.push(!!formData.beneficiary_number);
+                    if (required.includes('reason'))
+                        checks.push(!!formData.reason);
+
+                    return checks.every(Boolean);
+                }
+
+                // Fallback to defaults if no settings configured
                 if (inst?.type === 'bank') {
                     return !!(
                         hasAmount &&
@@ -741,47 +759,60 @@ export default function ClientForm() {
                                                 }}
                                                 className="space-y-4 pt-4"
                                             >
-                                                {institutions.find(
-                                                    (i) =>
-                                                        i.id ===
-                                                        formData.institution_id,
-                                                )?.type === 'bank' ? (
-                                                    // Layout Banque
-                                                    <>
-                                                        <div className="space-y-2">
-                                                            <Label className="ml-2 font-bold text-slate-800">
-                                                                Numéro de compte
-                                                            </Label>
-                                                            <Input
-                                                                value={
-                                                                    formData.account_number
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData(
-                                                                        {
-                                                                            ...formData,
-                                                                            account_number:
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                        },
-                                                                    )
-                                                                }
-                                                                placeholder="Entrez le numéro de compte"
-                                                                className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                            />
-                                                        </div>
+                                                {(() => {
+                                                    const inst =
+                                                        institutions.find(
+                                                            (i) =>
+                                                                i.id ===
+                                                                formData.institution_id,
+                                                        );
+                                                    const settings = (
+                                                        inst as any
+                                                    )?.settings;
+                                                    const required =
+                                                        settings?.required_fields;
 
-                                                        <div className="grid gap-4 md:grid-cols-2">
-                                                            <div className="space-y-2">
-                                                                <Label className="ml-2 font-bold text-slate-800">
-                                                                    Montant
-                                                                </Label>
-                                                                <div className="relative">
+                                                    const isVisible = (
+                                                        fieldId: string,
+                                                    ) => {
+                                                        // If settings defined, show only if in required_fields
+                                                        if (required)
+                                                            return required.includes(
+                                                                fieldId,
+                                                            );
+                                                        // Fallback for banks
+                                                        if (
+                                                            inst?.type ===
+                                                            'bank'
+                                                        ) {
+                                                            return [
+                                                                'account_number',
+                                                                'beneficiary',
+                                                                'reason',
+                                                            ].includes(fieldId);
+                                                        }
+                                                        // Fallback for mobile money
+                                                        return [
+                                                            'beneficiary_number',
+                                                            'beneficiary',
+                                                            'reason',
+                                                        ].includes(fieldId);
+                                                    };
+
+                                                    return (
+                                                        <div className="grid gap-6">
+                                                            {isVisible(
+                                                                'account_number',
+                                                            ) && (
+                                                                <div className="space-y-2">
+                                                                    <Label className="ml-2 font-bold text-slate-800">
+                                                                        Numéro
+                                                                        de
+                                                                        compte
+                                                                    </Label>
                                                                     <Input
-                                                                        type="number"
                                                                         value={
-                                                                            formData.amount
+                                                                            formData.account_number
                                                                         }
                                                                         onChange={(
                                                                             e,
@@ -789,264 +820,197 @@ export default function ClientForm() {
                                                                             setFormData(
                                                                                 {
                                                                                     ...formData,
-                                                                                    amount: e
+                                                                                    account_number:
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
+                                                                                },
+                                                                            )
+                                                                        }
+                                                                        placeholder="Compte bancaire..."
+                                                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                    />
+                                                                </div>
+                                                            )}
+
+                                                            {isVisible(
+                                                                'beneficiary_number',
+                                                            ) && (
+                                                                <div className="space-y-2">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <Label className="ml-2 font-bold text-slate-800">
+                                                                            Numéro
+                                                                            du
+                                                                            bénéficiaire
+                                                                        </Label>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                setFormData(
+                                                                                    {
+                                                                                        ...formData,
+                                                                                        beneficiary_number:
+                                                                                            formData.phone,
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                            className="text-xs font-bold text-cyan-800 transition-colors hover:text-cyan-900"
+                                                                        >
+                                                                            Utiliser
+                                                                            le
+                                                                            mien
+                                                                        </button>
+                                                                    </div>
+                                                                    <Input
+                                                                        value={
+                                                                            formData.beneficiary_number
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            setFormData(
+                                                                                {
+                                                                                    ...formData,
+                                                                                    beneficiary_number:
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
+                                                                                },
+                                                                            )
+                                                                        }
+                                                                        placeholder="08..."
+                                                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                    />
+                                                                </div>
+                                                            )}
+
+                                                            <div className="grid gap-4 md:grid-cols-2">
+                                                                <div className="space-y-2">
+                                                                    <Label className="ml-2 font-bold text-slate-800">
+                                                                        Montant
+                                                                    </Label>
+                                                                    <div className="relative">
+                                                                        <Input
+                                                                            type="number"
+                                                                            value={
+                                                                                formData.amount
+                                                                            }
+                                                                            onChange={(
+                                                                                e,
+                                                                            ) =>
+                                                                                setFormData(
+                                                                                    {
+                                                                                        ...formData,
+                                                                                        amount: e
+                                                                                            .target
+                                                                                            .value,
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                            placeholder="0.00"
+                                                                            className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 pr-24 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                        />
+                                                                        <div className="absolute top-1 right-1 bottom-1 flex rounded-xl bg-slate-100 p-1">
+                                                                            {[
+                                                                                'USD',
+                                                                                'CDF',
+                                                                            ].map(
+                                                                                (
+                                                                                    curr,
+                                                                                ) => (
+                                                                                    <button
+                                                                                        key={
+                                                                                            curr
+                                                                                        }
+                                                                                        onClick={() =>
+                                                                                            setFormData(
+                                                                                                {
+                                                                                                    ...formData,
+                                                                                                    currency:
+                                                                                                        curr,
+                                                                                                },
+                                                                                            )
+                                                                                        }
+                                                                                        className={`relative z-10 w-12 rounded-lg text-sm font-black transition-all ${
+                                                                                            formData.currency ===
+                                                                                            curr
+                                                                                                ? 'bg-white text-slate-900 shadow-sm'
+                                                                                                : 'text-slate-400 hover:text-slate-600'
+                                                                                        }`}
+                                                                                    >
+                                                                                        {
+                                                                                            curr
+                                                                                        }
+                                                                                    </button>
+                                                                                ),
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {isVisible(
+                                                                    'beneficiary',
+                                                                ) && (
+                                                                    <div className="space-y-2">
+                                                                        <Label className="ml-2 font-bold text-slate-800">
+                                                                            Bénéficiaire
+                                                                        </Label>
+                                                                        <Input
+                                                                            value={
+                                                                                formData.beneficiary
+                                                                            }
+                                                                            onChange={(
+                                                                                e,
+                                                                            ) =>
+                                                                                setFormData(
+                                                                                    {
+                                                                                        ...formData,
+                                                                                        beneficiary:
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                            placeholder="Nom du bénéficiaire"
+                                                                            className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {isVisible(
+                                                                'reason',
+                                                            ) && (
+                                                                <div className="space-y-2">
+                                                                    <Label className="ml-2 font-bold text-slate-800">
+                                                                        Motif /
+                                                                        Raison
+                                                                    </Label>
+                                                                    <Input
+                                                                        value={
+                                                                            formData.reason
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            setFormData(
+                                                                                {
+                                                                                    ...formData,
+                                                                                    reason: e
                                                                                         .target
                                                                                         .value,
                                                                                 },
                                                                             )
                                                                         }
-                                                                        placeholder="0.00"
-                                                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 pr-24 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                        placeholder="Raison du dépôt..."
+                                                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
                                                                     />
-                                                                    <div className="absolute top-1 right-1 bottom-1 flex rounded-xl bg-slate-100 p-1">
-                                                                        {[
-                                                                            'USD',
-                                                                            'CDF',
-                                                                        ].map(
-                                                                            (
-                                                                                curr,
-                                                                            ) => (
-                                                                                <button
-                                                                                    key={
-                                                                                        curr
-                                                                                    }
-                                                                                    onClick={() =>
-                                                                                        setFormData(
-                                                                                            {
-                                                                                                ...formData,
-                                                                                                currency:
-                                                                                                    curr,
-                                                                                            },
-                                                                                        )
-                                                                                    }
-                                                                                    className={`relative z-10 w-12 rounded-lg text-sm font-black transition-all ${
-                                                                                        formData.currency ===
-                                                                                        curr
-                                                                                            ? 'bg-white text-slate-900 shadow-sm'
-                                                                                            : 'text-slate-400 hover:text-slate-600'
-                                                                                    }`}
-                                                                                >
-                                                                                    {
-                                                                                        curr
-                                                                                    }
-                                                                                </button>
-                                                                            ),
-                                                                        )}
-                                                                    </div>
                                                                 </div>
-                                                            </div>
-
-                                                            <div className="space-y-2">
-                                                                <Label className="ml-2 font-bold text-slate-800">
-                                                                    Nom du
-                                                                    bénéficiaire
-                                                                </Label>
-                                                                <Input
-                                                                    value={
-                                                                        formData.beneficiary
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        setFormData(
-                                                                            {
-                                                                                ...formData,
-                                                                                beneficiary:
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                            },
-                                                                        )
-                                                                    }
-                                                                    placeholder="Nom complet du bénéficiaire"
-                                                                    className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                                />
-                                                            </div>
+                                                            )}
                                                         </div>
-
-                                                        <div className="space-y-2">
-                                                            <Label className="ml-2 font-bold text-slate-800">
-                                                                Motif
-                                                                (Optionnel)
-                                                            </Label>
-                                                            <Input
-                                                                value={
-                                                                    formData.reason
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData(
-                                                                        {
-                                                                            ...formData,
-                                                                            reason: e
-                                                                                .target
-                                                                                .value,
-                                                                        },
-                                                                    )
-                                                                }
-                                                                placeholder="Raison du dépôt"
-                                                                className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                            />
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    // Layout Mobile (Grid 2 cols)
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="space-y-2">
-                                                            <div className="flex items-center justify-between">
-                                                                <Label className="ml-2 font-bold text-slate-800">
-                                                                    Numéro du
-                                                                    bénéficiaire
-                                                                </Label>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        setFormData(
-                                                                            {
-                                                                                ...formData,
-                                                                                beneficiary_number:
-                                                                                    formData.phone,
-                                                                            },
-                                                                        )
-                                                                    }
-                                                                    className="text-xs font-bold text-cyan-800 transition-colors hover:text-cyan-900"
-                                                                >
-                                                                    Utiliser mon
-                                                                    numéro
-                                                                </button>
-                                                            </div>
-                                                            <Input
-                                                                value={
-                                                                    formData.beneficiary_number
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData(
-                                                                        {
-                                                                            ...formData,
-                                                                            beneficiary_number:
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                        },
-                                                                    )
-                                                                }
-                                                                placeholder="Saisissez le numéro"
-                                                                className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                            />
-                                                        </div>
-
-                                                        <div className="space-y-2">
-                                                            <Label className="ml-2 font-bold text-slate-800">
-                                                                Montant
-                                                            </Label>
-                                                            <div className="relative">
-                                                                <Input
-                                                                    type="number"
-                                                                    value={
-                                                                        formData.amount
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        setFormData(
-                                                                            {
-                                                                                ...formData,
-                                                                                amount: e
-                                                                                    .target
-                                                                                    .value,
-                                                                            },
-                                                                        )
-                                                                    }
-                                                                    placeholder="0.00"
-                                                                    className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 pr-24 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                                />
-                                                                <div className="absolute top-1 right-1 bottom-1 flex rounded-xl bg-slate-100 p-1">
-                                                                    {[
-                                                                        'USD',
-                                                                        'CDF',
-                                                                    ].map(
-                                                                        (
-                                                                            curr,
-                                                                        ) => (
-                                                                            <button
-                                                                                key={
-                                                                                    curr
-                                                                                }
-                                                                                onClick={() =>
-                                                                                    setFormData(
-                                                                                        {
-                                                                                            ...formData,
-                                                                                            currency:
-                                                                                                curr,
-                                                                                        },
-                                                                                    )
-                                                                                }
-                                                                                className={`relative z-10 w-12 rounded-lg text-sm font-black transition-all ${
-                                                                                    formData.currency ===
-                                                                                    curr
-                                                                                        ? 'bg-white text-slate-900 shadow-sm'
-                                                                                        : 'text-slate-400 hover:text-slate-600'
-                                                                                }`}
-                                                                            >
-                                                                                {
-                                                                                    curr
-                                                                                }
-                                                                            </button>
-                                                                        ),
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-2">
-                                                            <Label className="ml-2 font-bold text-slate-800">
-                                                                Nom du
-                                                                bénéficiaire
-                                                            </Label>
-                                                            <Input
-                                                                value={
-                                                                    formData.beneficiary
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData(
-                                                                        {
-                                                                            ...formData,
-                                                                            beneficiary:
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                        },
-                                                                    )
-                                                                }
-                                                                placeholder="Nom complet du bénéficiaire"
-                                                                className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                            />
-                                                        </div>
-
-                                                        <div className="space-y-2">
-                                                            <Label className="ml-2 font-bold text-slate-800">
-                                                                Motif
-                                                                (Optionnel)
-                                                            </Label>
-                                                            <Input
-                                                                value={
-                                                                    formData.reason
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData(
-                                                                        {
-                                                                            ...formData,
-                                                                            reason: e
-                                                                                .target
-                                                                                .value,
-                                                                        },
-                                                                    )
-                                                                }
-                                                                placeholder="Raison du dépôt"
-                                                                className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                    );
+                                                })()}
                                             </motion.div>
                                         )}
                                 </AnimatePresence>
