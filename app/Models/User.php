@@ -63,7 +63,7 @@ class User extends Authenticatable
      */
     public function isManager(): bool
     {
-        return $this->hasRole('manager');
+        return $this->role === 'manager' || $this->hasRole('manager');
     }
 
     /**
@@ -71,7 +71,7 @@ class User extends Authenticatable
      */
     public function isSuperAdmin(): bool
     {
-        return $this->hasRole('super-admin');
+        return $this->role === 'super-admin' || $this->hasRole('super-admin');
     }
 
     /**
@@ -79,7 +79,7 @@ class User extends Authenticatable
      */
     public function isCashier(): bool
     {
-        return $this->hasRole('cashier');
+        return $this->role === 'cashier' || $this->hasRole('cashier');
     }
 
     /**
@@ -87,7 +87,7 @@ class User extends Authenticatable
      */
     public function isClient(): bool
     {
-        return $this->hasRole('client');
+        return $this->role === 'client' || $this->hasRole('client');
     }
 
     /**

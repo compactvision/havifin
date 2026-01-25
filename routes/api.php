@@ -24,52 +24,69 @@ Route::middleware('web')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
     Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
 
-    Route::middleware(['auth'])->group(function () {
-        // User Management Routes (Manager only)
-        Route::middleware(['manager'])->group(function () {
-            Route::apiResource('users', UserController::class);
-        });
+    // Manager only routes
+    Route::middleware(['auth', 'manager'])->group(function () {
+        Route::apiResource('users', UserController::class);
+    });
 
-        // Shop Management Routes
+    // General Auth routes
+    Route::middleware(['auth'])->group(function () {
         Route::apiResource('shops', ShopController::class);
         Route::post('/shops/{shop}/assign-users', [ShopController::class, 'assignUsers']);
-        
-        // Counter Management Routes
         Route::get('/shops/{shop}/counters', [CounterController::class, 'index']);
         Route::post('/shops/{shop}/counters', [CounterController::class, 'store']);
         Route::put('/counters/{counter}', [CounterController::class, 'update']);
         Route::delete('/counters/{counter}', [CounterController::class, 'destroy']);
-
+        
         Route::get('/user', function (Request $request) {
             return $request->user();
         });
 
-        // Institutions
-        Route::get('/institutions/active', [InstitutionController::class, 'active']);
-        Route::apiResource('institutions', InstitutionController::class);
+        // Protected CRUD for institutions/advertisements/news (Managers)
+        Route::middleware(['manager'])->group(function () {
+            Route::post('/institutions', [InstitutionController::class, 'store']);
+            Route::put('/institutions/{institution}', [InstitutionController::class, 'update']);
+            Route::delete('/institutions/{institution}', [InstitutionController::class, 'destroy']);
 
-        // Client Verification & Registration
-        Route::post('/clients/verify-phone', [ClientVerificationController::class, 'verifyPhone']);
-        Route::post('/clients/register', [ClientVerificationController::class, 'register']);
-        Route::post('/clients/add-phone', [ClientVerificationController::class, 'addPhone']);
+            Route::post('/advertisements', [AdvertisementController::class, 'store']);
+            Route::put('/advertisements/{advertisement}', [AdvertisementController::class, 'update']);
+            Route::delete('/advertisements/{advertisement}', [AdvertisementController::class, 'destroy']);
 
-        // Clients
+            Route::post('/news', [NewsController::class, 'store']);
+            Route::put('/news/{news}', [NewsController::class, 'update']);
+            Route::delete('/news/{news}', [NewsController::class, 'destroy']);
+        });
+
+        // Full CRUD for Clients & Transactions
         Route::apiResource('clients', ClientController::class);
-        
-        // Existing routes (moved inside auth to ensure session/identity)
         Route::apiResource('transactions', TransactionController::class);
-        Route::apiResource('exchange-rates', ExchangeRateController::class);
     });
 });
 
-// Sessions
+// --- Public API Routes (No Auth Required) ---
+
+// TV Display & Public Info
+Route::get('/advertisements/active', [AdvertisementController::class, 'active']);
+Route::get('/advertisements', [AdvertisementController::class, 'index']);
+Route::get('/news/active', [NewsController::class, 'active']);
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/institutions/active', [InstitutionController::class, 'active']);
+Route::get('/institutions', [InstitutionController::class, 'index']);
+Route::get('/exchange-rates', [ExchangeRateController::class, 'index']);
+
+// Client Verification & Registration (Public for ClientForm)
+Route::post('/clients/verify-phone', [ClientVerificationController::class, 'verifyPhone']);
+Route::post('/clients/register', [ClientVerificationController::class, 'register']);
+Route::post('/clients/add-phone', [ClientVerificationController::class, 'addPhone']);
+
+// Sessions (Maybe should be protected, but for now kept as before)
 Route::get('/sessions/current', [SessionController::class, 'current']);
 Route::post('/sessions/{id}/close', [SessionController::class, 'close']);
 Route::get('/sessions/{id}/report', [SessionController::class, 'report']);
 Route::get('/sessions', [SessionController::class, 'index']);
 Route::post('/sessions', [SessionController::class, 'store']);
 
-// Exchange Rate History
+// Exchange Rate History (Public for ticker)
 Route::get('/exchange-rate-history/active', [ExchangeRateHistoryController::class, 'active']);
 Route::post('/exchange-rate-history/current-rate', [ExchangeRateHistoryController::class, 'currentRate']);
 Route::get('/exchange-rate-history', [ExchangeRateHistoryController::class, 'index']);
@@ -84,8 +101,4 @@ Route::post('/cashier-activities', [CashierActivityController::class, 'store']);
 Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);
 Route::get('/help-requests', [HelpRequestController::class, 'index']);
 Route::post('/help-requests', [HelpRequestController::class, 'store']);
-
-// Advertisements
-Route::get('/advertisements/active', [AdvertisementController::class, 'active']);
-Route::apiResource('advertisements', AdvertisementController::class);
 
