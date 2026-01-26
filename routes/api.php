@@ -19,48 +19,47 @@ use App\Http\Controllers\Api\CounterController;
 use App\Http\Controllers\Api\NewsController;
 
 // Authentication & Session-Based API Routes
-Route::middleware('web')->group(function () {
-    Route::post('/auth/login', [AuthController::class, 'login']);
-    Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
-    Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
+// Authentication & Session-Based API Routes
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
+Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
 
-    // Manager only routes
-    Route::middleware(['auth', 'manager'])->group(function () {
-        Route::apiResource('users', UserController::class);
+// Manager only routes
+Route::middleware(['auth', 'manager'])->group(function () {
+    Route::apiResource('users', UserController::class);
+});
+
+// General Auth routes
+Route::middleware(['auth'])->group(function () {
+    Route::apiResource('shops', ShopController::class);
+    Route::post('/shops/{shop}/assign-users', [ShopController::class, 'assignUsers']);
+    Route::get('/shops/{shop}/counters', [CounterController::class, 'index']);
+    Route::post('/shops/{shop}/counters', [CounterController::class, 'store']);
+    Route::put('/counters/{counter}', [CounterController::class, 'update']);
+    Route::delete('/counters/{counter}', [CounterController::class, 'destroy']);
+    
+    Route::get('/user', function (Request $request) {
+        return $request->user();
     });
 
-    // General Auth routes
-    Route::middleware(['auth'])->group(function () {
-        Route::apiResource('shops', ShopController::class);
-        Route::post('/shops/{shop}/assign-users', [ShopController::class, 'assignUsers']);
-        Route::get('/shops/{shop}/counters', [CounterController::class, 'index']);
-        Route::post('/shops/{shop}/counters', [CounterController::class, 'store']);
-        Route::put('/counters/{counter}', [CounterController::class, 'update']);
-        Route::delete('/counters/{counter}', [CounterController::class, 'destroy']);
-        
-        Route::get('/user', function (Request $request) {
-            return $request->user();
-        });
+    // Protected CRUD for institutions/advertisements/news (Managers)
+    Route::middleware(['manager'])->group(function () {
+        Route::post('/institutions', [InstitutionController::class, 'store']);
+        Route::put('/institutions/{institution}', [InstitutionController::class, 'update']);
+        Route::delete('/institutions/{institution}', [InstitutionController::class, 'destroy']);
 
-        // Protected CRUD for institutions/advertisements/news (Managers)
-        Route::middleware(['manager'])->group(function () {
-            Route::post('/institutions', [InstitutionController::class, 'store']);
-            Route::put('/institutions/{institution}', [InstitutionController::class, 'update']);
-            Route::delete('/institutions/{institution}', [InstitutionController::class, 'destroy']);
+        Route::post('/advertisements', [AdvertisementController::class, 'store']);
+        Route::put('/advertisements/{advertisement}', [AdvertisementController::class, 'update']);
+        Route::delete('/advertisements/{advertisement}', [AdvertisementController::class, 'destroy']);
 
-            Route::post('/advertisements', [AdvertisementController::class, 'store']);
-            Route::put('/advertisements/{advertisement}', [AdvertisementController::class, 'update']);
-            Route::delete('/advertisements/{advertisement}', [AdvertisementController::class, 'destroy']);
-
-            Route::post('/news', [NewsController::class, 'store']);
-            Route::put('/news/{news}', [NewsController::class, 'update']);
-            Route::delete('/news/{news}', [NewsController::class, 'destroy']);
-        });
-
-        // Full CRUD for Clients & Transactions
-        Route::apiResource('clients', ClientController::class);
-        Route::apiResource('transactions', TransactionController::class);
+        Route::post('/news', [NewsController::class, 'store']);
+        Route::put('/news/{news}', [NewsController::class, 'update']);
+        Route::delete('/news/{news}', [NewsController::class, 'destroy']);
     });
+
+    // Full CRUD for Clients & Transactions
+    Route::apiResource('clients', ClientController::class);
+    Route::apiResource('transactions', TransactionController::class);
 });
 
 // --- Public API Routes (No Auth Required) ---
