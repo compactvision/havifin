@@ -15,21 +15,14 @@ let csrfInitPromise: Promise<void> | null = null;
 
 client.interceptors.request.use(
     async (config) => {
-        // Skip CSRF initialization for:
-        // 1. GET requests (safe methods)
-        // 2. The CSRF cookie endpoint itself
-        // 3. Public endpoints that don't require auth
+        // Initialize CSRF for all non-GET requests (POST, PUT, DELETE, PATCH)
+        // Skip only:
+        // 1. GET requests (safe methods that don't modify data)
+        // 2. The CSRF cookie endpoint itself (to avoid infinite loop)
         const isGetRequest = config.method?.toLowerCase() === 'get';
         const isCsrfEndpoint = config.url?.includes('/sanctum/csrf-cookie');
-        const isPublicEndpoint =
-            config.url?.includes('/advertisements/active') ||
-            config.url?.includes('/news/active') ||
-            config.url?.includes('/institutions/active') ||
-            config.url?.includes('/exchange-rates') ||
-            config.url?.includes('/clients/verify-phone') ||
-            config.url?.includes('/clients/register');
 
-        if (!isGetRequest && !isCsrfEndpoint && !isPublicEndpoint) {
+        if (!isGetRequest && !isCsrfEndpoint) {
             // Initialize CSRF only once, reuse the same promise for concurrent requests
             if (!csrfInitPromise) {
                 csrfInitPromise = initializeCsrf().catch((error) => {

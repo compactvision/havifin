@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import axios from '@/lib/axios';
 import { motion } from 'framer-motion';
 import { AlertCircle, Lock, LogIn, Mail } from 'lucide-react';
 import { useState } from 'react';
@@ -22,27 +23,8 @@ export default function Login() {
         setErrors({});
 
         try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify(formData),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.errors) {
-                    setErrors(data.errors);
-                } else if (data.message) {
-                    toast.error(data.message);
-                }
-                return;
-            }
+            const response = await axios.post('/api/auth/login', formData);
+            const data = response.data;
 
             toast.success('Connexion réussie!');
 
@@ -58,9 +40,16 @@ export default function Login() {
             } else {
                 window.location.href = '/clientform';
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login error:', error);
-            toast.error('Une erreur est survenue lors de la connexion');
+
+            if (error.response?.data?.errors) {
+                setErrors(error.response.data.errors);
+            } else if (error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error('Une erreur est survenue lors de la connexion');
+            }
         } finally {
             setIsLoading(false);
         }
