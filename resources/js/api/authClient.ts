@@ -1,3 +1,5 @@
+import axios from '@/lib/axios';
+
 export interface User {
     id: number;
     name: string;
@@ -20,14 +22,9 @@ export const authClient = {
     // User Management
     getUsers: async (): Promise<User[]> => {
         try {
-            const response = await fetch('/api/users', {
-                headers: {
-                    Accept: 'application/json',
-                },
-            });
-            if (!response.ok) throw new Error('Failed to fetch users');
-            return await response.json();
-        } catch (error) {
+            const response = await axios.get<User[]>('/api/users');
+            return response.data;
+        } catch (error: any) {
             console.error('Error fetching users:', error);
             throw error;
         }
@@ -35,30 +32,18 @@ export const authClient = {
 
     createUser: async (user: CreateUserPayload): Promise<User> => {
         try {
-            const response = await fetch('/api/users', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-                body: JSON.stringify(user),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.errors) {
-                    throw new Error(
-                        Object.values(data.errors).flat().join('\n'),
-                    );
-                }
-                throw new Error(data.message || 'Failed to create user');
-            }
-
-            return data;
-        } catch (error) {
+            const response = await axios.post<User>('/api/users', user);
+            return response.data;
+        } catch (error: any) {
             console.error('Error creating user:', error);
-            throw error;
+            if (error.response?.data?.errors) {
+                throw new Error(
+                    Object.values(error.response.data.errors).flat().join('\n'),
+                );
+            }
+            throw new Error(
+                error.response?.data?.message || 'Failed to create user',
+            );
         }
     },
 
@@ -67,43 +52,24 @@ export const authClient = {
         user: Partial<CreateUserPayload>,
     ): Promise<User> => {
         try {
-            const response = await fetch(`/api/users/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-                body: JSON.stringify(user),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.errors) {
-                    throw new Error(
-                        Object.values(data.errors).flat().join('\n'),
-                    );
-                }
-                throw new Error(data.message || 'Failed to update user');
-            }
-
-            return data;
-        } catch (error) {
+            const response = await axios.put<User>(`/api/users/${id}`, user);
+            return response.data;
+        } catch (error: any) {
             console.error('Error updating user:', error);
-            throw error;
+            if (error.response?.data?.errors) {
+                throw new Error(
+                    Object.values(error.response.data.errors).flat().join('\n'),
+                );
+            }
+            throw new Error(
+                error.response?.data?.message || 'Failed to update user',
+            );
         }
     },
 
     deleteUser: async (id: number): Promise<void> => {
         try {
-            const response = await fetch(`/api/users/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    Accept: 'application/json',
-                },
-            });
-
-            if (!response.ok) throw new Error('Failed to delete user');
+            await axios.delete(`/api/users/${id}`);
         } catch (error) {
             console.error('Error deleting user:', error);
             throw error;
