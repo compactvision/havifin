@@ -9,6 +9,16 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+Route::get('/debug-auth', function () {
+    return [
+        'is_secure' => request()->isSecure(),
+        'protocol' => request()->header('X-Forwarded-Proto'),
+        'user' => auth()->user(),
+        'session_id' => session()->getId(),
+        'all_headers' => request()->headers->all(),
+    ];
+});
+
 // Public routes
 Route::get('/login', function () {
     // If already authenticated, redirect to appropriate page
