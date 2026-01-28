@@ -16,6 +16,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
     Building2,
     CheckCircle2,
+    Globe,
     Landmark,
     Loader2,
     Pencil,
@@ -36,9 +37,12 @@ export default function InstitutionManager() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [configId, setConfigId] = useState<number | null>(null);
+    const [activeTab, setActiveTab] = useState<
+        'all' | 'bank' | 'mobile_money' | 'payment'
+    >('all');
     const [newInstitution, setNewInstitution] = useState<{
         name: string;
-        type: 'bank' | 'mobile_money';
+        type: 'bank' | 'mobile_money' | 'payment' | 'other';
         code: string;
         logo: File | null;
     }>({
@@ -47,10 +51,19 @@ export default function InstitutionManager() {
         code: '',
         logo: null,
     });
+    const [customFieldName, setCustomFieldName] = useState('');
+    const [customFieldOp, setCustomFieldOp] = useState<
+        'depot' | 'retrait' | 'both'
+    >('depot');
 
     const { data: institutions = [], isLoading } = useQuery({
         queryKey: ['institutions'],
         queryFn: () => base44.entities.Institution.list(),
+    });
+
+    const filteredInstitutions = institutions.filter((inst: Institution) => {
+        if (activeTab === 'all') return true;
+        return inst.type === activeTab;
     });
 
     const createMutation = useMutation({
@@ -151,7 +164,7 @@ export default function InstitutionManager() {
     const handleEdit = (inst: Institution) => {
         setNewInstitution({
             name: inst.name,
-            type: inst.type as 'bank' | 'mobile_money',
+            type: inst.type as 'bank' | 'mobile_money' | 'payment' | 'other',
             code: inst.code,
             logo: null,
         });
@@ -173,6 +186,105 @@ export default function InstitutionManager() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['institutions'] });
             toast.success('Statut mis à jour');
+        },
+    });
+
+    const addCustomFieldMutation = useMutation({
+        mutationFn: ({
+            institution,
+            label,
+            operation_type,
+        }: {
+            institution: Institution;
+            label: string;
+            operation_type: 'depot' | 'retrait' | 'both';
+        }) => {
+            const currentSettings = institution.settings || {
+                required_fields: [],
+            };
+            const customFields = currentSettings.custom_fields || [];
+
+            const id = label
+                .toLowerCase()
+                .replace(/\s+/g, '_')
+                .replace(/[^\w]/g, '');
+
+            if (customFields.find((f: any) => f.id === id)) {
+                return Promise.reject('Ce champ existe déjà');
+            }
+
+            const newFields = [
+                ...customFields,
+                { id, label, type: 'text', operation_type },
+            ];
+
+            return axios.post(`/api/institutions/${institution.id}`, {
+                _method: 'PUT',
+                settings: { ...currentSettings, custom_fields: newFields },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['institutions'] });
+            setCustomFieldName('');
+            setCustomFieldOp('depot');
+            toast.success('Champ ajouté');
+        },
+        onError: (err: any) =>
+            toast.error(
+                typeof err === 'string' ? err : 'Erreur lors de l’ajout',
+            ),
+    });
+
+    const removeCustomFieldMutation = useMutation({
+        mutationFn: ({
+            institution,
+            fieldId,
+        }: {
+            institution: Institution;
+            fieldId: string;
+        }) => {
+            const currentSettings = institution.settings || {
+                required_fields: [],
+            };
+            const customFields = currentSettings.custom_fields || [];
+            const newFields = customFields.filter((f: any) => f.id !== fieldId);
+
+            return axios.post(`/api/institutions/${institution.id}`, {
+                _method: 'PUT',
+                settings: { ...currentSettings, custom_fields: newFields },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['institutions'] });
+            toast.success('Champ supprimé');
+        },
+    });
+
+    const updateAgentInfoMutation = useMutation({
+        mutationFn: ({
+            institution,
+            name,
+            number,
+        }: {
+            institution: Institution;
+            name: string;
+            number: string;
+        }) => {
+            const currentSettings = institution.settings || {
+                required_fields: [],
+            };
+            return axios.post(`/api/institutions/${institution.id}`, {
+                _method: 'PUT',
+                settings: {
+                    ...currentSettings,
+                    withdrawal_agent_name: name,
+                    withdrawal_agent_number: number,
+                },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['institutions'] });
+            toast.success('Infos agent mises à jour');
         },
     });
 
@@ -275,6 +387,18 @@ export default function InstitutionManager() {
                                                 className="focus:bg-slate-800"
                                             >
                                                 Mobile Money
+                                            </SelectItem>
+                                            <SelectItem
+                                                value="payment"
+                                                className="focus:bg-slate-800"
+                                            >
+                                                Service de Paiement
+                                            </SelectItem>
+                                            <SelectItem
+                                                value="other"
+                                                className="focus:bg-slate-800"
+                                            >
+                                                Autre Service (MoneyGram, etc.)
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -386,8 +510,31 @@ export default function InstitutionManager() {
                 )}
             </AnimatePresence>
 
+            <div className="flex gap-2">
+                {[
+                    { id: 'all', label: 'Tout' },
+                    { id: 'bank', label: 'Banques' },
+                    { id: 'mobile_money', label: 'Mobile Money' },
+                    { id: 'payment', label: 'Paiement' },
+                    { id: 'other', label: 'Autres' },
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={cn(
+                            'rounded-xl px-4 py-2 text-xs font-black tracking-widest uppercase transition-all',
+                            activeTab === tab.id
+                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10'
+                                : 'bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600',
+                        )}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {institutions.map((inst: Institution) => (
+                {filteredInstitutions.map((inst: Institution) => (
                     <motion.div
                         key={inst.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -400,7 +547,11 @@ export default function InstitutionManager() {
                                     'flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg transition-transform group-hover:rotate-6',
                                     inst.type === 'bank'
                                         ? 'bg-slate-900 text-white shadow-slate-900/10'
-                                        : 'bg-emerald-500 text-white shadow-emerald-500/10',
+                                        : inst.type === 'payment'
+                                          ? 'bg-indigo-500 text-white shadow-indigo-500/10'
+                                          : inst.type === 'other'
+                                            ? 'bg-amber-500 text-white shadow-amber-500/10'
+                                            : 'bg-emerald-500 text-white shadow-emerald-500/10',
                                 )}
                             >
                                 {inst.logo_url ? (
@@ -411,6 +562,10 @@ export default function InstitutionManager() {
                                     />
                                 ) : inst.type === 'bank' ? (
                                     <Building2 className="h-7 w-7" />
+                                ) : inst.type === 'payment' ? (
+                                    <Globe className="h-7 w-7" />
+                                ) : inst.type === 'other' ? (
+                                    <Globe className="h-7 w-7" />
                                 ) : (
                                     <Smartphone className="h-7 w-7" />
                                 )}
@@ -491,7 +646,11 @@ export default function InstitutionManager() {
                                 <span className="text-[10px] font-bold text-indigo-500 uppercase">
                                     {inst.type === 'bank'
                                         ? 'Banque'
-                                        : 'Mobile Money'}
+                                        : inst.type === 'payment'
+                                          ? 'Service de Paiement'
+                                          : inst.type === 'other'
+                                            ? 'Autre Service'
+                                            : 'Mobile Money'}
                                 </span>
                             </div>
                         </div>
@@ -615,6 +774,234 @@ export default function InstitutionManager() {
                                             </button>
                                         );
                                     })}
+                                </div>
+
+                                <div className="mt-8 space-y-4">
+                                    <h4 className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                                        <Plus className="h-3 w-3" />
+                                        Ajouter un champ personnalisé
+                                    </h4>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex gap-2">
+                                            <Input
+                                                placeholder="ex: Code Agence..."
+                                                value={customFieldName}
+                                                onChange={(e) =>
+                                                    setCustomFieldName(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="h-12 rounded-xl border-slate-200"
+                                            />
+                                            <Select
+                                                value={customFieldOp}
+                                                onValueChange={(v: any) =>
+                                                    setCustomFieldOp(v)
+                                                }
+                                            >
+                                                <SelectTrigger className="h-12 w-32 rounded-xl border-slate-200">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    <SelectItem value="depot">
+                                                        Dépôt
+                                                    </SelectItem>
+                                                    <SelectItem value="retrait">
+                                                        Retrait
+                                                    </SelectItem>
+                                                    <SelectItem value="both">
+                                                        Les deux
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Button
+                                                onClick={() => {
+                                                    if (
+                                                        customFieldName.trim()
+                                                    ) {
+                                                        const inst =
+                                                            institutions.find(
+                                                                (i) =>
+                                                                    i.id ===
+                                                                    configId,
+                                                            );
+                                                        addCustomFieldMutation.mutate(
+                                                            {
+                                                                institution:
+                                                                    inst!,
+                                                                label: customFieldName,
+                                                                operation_type:
+                                                                    customFieldOp,
+                                                            },
+                                                        );
+                                                    }
+                                                }}
+                                                disabled={
+                                                    !customFieldName.trim() ||
+                                                    addCustomFieldMutation.isPending
+                                                }
+                                                className="h-12 rounded-xl bg-indigo-600 px-4 text-white hover:bg-indigo-700"
+                                            >
+                                                {addCustomFieldMutation.isPending ? (
+                                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Plus className="h-4 w-4" />
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {(
+                                            institutions.find(
+                                                (i) => i.id === configId,
+                                            )?.settings?.custom_fields || []
+                                        ).map((field: any) => (
+                                            <div
+                                                key={field.id}
+                                                className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3"
+                                            >
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-slate-700">
+                                                        {field.label}
+                                                    </span>
+                                                    <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                                        {field.operation_type ===
+                                                        'depot'
+                                                            ? 'Dépôt'
+                                                            : field.operation_type ===
+                                                                'retrait'
+                                                              ? 'Retrait'
+                                                              : 'Les deux'}
+                                                    </span>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        const inst =
+                                                            institutions.find(
+                                                                (i) =>
+                                                                    i.id ===
+                                                                    configId,
+                                                            );
+                                                        removeCustomFieldMutation.mutate(
+                                                            {
+                                                                institution:
+                                                                    inst!,
+                                                                fieldId:
+                                                                    field.id,
+                                                            },
+                                                        );
+                                                    }}
+                                                    className="h-8 w-8 text-slate-400 hover:text-red-500"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 space-y-4 border-t border-slate-100 pt-6">
+                                    <h4 className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                                        <ShieldCheck className="h-3 w-3" />
+                                        Infos Agent (Retrait)
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div className="space-y-1">
+                                            <Label className="ml-1 text-[10px] font-bold text-slate-500">
+                                                Nom de l'Agent
+                                            </Label>
+                                            <Input
+                                                placeholder="ex: HAVIFIN BOUTIQUE"
+                                                defaultValue={
+                                                    institutions.find(
+                                                        (i) =>
+                                                            i.id === configId,
+                                                    )?.settings
+                                                        ?.withdrawal_agent_name ||
+                                                    ''
+                                                }
+                                                onBlur={(e) => {
+                                                    const inst =
+                                                        institutions.find(
+                                                            (i) =>
+                                                                i.id ===
+                                                                configId,
+                                                        );
+                                                    if (
+                                                        inst &&
+                                                        e.target.value !==
+                                                            (inst.settings
+                                                                ?.withdrawal_agent_name ||
+                                                                '')
+                                                    ) {
+                                                        updateAgentInfoMutation.mutate(
+                                                            {
+                                                                institution:
+                                                                    inst,
+                                                                name: e.target
+                                                                    .value,
+                                                                number:
+                                                                    inst
+                                                                        .settings
+                                                                        ?.withdrawal_agent_number ||
+                                                                    '',
+                                                            },
+                                                        );
+                                                    }
+                                                }}
+                                                className="h-10 rounded-xl border-slate-200 text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="ml-1 text-[10px] font-bold text-slate-500">
+                                                Numéro de l'Agent
+                                            </Label>
+                                            <Input
+                                                placeholder="ex: 123456"
+                                                defaultValue={
+                                                    institutions.find(
+                                                        (i) =>
+                                                            i.id === configId,
+                                                    )?.settings
+                                                        ?.withdrawal_agent_number ||
+                                                    ''
+                                                }
+                                                onBlur={(e) => {
+                                                    const inst =
+                                                        institutions.find(
+                                                            (i) =>
+                                                                i.id ===
+                                                                configId,
+                                                        );
+                                                    if (
+                                                        inst &&
+                                                        e.target.value !==
+                                                            (inst.settings
+                                                                ?.withdrawal_agent_number ||
+                                                                '')
+                                                    ) {
+                                                        updateAgentInfoMutation.mutate(
+                                                            {
+                                                                institution:
+                                                                    inst,
+                                                                name:
+                                                                    inst
+                                                                        .settings
+                                                                        ?.withdrawal_agent_name ||
+                                                                    '',
+                                                                number: e.target
+                                                                    .value,
+                                                            },
+                                                        );
+                                                    }
+                                                }}
+                                                className="h-10 rounded-xl border-slate-200 text-sm"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <Button

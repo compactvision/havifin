@@ -14,6 +14,7 @@ import {
     X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Toaster } from 'sonner';
 
 const navigation = [
     {
@@ -266,6 +267,7 @@ export default function AppMain({ children, currentPageName }: any) {
                     </motion.div>
                 )}
             </AnimatePresence>
+            <Toaster position="top-right" expand={true} richColors={true} />
         </div>
     );
 }

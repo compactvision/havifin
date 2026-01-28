@@ -71,7 +71,7 @@ class UserSeeder extends Seeder
         // SA1 Advertisement
         \App\Models\Advertisement::create([
             'title' => 'Promo SA1',
-            'image_url' => 'https://via.placeholder.com/1920x1080/0000FF/808080?text=Promo+SA1',
+            'image_url' => 'https://placehold.co/1920x1080/0000FF/808080?text=Promo+SA1',
             'is_active' => true,
             'owner_id' => $sa1->id,
         ]);
@@ -115,7 +115,7 @@ class UserSeeder extends Seeder
         // SA2 Advertisement
         \App\Models\Advertisement::create([
             'title' => 'Promo SA2',
-            'image_url' => 'https://via.placeholder.com/1920x1080/FF0000/FFFFFF?text=Promo+SA2',
+            'image_url' => 'https://placehold.co/1920x1080/FF0000/FFFFFF?text=Promo+SA2',
             'is_active' => true,
             'owner_id' => $sa2->id,
         ]);

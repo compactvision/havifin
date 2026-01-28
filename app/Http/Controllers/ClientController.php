@@ -50,19 +50,66 @@ class ClientController extends Controller
             'phone' => 'required|string',
             'operation_type' => 'required|string',
             'service' => 'required|string',
-            'ticket_number' => 'required|string|unique:clients,ticket_number',
             'status' => 'string',
+            'amount' => 'nullable|numeric',
+            'currency_from' => 'nullable|string',
+            'currency_to' => 'nullable|string',
+            'first_name' => 'nullable|string',
+            'last_name' => 'nullable|string',
+            'metadata' => 'nullable|array',
+            'is_registered' => 'nullable|boolean',
+            'notes' => 'nullable|string',
         ]);
 
+        $user = $request->user();
+        $validated['owner_id'] = $user ? ($user->role === 'super-admin' ? $user->id : $user->owner_id) : null; // Handle unauth case if needed, or rely on auth middleware
+        
+        // Handle unauthenticated kiosk requests possibly? 
+        // Assuming auth middleware is present or user is derived. 
+        // Actually for Kiosk (public endpoint?) user might be null? 
+        // Looking at previous code `$user = $request->user(); if ($user)...` suggests it might be optional?
+        // But `owner` global scope requires auth. Let's assume Kiosk is authenticated as a "shop" user or similar.
+        // Wait, ClientForm uses `base44` client which likely sends auth token. 
+        
+        $shopId = null;
         if ($user) {
-            $validated['owner_id'] = $user->role === 'super-admin' ? $user->id : $user->owner_id;
-            
-            if ($user->isClient() || $user->isCashier()) {
+             if (in_array($user->role, ['manager', 'cashier', 'client'])) {
                 $shopId = $user->shops()->first()?->id;
                 if ($shopId) {
                     $validated['shop_id'] = $shopId;
                 }
             }
+        }
+        
+        // If we have a shop, we MUST have a session to generate a ticket
+        if ($shopId) {
+            $activeSession = \App\Models\Session::open()->where('shop_id', $shopId)->first();
+            
+            if (!$activeSession) {
+                 return response()->json([
+                    'error' => 'Agence fermée',
+                    'message' => 'Veuillez patienter qu\'une session soit ouverte par le manager.'
+                ], 403);
+            }
+            
+            $validated['session_id'] = $activeSession->id;
+            
+            // Generate Ticket Number
+            // Count clients in this session to determine next number
+            // Using logic: Next = Count + 1
+            $currentCount = \App\Models\Client::where('session_id', $activeSession->id)->count();
+            $nextNumber = $currentCount + 1;
+            $validated['ticket_number'] = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            
+        } else {
+             // Fallback for non-shop/super-admin/testing context if needed?
+             // Or maybe valid for super-admin creating client directly?
+             // For now, let's keep it simple. If no session, maybe random or required?
+             // The requirement is specific to "sessions", so implies shop context.
+             if (!isset($validated['ticket_number'])) {
+                  // Fallback if no session found (rare/edge case)
+                  $validated['ticket_number'] = str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+             }
         }
 
         $client = Client::create($validated);

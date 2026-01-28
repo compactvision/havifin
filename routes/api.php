@@ -19,7 +19,6 @@ use App\Http\Controllers\Api\CounterController;
 use App\Http\Controllers\Api\NewsController;
 
 // Authentication & Session-Based API Routes
-// Authentication & Session-Based API Routes
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
 Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
@@ -81,6 +80,7 @@ Route::post('/clients/add-phone', [ClientVerificationController::class, 'addPhon
 // Sessions (Maybe should be protected, but for now kept as before)
 Route::get('/sessions/current', [SessionController::class, 'current']);
 Route::post('/sessions/{id}/close', [SessionController::class, 'close']);
+Route::post('/sessions/{id}/reopen', [SessionController::class, 'reopen']);
 Route::get('/sessions/{id}/report', [SessionController::class, 'report']);
 Route::get('/sessions', [SessionController::class, 'index']);
 Route::post('/sessions', [SessionController::class, 'store']);

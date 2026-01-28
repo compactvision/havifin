@@ -41,7 +41,7 @@ class InstitutionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'type' => 'required|in:mobile_money,bank',
+            'type' => 'required|in:mobile_money,bank,payment,other',
             'code' => 'required|string|max:255|unique:institutions,code',
             'logo' => 'nullable|image|max:2048', // Allow image upload
             'is_active' => 'boolean',
@@ -95,7 +95,7 @@ class InstitutionController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
-            'type' => 'sometimes|required|in:mobile_money,bank',
+            'type' => 'sometimes|required|in:mobile_money,bank,payment,other',
             'code' => 'sometimes|required|string|max:255|unique:institutions,code,' . $institution->id,
             'logo' => $logoValidation,
             'is_active' => 'sometimes', // Can be boolean or "1"/"0" string from FormData

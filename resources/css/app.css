@@ -160,3 +160,42 @@
         @apply bg-background text-foreground;
     }
 }
+
+@media print {
+    @page {
+        margin: 0;
+        size: 58mm auto; /* Explicit thermal paper size */
+    }
+
+    /* Hide EVERYTHING by default */
+    html,
+    body,
+    #app,
+    main,
+    div,
+    section,
+    header,
+    footer,
+    button,
+    nav {
+        display: none !important;
+    }
+
+    /* ONLY show the printable ticket */
+    #printable-ticket,
+    #printable-ticket * {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    #printable-ticket {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 58mm !important;
+        margin: 0;
+        padding: 5px;
+        background: white !important;
+        color: black !important;
+    }
+}

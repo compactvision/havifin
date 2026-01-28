@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import InstitutionManager from '@/components/manager/InstitutionManager';
 import RatesManager from '@/components/manager/RatesManager';
+import SessionManager from '@/components/manager/SessionManager';
 import ShopManager from '@/components/manager/ShopManager';
 import { StatsCard } from '@/components/manager/StatsCard';
 import { TransactionsTable } from '@/components/manager/TransactionsTable';
@@ -19,6 +20,7 @@ import {
     Landmark,
     LayoutDashboard,
     PieChart,
+    Play,
     RefreshCw,
     Search,
     Settings,
@@ -235,6 +237,11 @@ export default function Manager() {
                                                 label: 'Journal Activité',
                                                 icon: Activity,
                                             },
+                                            {
+                                                id: 'sessions',
+                                                label: 'Gestion Sessions',
+                                                icon: Play,
+                                            },
                                             ...(isSuperAdmin
                                                 ? [
                                                       {
@@ -405,6 +412,12 @@ export default function Manager() {
                                         {activeTab === 'shops' && (
                                             <div className="animate-in duration-300 fade-in">
                                                 <ShopManager />
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'sessions' && (
+                                            <div className="animate-in duration-300 fade-in">
+                                                <SessionManager />
                                             </div>
                                         )}
 

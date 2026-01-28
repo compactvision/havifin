@@ -1,13 +1,13 @@
 import { Institution } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { Building2, Landmark, Smartphone } from 'lucide-react';
+import { Building2, Globe, Landmark, Smartphone } from 'lucide-react';
 
 interface InstitutionSelectorProps {
     institutions: Institution[];
     selectedId?: number;
     onSelect: (id: number) => void;
-    type: 'mobile_money' | 'bank';
+    type: 'mobile_money' | 'bank' | 'payment' | 'other';
 }
 
 export default function InstitutionSelector({
@@ -18,14 +18,43 @@ export default function InstitutionSelector({
 }: InstitutionSelectorProps) {
     const filtered = institutions.filter((inst) => inst.type === type);
 
-    const Icon = type === 'mobile_money' ? Smartphone : Building2;
+    const getIcon = () => {
+        switch (type) {
+            case 'mobile_money':
+                return Smartphone;
+            case 'bank':
+                return Building2;
+            case 'payment':
+            case 'other':
+                return Globe;
+            default:
+                return Building2;
+        }
+    };
+
+    const getTitle = () => {
+        switch (type) {
+            case 'mobile_money':
+                return 'Opérateurs Mobile';
+            case 'bank':
+                return 'Banques';
+            case 'payment':
+                return 'Services de Paiement';
+            case 'other':
+                return 'Autres Partenaires';
+            default:
+                return 'Institutions';
+        }
+    };
+
+    const Icon = getIcon();
 
     return (
         <div className="space-y-4">
             <div className="mb-2 flex items-center gap-2">
                 <Icon className="h-5 w-5 text-blue-500" />
                 <h3 className="text-lg font-bold text-slate-800">
-                    {type === 'mobile_money' ? 'Opérateurs Mobile' : 'Banques'}
+                    {getTitle()}
                 </h3>
             </div>
 

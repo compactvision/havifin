@@ -33,8 +33,22 @@ class TransactionController extends Controller
 
         if ($user) {
             $validated['cashier_email'] = $user->email;
-            $validated['owner_id'] = $user->owner_id ?: $user->id; // If super-admin, owner_id is their id
-            $validated['shop_id'] = $user->shops()->first()?->id;
+            $validated['owner_id'] = $user->owner_id ?: $user->id;
+            
+            $shopId = $user->shops()->first()?->id;
+            if ($shopId) {
+                $validated['shop_id'] = $shopId;
+                
+                // Enforce active session
+                $activeSession = \App\Models\Session::open()->where('shop_id', $shopId)->first();
+                if (!$activeSession) {
+                    return response()->json([
+                        'error' => 'Session requise',
+                        'message' => 'Aucune session active pour cette boutique.'
+                    ], 403);
+                }
+                $validated['session_id'] = $activeSession->id;
+            }
         }
 
         $transaction = Transaction::create($validated);

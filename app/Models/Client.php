@@ -31,6 +31,8 @@ class Client extends Model
         'notes',
         'shop_id',
         'owner_id',
+        'metadata',
+        'session_id',
     ];
 
     protected $casts = [
@@ -38,6 +40,7 @@ class Client extends Model
         'completed_at' => 'datetime',
         'amount' => 'decimal:2',
         'is_registered' => 'boolean',
+        'metadata' => 'array',
     ];
 
     /**
@@ -80,6 +83,14 @@ class Client extends Model
     public function shop()
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    /**
+     * Get the session this client ticket belongs to.
+     */
+    public function session()
+    {
+        return $this->belongsTo(Session::class);
     }
 
     /**

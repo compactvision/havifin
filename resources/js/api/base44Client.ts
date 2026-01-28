@@ -65,12 +65,20 @@ export interface ExchangeRate {
 export interface Institution {
     id: number;
     name: string;
-    type: 'mobile_money' | 'bank' | 'other';
+    type: 'mobile_money' | 'bank' | 'payment' | 'other';
     code: string;
     logo_url?: string;
     is_active: boolean;
     settings?: {
         required_fields: string[];
+        withdrawal_agent_name?: string;
+        withdrawal_agent_number?: string;
+        custom_fields?: {
+            id: string;
+            label: string;
+            type: string;
+            operation_type?: 'depot' | 'retrait' | 'both';
+        }[];
     };
 }
 
@@ -83,6 +91,8 @@ export interface Session {
     closed_at?: string;
     status: 'open' | 'closed';
     notes?: string;
+    shop_id: number;
+    shop?: Shop;
 }
 
 export interface ExchangeRateHistory {
@@ -166,6 +176,26 @@ export interface Counter {
     cashier_id?: number;
     cashier?: User;
     is_active: boolean;
+}
+
+export interface PaginatedResponse<T> {
+    current_page: number;
+    data: T[];
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+    }[];
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
 }
 
 const handleResponse = <T>(response: any): T => response.data;
@@ -286,17 +316,32 @@ export const base44 = {
                 axios
                     .get<Session | null>('/api/sessions/current')
                     .then(handleResponse),
-            list: (params?: { status?: string }) =>
+            list: (params?: {
+                status?: string;
+                shop_id?: string;
+                date?: string;
+                page?: string;
+            }) =>
                 axios
-                    .get<Session[]>('/api/sessions', { params })
-                    .then(handleResponse<Session[]>),
-            create: (data: { session_date: string; notes?: string }) =>
+                    .get<
+                        PaginatedResponse<Session>
+                    >('/api/sessions', { params })
+                    .then(handleResponse<PaginatedResponse<Session>>),
+            create: (data: {
+                session_date: string;
+                shop_id: number;
+                notes?: string;
+            }) =>
                 axios
                     .post<Session>('/api/sessions', data)
                     .then(handleResponse<Session>),
             close: (id: number) =>
                 axios
                     .post<Session>(`/api/sessions/${id}/close`)
+                    .then(handleResponse<Session>),
+            reopen: (id: number) =>
+                axios
+                    .post<Session>(`/api/sessions/${id}/reopen`)
                     .then(handleResponse<Session>),
             report: (id: number) =>
                 axios.get(`/api/sessions/${id}/report`).then(handleResponse),

@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, RefreshCw, Ticket } from 'lucide-react';
+import { CheckCircle2, Clock, Printer, RefreshCw, Ticket } from 'lucide-react';
+import { useEffect } from 'react';
+import { PrintableTicket } from './PrintableTicket';
 
 interface TicketSuccessProps {
     ticketNumber: string | null;
@@ -11,6 +13,19 @@ export default function TicketSuccess({
     ticketNumber,
     onNewTicket,
 }: TicketSuccessProps) {
+    useEffect(() => {
+        if (ticketNumber) {
+            // Short delay to ensure component is rendered
+            const timer = setTimeout(() => {
+                window.print();
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [ticketNumber]);
+
+    const handleManualPrint = () => {
+        window.print();
+    };
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -88,6 +103,19 @@ export default function TicketSuccess({
                     <RefreshCw className="mr-2 h-5 w-5 text-blue-500" />
                     Nouvelle opération
                 </Button>
+
+                <Button
+                    onClick={handleManualPrint}
+                    variant="ghost"
+                    className="ml-4 h-14 rounded-2xl border-none bg-white/10 px-10 font-black tracking-tight text-white shadow-none transition-all hover:bg-white/20 active:scale-95"
+                >
+                    <Printer className="mr-2 h-5 w-5 text-indigo-400" />
+                    Réimprimer
+                </Button>
+
+                {ticketNumber && (
+                    <PrintableTicket ticketNumber={ticketNumber} />
+                )}
             </motion.div>
         </motion.div>
     );

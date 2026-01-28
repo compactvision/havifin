@@ -25,6 +25,7 @@ class Transaction extends Model
         'client_phone',
         'owner_id',
         'shop_id',
+        'session_id',
     ];
 
     protected $casts = [
@@ -56,6 +57,14 @@ class Transaction extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Get the session this transaction belongs to.
+     */
+    public function session()
+    {
+        return $this->belongsTo(Session::class);
     }
 
     /**
