@@ -24,6 +24,7 @@ import { motion } from 'framer-motion';
 import {
     ArrowLeft,
     Image as ImageIcon,
+    Monitor,
     Newspaper,
     Plus,
     Store,
@@ -460,6 +461,19 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
 
                     <div className="flex flex-wrap items-center gap-6">
                         <div className="flex gap-3">
+                            <Button
+                                onClick={() =>
+                                    window.open(
+                                        `/display?shop_id=${shop.id}`,
+                                        '_blank',
+                                    )
+                                }
+                                variant="outline"
+                                className="h-12 rounded-2xl border border-purple-100 bg-purple-50/50 px-6 font-bold text-purple-600 hover:bg-purple-100/50"
+                            >
+                                <Monitor className="mr-2 h-4 w-4" />
+                                Lancer l'écran TV
+                            </Button>
                             <Button
                                 onClick={() => setIsCreatingCashier(true)}
                                 className="h-12 rounded-2xl border border-indigo-100 bg-indigo-50/50 px-6 font-bold text-indigo-600 hover:bg-indigo-100/50"

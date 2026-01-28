@@ -70,7 +70,7 @@ Route::get('/news/active', [NewsController::class, 'active']);
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/institutions/active', [InstitutionController::class, 'active']);
 Route::get('/institutions', [InstitutionController::class, 'index']);
-Route::get('/exchange-rates', [ExchangeRateController::class, 'index']);
+Route::apiResource('exchange-rates', ExchangeRateController::class);
 
 // Client Verification & Registration (Public for ClientForm)
 Route::post('/clients/verify-phone', [ClientVerificationController::class, 'verifyPhone']);
