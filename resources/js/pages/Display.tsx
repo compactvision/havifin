@@ -1,7 +1,9 @@
 import { base44, Client } from '@/api/base44Client';
 import AdCarousel from '@/components/display/AdCarousel';
+import NewsTicker from '@/components/display/NewsTicker';
 import RateTicker from '@/components/display/RateTicker';
 import { cn } from '@/lib/utils';
+import { Link, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -175,6 +177,12 @@ export default function Display() {
         };
     }, [mostRecentCalled?.id, mostRecentCalled?.called_at]);
 
+    const { auth } = usePage().props as any;
+    const canConfigure =
+        auth.user?.role === 'manager' || auth.user?.role === 'super-admin';
+    const configLink =
+        auth.user?.role === 'super-admin' ? '/admin/shops' : '/manager/shops';
+
     if (!shopId) {
         return (
             <div
@@ -212,6 +220,16 @@ export default function Display() {
                         <strong>"Lancer l'écran TV"</strong> depuis le tableau
                         de bord Manager pour configurer cet affichage.
                     </p>
+
+                    {canConfigure && (
+                        <div className="mt-8">
+                            <Link href={configLink}>
+                                <button className="rounded-2xl bg-indigo-600 px-8 py-4 text-sm font-black tracking-widest text-white uppercase shadow-xl transition-all hover:scale-105 hover:bg-indigo-700 active:scale-95">
+                                    Configurer l'Affichage
+                                </button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
         );
