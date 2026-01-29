@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import axios from '@/lib/axios';
+import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { AlertCircle, Lock, LogIn, Mail } from 'lucide-react';
 import { useState } from 'react';
@@ -57,6 +58,7 @@ export default function Login() {
 
     return (
         <div className="relative min-h-screen overflow-hidden">
+            <Head title="Connexion" />
             <div className="fixed inset-0 z-0">
                 <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"

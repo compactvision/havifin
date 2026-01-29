@@ -3,7 +3,7 @@ import AdCarousel from '@/components/display/AdCarousel';
 import NewsTicker from '@/components/display/NewsTicker';
 import RateTicker from '@/components/display/RateTicker';
 import { cn } from '@/lib/utils';
-import { Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronRight, Monitor, Users } from 'lucide-react';
@@ -232,6 +232,7 @@ export default function Display() {
                     : 'bg-gradient-to-br from-brand-white via-white to-brand-blue/10 text-brand-dark',
             )}
         >
+            <Head title="Affichage" />  
             {/* Background Ambient Glows */}
             {isDarkMode ? (
                 <>

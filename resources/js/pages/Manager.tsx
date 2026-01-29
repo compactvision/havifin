@@ -9,7 +9,7 @@ import { UserManagement } from '@/components/manager/UserManagement';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
-import { usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -94,6 +94,7 @@ export default function Manager() {
 
     return (
         <AppMain currentPageName="Manager">
+            <Head title="Manager" />
             <div className="flex flex-col overflow-hidden bg-[#f8fafc]">
                 {/* Manager Header */}
                 <header className="z-20 flex h-24 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">

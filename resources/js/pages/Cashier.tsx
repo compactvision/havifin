@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
-import { usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -136,6 +136,7 @@ export default function Cashier() {
 
     return (
         <AppMain currentPageName="Tableau de Bord Caissier">
+            <Head title="Tableau de Bord Caissier" />
             <div className="flex flex-col overflow-hidden bg-slate-50">
                 {/* Dashboard Header */}
                 <header className="z-20 flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">

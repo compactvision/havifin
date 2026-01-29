@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppMain from '@/layouts/app-main';
-import { usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -1276,6 +1276,7 @@ export default function ClientForm() {
 
     return (
         <AppMain currentPageName="Client">
+            <Head title="Client" />
             <div className="relative flex h-screen w-screen flex-col overflow-hidden">
                 {/* Session Check Overlay */}
                 <AnimatePresence>
