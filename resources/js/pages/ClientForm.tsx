@@ -380,15 +380,15 @@ export default function ClientForm() {
                         className="space-y-8"
                     >
                         <div className="text-center">
-                            <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/20 bg-gradient-to-br from-cyan-400/20 to-purple-500/20 shadow-xl shadow-purple-500/20 backdrop-blur-xl transition-transform group-hover:scale-110">
-                                <Phone className="h-12 w-12 text-slate-800 transition-transform group-hover:rotate-12" />
+                            <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/20 bg-gradient-to-br from-brand-cyan/20 to-brand-purple/20 shadow-xl shadow-brand-purple/20 backdrop-blur-xl transition-transform group-hover:scale-110">
+                                <Phone className="h-12 w-12 text-brand-dark transition-transform group-hover:rotate-12" />
                             </div>
                             <h2 className="text-4xl font-black tracking-tight text-slate-800 drop-shadow-sm">
                                 {showRegistration
                                     ? 'Nouvelle Inscription'
                                     : 'Bienvenue chez Havifin'}
                             </h2>
-                            <p className="mt-3 text-lg font-bold tracking-[0.2em] text-blue-600 uppercase">
+                            <p className="mt-3 text-lg font-bold tracking-[0.2em] text-brand-blue uppercase">
                                 {auth.user?.shop}
                             </p>
                             <p className="mt-2 text-lg font-medium text-slate-600">
@@ -401,7 +401,7 @@ export default function ClientForm() {
                         <div className="mx-auto max-w-lg space-y-6">
                             {!existingClient && !showRegistration && (
                                 <div className="group relative">
-                                    <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-cyan-400/40 via-purple-500/40 to-pink-500/40 opacity-60 blur-xl transition duration-1000 group-hover:opacity-100 group-hover:duration-200"></div>
+                                    <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-brand-cyan/40 via-brand-purple/40 to-brand-pink/40 opacity-60 blur-xl transition duration-1000 group-hover:opacity-100 group-hover:duration-200"></div>
                                     <Input
                                         type="tel"
                                         inputMode="numeric"
@@ -422,7 +422,7 @@ export default function ClientForm() {
                                     />
                                     {isVerifying && (
                                         <div className="absolute top-1/2 right-6 -translate-y-1/2">
-                                            <Loader2 className="h-6 w-6 animate-spin text-cyan-300" />
+                                            <Loader2 className="h-6 w-6 animate-spin text-brand-cyan" />
                                         </div>
                                     )}
                                 </div>
@@ -489,7 +489,7 @@ export default function ClientForm() {
                                                             {client.phone}
                                                         </p>
                                                     </div>
-                                                    <ArrowRight className="h-4 w-4 text-cyan-600" />
+                                                    <ArrowRight className="h-4 w-4 text-brand-cyan" />
                                                 </div>
                                             ))}
                                         </div>
@@ -517,7 +517,7 @@ export default function ClientForm() {
                                         <span className="text-sm font-bold text-slate-600">
                                             Numéro à enregistrer
                                         </span>
-                                        <span className="font-mono text-xl font-black text-cyan-600">
+                                        <span className="font-mono text-xl font-black text-brand-cyan">
                                             {formData.phone}
                                         </span>
                                     </div>
@@ -607,7 +607,7 @@ export default function ClientForm() {
                                     <Button
                                         variant="outline"
                                         onClick={() => setShowLinkAccount(true)}
-                                        className="h-14 w-full rounded-2xl border-2 border-dashed border-cyan-200 bg-cyan-50 font-bold text-cyan-700 hover:bg-cyan-100"
+                                        className="h-14 w-full rounded-2xl border-2 border-dashed border-brand-cyan/40 bg-brand-cyan/10 font-bold text-brand-cyan hover:bg-brand-cyan/20"
                                     >
                                         Déjà client ? Lier ce numéro
                                     </Button>
@@ -629,13 +629,13 @@ export default function ClientForm() {
                             <motion.span
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="mb-2 inline-block rounded-full bg-blue-50 px-4 py-1 text-xs font-black tracking-widest text-blue-600 uppercase"
+                                className="mb-2 inline-block rounded-full bg-brand-blue/10 px-4 py-1 text-xs font-black tracking-widest text-brand-blue uppercase"
                             >
                                 Étape 2 • Opération
                             </motion.span>
                             <h2 className="text-4xl font-black tracking-tight text-slate-900">
                                 Bonjour{' '}
-                                <span className="text-blue-600">
+                                <span className="text-brand-blue">
                                     {existingClient?.first_name ||
                                         formData.first_name}
                                 </span>
@@ -1276,7 +1276,7 @@ export default function ClientForm() {
 
     return (
         <AppMain currentPageName="Client">
-            <div className="relative min-h-screen overflow-hidden">
+            <div className="relative flex h-screen w-screen flex-col overflow-hidden">
                 {/* Session Check Overlay */}
                 <AnimatePresence>
                     {!isLoadingSession && !currentSession && (
@@ -1355,96 +1355,88 @@ export default function ClientForm() {
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-slate-900/20 to-slate-900/40" />
                 </div>
 
-                <div className="relative z-10 mx-auto max-w-5xl px-4 py-12">
-                    <div className="mb-12 text-center">
-                        <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-center"
-                        >
-                            <div className="group relative mb-12">
-                                <div className="absolute -inset-12 rounded-full bg-gradient-to-tr from-cyan-400/30 via-purple-500/30 to-pink-500/30 opacity-60 blur-3xl transition-all duration-700 group-hover:scale-110 group-hover:opacity-100" />
-                                <div className="relative flex h-40 w-40 items-center justify-center rounded-[48px] border border-white/30 bg-white/10 p-8 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-white/50 group-hover:bg-white/20">
-                                    <img
-                                        src="/logo.png"
-                                        alt="Havifin"
-                                        className="h-full w-full object-contain drop-shadow-2xl"
-                                    />
-                                    <div className="absolute inset-0 rounded-[48px] bg-gradient-to-tr from-cyan-400/10 via-purple-500/10 to-pink-500/10 opacity-0 transition-opacity group-hover:opacity-100" />
-                                </div>
-                            </div>
-                            <h1 className="mb-2 text-5xl font-black tracking-tight drop-shadow-lg">
-                                <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 bg-clip-text text-transparent">
+                <div className="relative z-10 flex w-full flex-1 flex-col overflow-hidden px-4 pb-4">
+                    {/* Compact Header */}
+                    <div className="flex shrink-0 items-center justify-between py-4">
+                        <div className="flex items-center gap-4 rounded-full bg-white/10 px-6 py-2 backdrop-blur-md">
+                            <img
+                                src="/logo.png"
+                                alt="Havifin"
+                                className="h-10 w-10 object-contain"
+                            />
+                            <div>
+                                <h1 className="text-xl font-black tracking-tight text-white uppercase">
                                     Havifin
-                                </span>
-                                <span className="mx-2 text-white/40">|</span>
-                                <span className="text-white/90">
+                                </h1>
+                                <p className="text-[10px] font-bold tracking-widest text-white/60 uppercase">
                                     Smart Ticket
-                                </span>
-                            </h1>
-                            <p className="text-lg font-bold tracking-widest text-white/60 uppercase">
-                                Bureau de Change & Services
-                            </p>
-                        </motion.div>
-                    </div>
-
-                    <div className="rounded-[40px] border border-white/20 bg-white/60 p-8 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl md:p-12">
-                        <AnimatePresence mode="wait">
-                            {renderStep()}
-                        </AnimatePresence>
-
-                        {step < 3 && (
-                            <div className="mt-12 flex justify-center gap-4">
-                                {step === 2 && (
-                                    <Button
-                                        variant="ghost"
-                                        onClick={handleNewTicket}
-                                        size="lg"
-                                        className="h-16 rounded-3xl border border-white/30 bg-white/20 px-16 text-xl font-bold text-slate-600 shadow-xl backdrop-blur-xl transition-all hover:bg-white/40 hover:text-red-500"
-                                    >
-                                        Annuler
-                                    </Button>
-                                )}
-                                <Button
-                                    onClick={handleNext}
-                                    disabled={
-                                        !canProceed() ||
-                                        createClientMutation.isPending ||
-                                        registerMutation.isPending ||
-                                        isVerifying
-                                    }
-                                    size="lg"
-                                    className="h-16 rounded-3xl border border-white/30 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 px-16 text-xl font-bold text-white shadow-2xl shadow-cyan-500/30 backdrop-blur-xl transition-all hover:scale-[1.02] hover:border-white/50 hover:shadow-cyan-500/50 active:scale-[0.98]"
-                                >
-                                    {createClientMutation.isPending ||
-                                    registerMutation.isPending ? (
-                                        <>
-                                            <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                                            Traitement...
-                                        </>
-                                    ) : (
-                                        <>
-                                            {step === 1 && 'Continuer'}
-                                            {step === 2 && 'Confirmer'}
-                                            <ArrowRight className="ml-3 h-6 w-6" />
-                                        </>
-                                    )}
-                                </Button>
+                                </p>
                             </div>
-                        )}
+                        </div>
                     </div>
 
-                    {/* Footsteps */}
-                    {step < 3 && (
-                        <div className="mt-12 flex justify-center gap-4">
-                            {[1, 2].map((i) => (
-                                <div
-                                    key={i}
-                                    className={`h-2 rounded-full transition-all duration-500 ${step === i ? 'w-12 bg-blue-600' : 'w-2 bg-slate-200'}`}
-                                />
-                            ))}
+                    {/* Scrollable Form Container */}
+                    <div className="scrollbar-hide flex-1 overflow-y-auto">
+                        <div className="mx-auto max-w-5xl">
+                            <div className="rounded-[40px] border border-white/20 bg-white/60 p-8 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl md:p-12">
+                                <AnimatePresence mode="wait">
+                                    {renderStep()}
+                                </AnimatePresence>
+
+                                {step < 3 && (
+                                    <div className="mt-12 flex justify-center gap-4">
+                                        {step === 2 && (
+                                            <Button
+                                                variant="ghost"
+                                                onClick={handleNewTicket}
+                                                size="lg"
+                                                className="h-16 rounded-3xl border border-white/30 bg-white/20 px-16 text-xl font-bold text-slate-600 shadow-xl backdrop-blur-xl transition-all hover:bg-white/40 hover:text-red-500"
+                                            >
+                                                Annuler
+                                            </Button>
+                                        )}
+                                        <Button
+                                            onClick={handleNext}
+                                            disabled={
+                                                !canProceed() ||
+                                                createClientMutation.isPending ||
+                                                registerMutation.isPending ||
+                                                isVerifying
+                                            }
+                                            size="lg"
+                                            className="h-16 rounded-3xl border border-white/30 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 px-16 text-xl font-bold text-white shadow-2xl shadow-cyan-500/30 backdrop-blur-xl transition-all hover:scale-[1.02] hover:border-white/50 hover:shadow-cyan-500/50 active:scale-[0.98]"
+                                        >
+                                            {createClientMutation.isPending ||
+                                            registerMutation.isPending ? (
+                                                <>
+                                                    <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                                                    Traitement...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {step === 1 && 'Continuer'}
+                                                    {step === 2 && 'Confirmer'}
+                                                    <ArrowRight className="ml-3 h-6 w-6" />
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footsteps */}
+                            {step < 3 && (
+                                <div className="mt-12 flex justify-center gap-4">
+                                    {[1, 2].map((i) => (
+                                        <div
+                                            key={i}
+                                            className={`h-2 rounded-full transition-all duration-500 ${step === i ? 'w-12 bg-blue-600' : 'w-2 bg-slate-200'}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </AppMain>

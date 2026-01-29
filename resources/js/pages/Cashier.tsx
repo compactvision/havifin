@@ -154,14 +154,14 @@ export default function Cashier() {
                         <div className="hidden md:block">
                             <h1 className="text-lg font-black tracking-tighter text-slate-800 uppercase">
                                 Terminal{' '}
-                                <span className="text-blue-600">Caisse</span>
+                                <span className="text-brand-blue">Caisse</span>
                             </h1>
                         </div>
                     </div>
 
                     <div className="mx-10 max-w-sm flex-1">
                         <div className="group relative">
-                            <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-500" />
+                            <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-brand-blue" />
                             <Input
                                 placeholder="Rechercher ticket..."
                                 value={searchQuery}
@@ -175,7 +175,7 @@ export default function Cashier() {
                         <Button
                             variant="outline"
                             onClick={handleRefresh}
-                            className="h-12 rounded-2xl border-slate-200 bg-white px-6 font-bold shadow-sm transition-all hover:border-blue-500 hover:text-blue-600"
+                            className="h-12 rounded-2xl border-slate-200 bg-white px-6 font-bold shadow-sm transition-all hover:border-brand-blue hover:text-brand-blue"
                         >
                             <RefreshCw
                                 className={cn(
@@ -206,7 +206,7 @@ export default function Cashier() {
                         </div>
 
                         {auth.user.counter && (
-                            <div className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 font-bold text-blue-600">
+                            <div className="flex items-center gap-2 rounded-2xl border border-brand-blue/20 bg-brand-blue/10 px-4 py-2 font-bold text-brand-blue">
                                 <span className="text-[10px] tracking-widest uppercase">
                                     Guichet
                                 </span>
@@ -257,7 +257,7 @@ export default function Cashier() {
                             title="En Cours de Service"
                             icon={PhoneCall}
                             count={calledClients.length}
-                            color="bg-blue-600 text-white border-blue-600"
+                            color="bg-brand-blue text-white border-brand-blue"
                         >
                             <AnimatePresence mode="popLayout">
                                 {filteredCalled.map((client) => (
@@ -285,7 +285,7 @@ export default function Cashier() {
                             title="Derniers Traités"
                             icon={CheckCircle2}
                             count={completedClients.length}
-                            color="bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20"
+                            color="bg-brand-cyan text-brand-dark border-brand-cyan shadow-lg shadow-brand-cyan/20"
                         >
                             <AnimatePresence mode="popLayout">
                                 {filteredCompleted.map((client) => (

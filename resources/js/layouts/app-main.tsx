@@ -21,44 +21,44 @@ const navigation = [
         name: 'Client',
         label: 'Client',
         icon: User,
-        color: 'text-[#00e2f6]',
-        bg: 'bg-[#00e2f6]/10',
+        color: 'text-brand-cyan',
+        bg: 'bg-brand-cyan/10',
     },
     {
         name: 'Display',
         label: 'Ecran',
         icon: Monitor,
-        color: 'text-[#bf15cf]',
-        bg: 'bg-[#bf15cf]/10',
+        color: 'text-brand-purple',
+        bg: 'bg-brand-purple/10',
     },
     {
         name: 'Cashier',
         label: 'Caissier',
         icon: Wallet,
-        color: 'text-[#ff55ba]',
-        bg: 'bg-[#ff55ba]/10',
+        color: 'text-brand-pink',
+        bg: 'bg-brand-pink/10',
     },
     {
         name: 'Manager',
         label: 'Manager',
         icon: LayoutDashboard,
-        color: 'text-[#1f61e4]',
-        bg: 'bg-[#1f61e4]/10',
+        color: 'text-brand-blue',
+        bg: 'bg-brand-blue/10',
     },
     {
         name: 'ManagerShops',
         label: 'Mes Boutiques',
         icon: Store,
-        color: 'text-[#10b981]',
-        bg: 'bg-[#10b981]/10',
+        color: 'text-brand-cyan',
+        bg: 'bg-brand-cyan/10',
         roles: ['manager', 'super-admin'],
     },
     {
         name: 'Admin',
         label: 'Super Admin',
         icon: ShieldCheck,
-        color: 'text-[#4f46e5]',
-        bg: 'bg-[#4f46e5]/10',
+        color: 'text-brand-deep',
+        bg: 'bg-brand-deep/10',
     },
 ];
 
@@ -109,7 +109,7 @@ export default function AppMain({ children, currentPageName }: any) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#1f61e4] selection:text-white">
+        <div className="min-h-screen bg-brand-white font-sans text-brand-dark selection:bg-brand-blue selection:text-white">
             {/* Main Content Area - No Margin/Padding for Sidebar */}
             <main className="min-h-screen w-full">
                 <motion.div
@@ -129,10 +129,10 @@ export default function AppMain({ children, currentPageName }: any) {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setIsMenuOpen(true)}
-                        className="group relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-[#1f61e4] to-[#00e2f6] text-white shadow-lg shadow-blue-500/40 transition-all duration-300 hover:shadow-blue-500/60"
+                        className="group relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-brand-blue to-brand-cyan text-white shadow-lg shadow-brand-blue/40 transition-all duration-300 hover:shadow-brand-blue/60"
                     >
                         {/* Pulse Effect */}
-                        <div className="absolute inset-0 -z-10 rounded-full bg-blue-500 opacity-20 blur-lg transition-all duration-500 group-hover:opacity-40" />
+                        <div className="absolute inset-0 -z-10 rounded-full bg-brand-blue opacity-20 blur-lg transition-all duration-500 group-hover:opacity-40" />
 
                         <Menu className="h-8 w-8" />
                     </motion.button>
@@ -218,7 +218,7 @@ export default function AppMain({ children, currentPageName }: any) {
                                                 className={cn(
                                                     'group flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all duration-300 hover:scale-[1.02]',
                                                     isActive
-                                                        ? 'border-blue-500 bg-blue-50/50 shadow-inner'
+                                                        ? 'border-brand-blue bg-brand-blue/10 shadow-inner'
                                                         : 'border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-lg',
                                                 )}
                                             >
@@ -226,8 +226,8 @@ export default function AppMain({ children, currentPageName }: any) {
                                                     className={cn(
                                                         'rounded-xl p-3 transition-colors',
                                                         isActive
-                                                            ? 'bg-blue-500 text-white'
-                                                            : `${item.bg} ${item.color} group-hover:bg-blue-500 group-hover:text-white`,
+                                                            ? 'bg-brand-blue text-white'
+                                                            : `${item.bg} ${item.color} group-hover:bg-brand-blue group-hover:text-white`,
                                                     )}
                                                 >
                                                     <item.icon className="h-6 w-6" />
@@ -236,7 +236,7 @@ export default function AppMain({ children, currentPageName }: any) {
                                                     className={cn(
                                                         'font-bold',
                                                         isActive
-                                                            ? 'text-blue-900'
+                                                            ? 'text-brand-blue'
                                                             : 'text-slate-600',
                                                     )}
                                                 >

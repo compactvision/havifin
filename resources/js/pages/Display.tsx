@@ -6,15 +6,7 @@ import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-    ChevronRight,
-    Landmark,
-    Monitor,
-    Moon,
-    Smartphone,
-    Sun,
-    Users,
-} from 'lucide-react';
+import { ChevronRight, Monitor, Users } from 'lucide-react';
 import moment from 'moment';
 import 'moment/locale/fr';
 import { useEffect, useRef, useState } from 'react';
@@ -69,7 +61,7 @@ export default function Display() {
         return () => clearInterval(timer);
     }, []);
 
-    // Fetch shop counters to determine grid layout
+    // Fetch shop counters
     const { data: shopCounters = [] } = useQuery({
         queryKey: ['shop-counters', shopId],
         queryFn: () =>
@@ -145,11 +137,8 @@ export default function Display() {
     useEffect(() => {
         if (!mostRecentCalled) return;
 
-        // Use a ref to store the last timestamp we announced
         const lastCalledTime = mostRecentCalled.called_at;
 
-        // We only announce if the timestamp has changed (new call or recall)
-        // or if it's the first time we see this client
         if (lastCalledId.current === mostRecentCalled.id + lastCalledTime)
             return;
 
@@ -158,10 +147,8 @@ export default function Display() {
         const speak = () => {
             window.speechSynthesis.cancel();
 
-            const name = mostRecentCalled.first_name
-                ? `, ${mostRecentCalled.first_name}`
-                : '';
-            const text = `Ticket ${mostRecentCalled.ticket_number}${name}, au guichet ${mostRecentCalled.counter_number}`;
+            // Privacy: Call ONLY the ticket number, no names
+            const text = `Ticket ${mostRecentCalled.ticket_number}, au guichet ${mostRecentCalled.counter_number}`;
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'fr-FR';
             utterance.rate = 0.85;
@@ -193,6 +180,7 @@ export default function Display() {
                         : 'bg-slate-50 text-slate-900',
                 )}
             >
+                {/* ... (Keep existing Not Configured UI) ... */}
                 <div className="text-center">
                     <Monitor
                         className={cn(
@@ -235,30 +223,19 @@ export default function Display() {
         );
     }
 
-    // Calculate grid layout based on counter count
-    const counterCount = shopCounters.length;
-    const gridCols =
-        counterCount <= 2
-            ? 1
-            : counterCount <= 4
-              ? 2
-              : counterCount <= 6
-                ? 3
-                : 4;
-
     return (
         <div
             className={cn(
                 'relative flex h-screen w-screen flex-col overflow-hidden transition-colors duration-500 selection:bg-blue-500 selection:text-white',
                 isDarkMode
-                    ? 'bg-[#020617] text-white'
-                    : 'bg-gradient-to-br from-slate-50 via-white to-blue-50 text-slate-900',
+                    ? 'bg-brand-dark text-white'
+                    : 'bg-gradient-to-br from-brand-white via-white to-brand-blue/10 text-brand-dark',
             )}
         >
             {/* Background Ambient Glows */}
             {isDarkMode ? (
                 <>
-                    <div className="pointer-events-none absolute -top-[10%] -left-[10%] h-[40%] w-[40%] animate-pulse rounded-full bg-blue-600/10 blur-[120px]" />
+                    <div className="pointer-events-none absolute -top-[10%] -left-[10%] h-[40%] w-[40%] animate-pulse rounded-full bg-brand-blue/20 blur-[120px]" />
                     <div className="pointer-events-none absolute -right-[10%] -bottom-[10%] h-[40%] w-[40%] animate-pulse rounded-full bg-indigo-600/10 blur-[120px] delay-700" />
                     <div className="pointer-events-none absolute top-1/2 left-1/2 z-0 h-full w-full -translate-x-1/2 -translate-y-1/2 bg-[url('/grid.svg')] opacity-[0.03]" />
                 </>
@@ -269,480 +246,348 @@ export default function Display() {
                 </>
             )}
 
-            {/* Theme Toggle Button - Floating */}
+            {/* Theme Toggle - Hidden but accessible top right */}
             <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 onClick={toggleDarkMode}
-                className={cn(
-                    'fixed top-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-2xl border shadow-lg backdrop-blur-xl transition-all duration-300',
-                    isDarkMode
-                        ? 'border-white/10 bg-white/10 text-yellow-400 hover:bg-white/20'
-                        : 'border-slate-200 bg-white/80 text-indigo-600 hover:bg-white',
-                )}
+                className="fixed top-2 right-2 z-50 p-2 opacity-0 hover:opacity-100"
             >
-                <AnimatePresence mode="wait">
-                    {isDarkMode ? (
-                        <motion.div
-                            key="sun"
-                            initial={{ rotate: -90, opacity: 0 }}
-                            animate={{ rotate: 0, opacity: 1 }}
-                            exit={{ rotate: 90, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Sun className="h-6 w-6" />
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="moon"
-                            initial={{ rotate: 90, opacity: 0 }}
-                            animate={{ rotate: 0, opacity: 1 }}
-                            exit={{ rotate: -90, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Moon className="h-6 w-6" />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                {/* Hidden toggle for manual override */}
             </motion.button>
 
-            {/* Header */}
+            {/* Top Header - Compact */}
             <header
                 className={cn(
-                    'relative z-10 flex h-28 items-center justify-between border-b px-12 backdrop-blur-2xl transition-colors',
+                    'relative z-10 flex h-20 items-center justify-between border-b px-8 backdrop-blur-2xl transition-colors',
                     isDarkMode
-                        ? 'border-white/5 bg-slate-950/40'
+                        ? 'border-white/5 bg-brand-dark/40'
                         : 'border-slate-200/60 bg-white/60',
                 )}
             >
-                <div className="flex items-center gap-8">
-                    <div className="relative">
-                        <div
-                            className={cn(
-                                'absolute -inset-2 animate-pulse rounded-full blur-md',
-                                isDarkMode
-                                    ? 'bg-blue-500/20'
-                                    : 'bg-blue-500/30',
-                            )}
-                        />
-                        <img
-                            src="/logo-color.png"
-                            alt="Havifin"
-                            className="relative h-16 w-16 object-contain drop-shadow-2xl"
-                        />
-                    </div>
-                    <div>
-                        <h1 className="flex items-center gap-3 text-5xl font-black tracking-tighter">
-                            <span
-                                className={cn(
-                                    'bg-gradient-to-r bg-clip-text text-transparent',
-                                    isDarkMode
-                                        ? 'from-blue-400 to-indigo-400'
-                                        : 'from-blue-600 to-indigo-600',
-                                )}
-                            >
-                                HAVIFIN
-                            </span>
-                            <span
-                                className={cn(
-                                    'font-thin',
-                                    isDarkMode
-                                        ? 'text-slate-700'
-                                        : 'text-slate-300',
-                                )}
-                            >
-                                |
-                            </span>
-                            <span
-                                className={cn(
-                                    'text-2xl font-bold tracking-[0.3em] uppercase',
-                                    isDarkMode
-                                        ? 'text-slate-400'
-                                        : 'text-slate-600',
-                                )}
-                            >
-                                {shop?.name || 'Smart Ticket'}
-                            </span>
-                        </h1>
-                    </div>
+                <div className="flex items-center gap-4">
+                    <img
+                        src="/logo-color.png"
+                        alt="Havifin"
+                        className="h-10 w-auto object-contain drop-shadow-2xl"
+                    />
+                    <div className="h-6 w-px bg-current opacity-20" />
+                    <h1 className="text-xl font-bold tracking-widest uppercase opacity-80">
+                        {shop?.name || 'Smart Ticket'}
+                    </h1>
                 </div>
 
-                <div className="flex items-center gap-12">
-                    <div className="text-right">
-                        <div className="flex items-center justify-end gap-3 text-[#00e2f6]">
-                            <span
-                                className={cn(
-                                    'font-mono text-6xl font-black tracking-tight tabular-nums',
-                                    isDarkMode
-                                        ? 'text-white'
-                                        : 'text-slate-900',
-                                )}
-                            >
-                                {currentTime.format('HH:mm')}
-                            </span>
-                            <span
-                                className={cn(
-                                    'mb-1 self-end font-mono text-3xl font-bold tabular-nums',
-                                    isDarkMode
-                                        ? 'text-slate-500'
-                                        : 'text-slate-400',
-                                )}
-                            >
-                                {currentTime.format(':ss')}
-                            </span>
-                        </div>
-                        <p
+                <div className="text-right">
+                    <div className="flex items-center justify-end gap-3 text-brand-cyan">
+                        {/* Live Badge */}
+                        <div
                             className={cn(
-                                'mt-1 text-sm font-black tracking-[0.2em] uppercase',
+                                'mr-4 flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-black tracking-widest uppercase',
+                                isDarkMode
+                                    ? 'border-brand-cyan/30 bg-brand-cyan/10 text-brand-cyan'
+                                    : 'border-brand-cyan/30 bg-brand-cyan/10 text-brand-cyan',
+                            )}
+                        >
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-cyan opacity-75"></span>
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-cyan"></span>
+                            </span>
+                            LIVE
+                        </div>
+
+                        <span
+                            className={cn(
+                                'font-mono text-6xl font-black tracking-tight tabular-nums',
+                                isDarkMode ? 'text-white' : 'text-slate-900',
+                            )}
+                        >
+                            {currentTime.format('HH:mm')}
+                        </span>
+                        <span
+                            className={cn(
+                                'mb-1 self-end font-mono text-3xl font-bold tabular-nums',
                                 isDarkMode
                                     ? 'text-slate-500'
                                     : 'text-slate-400',
                             )}
                         >
-                            {currentTime.format('dddd D MMMM YYYY')}
-                        </p>
+                            {currentTime.format(':ss')}
+                        </span>
                     </div>
                 </div>
             </header>
 
-            {/* Main Content Grid */}
-            <main className="relative z-10 grid flex-1 grid-cols-12 gap-6 overflow-hidden p-6">
-                {/* Left Side: Counters Grid */}
-                <div className="col-span-8 flex h-full flex-col gap-6">
-                    {/* Active Counters Grid - Dynamic */}
-                    <div
-                        className={cn(
-                            'grid flex-1 gap-6',
-                            gridCols === 1 && 'grid-cols-1',
-                            gridCols === 2 && 'grid-cols-2',
-                            gridCols === 3 && 'grid-cols-3',
-                            gridCols === 4 && 'grid-cols-4',
-                        )}
-                    >
-                        {shopCounters.map((counter, idx) => {
-                            const client = calledClients.find(
-                                (c) =>
-                                    c.counter_number === counter.counter_number,
-                            );
-                            const isActive =
-                                client?.id === mostRecentCalled?.id;
-
-                            return (
-                                <motion.div
-                                    key={counter.id}
-                                    layout
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: idx * 0.1 }}
-                                    className={cn(
-                                        'relative flex flex-col overflow-hidden rounded-[3rem] border transition-all duration-700',
-                                        client
-                                            ? isActive
-                                                ? isDarkMode
-                                                    ? 'border-blue-500/50 bg-gradient-to-br from-blue-600 to-indigo-900 shadow-[0_0_60px_-10px_rgba(59,130,246,0.3)]'
-                                                    : 'border-blue-400/50 bg-gradient-to-br from-blue-500 to-indigo-700 shadow-[0_0_60px_-10px_rgba(59,130,246,0.5)]'
-                                                : isDarkMode
-                                                  ? 'border-white/10 bg-white/5 backdrop-blur-xl'
-                                                  : 'border-slate-200 bg-white/80 backdrop-blur-xl'
-                                            : isDarkMode
-                                              ? 'border-dashed border-white/5 bg-slate-900/40'
-                                              : 'border-dashed border-slate-200 bg-slate-50/40',
-                                    )}
-                                >
-                                    {/* Counter Label */}
-                                    <div
-                                        className={cn(
-                                            'absolute top-6 left-6 flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black tracking-widest uppercase',
-                                            client
-                                                ? isActive
-                                                    ? 'border-white/20 bg-white/20 text-white'
-                                                    : isDarkMode
-                                                      ? 'border-blue-500/20 bg-blue-500/10 text-blue-400'
-                                                      : 'border-blue-400/30 bg-blue-400/10 text-blue-600'
-                                                : isDarkMode
-                                                  ? 'border-slate-700 bg-slate-800 text-slate-500'
-                                                  : 'border-slate-300 bg-slate-200 text-slate-400',
-                                        )}
-                                    >
-                                        <Monitor className="h-3 w-3" />
-                                        Guichet {counter.counter_number}
-                                    </div>
-
-                                    {client ? (
-                                        <div className="flex flex-1 flex-col items-center justify-center p-8">
-                                            <AnimatePresence mode="wait">
-                                                <motion.div
-                                                    key={client.id}
-                                                    initial={{
-                                                        opacity: 0,
-                                                        scale: 0.8,
-                                                    }}
-                                                    animate={{
-                                                        opacity: 1,
-                                                        scale: 1,
-                                                    }}
-                                                    exit={{
-                                                        opacity: 0,
-                                                        scale: 1.1,
-                                                    }}
-                                                    className="text-center"
-                                                >
-                                                    <motion.div
-                                                        animate={
-                                                            isActive
-                                                                ? {
-                                                                      scale: [
-                                                                          1,
-                                                                          1.05,
-                                                                          1,
-                                                                      ],
-                                                                      textShadow:
-                                                                          [
-                                                                              '0 0 0px #fff',
-                                                                              '0 0 40px rgba(255,255,255,0.4)',
-                                                                              '0 0 0px #fff',
-                                                                          ],
-                                                                  }
-                                                                : {}
-                                                        }
-                                                        transition={{
-                                                            repeat: Infinity,
-                                                            duration: 2,
-                                                        }}
-                                                        className="mb-4 text-[9rem] leading-none font-black tracking-tighter"
-                                                    >
-                                                        {client.ticket_number}
-                                                    </motion.div>
-
-                                                    <div className="flex flex-col items-center gap-4">
-                                                        <div
-                                                            className={cn(
-                                                                'rounded-2xl px-6 py-2 text-xl font-bold backdrop-blur-md',
-                                                                isActive
-                                                                    ? 'bg-white/10 text-white'
-                                                                    : isDarkMode
-                                                                      ? 'bg-blue-500/10 text-blue-400'
-                                                                      : 'bg-blue-500/20 text-blue-700',
-                                                            )}
-                                                        >
-                                                            {client.first_name
-                                                                ? `${client.first_name} ${client.last_name || ''}`
-                                                                : client.phone}
-                                                        </div>
-                                                        <div
-                                                            className={cn(
-                                                                'flex items-center gap-2 text-xs font-bold tracking-widest uppercase',
-                                                                isDarkMode
-                                                                    ? 'text-slate-400'
-                                                                    : 'text-slate-500',
-                                                            )}
-                                                        >
-                                                            {client.operation_type ===
-                                                            'change' ? (
-                                                                <Landmark className="h-4 w-4" />
-                                                            ) : (
-                                                                <Smartphone className="h-4 w-4" />
-                                                            )}
-                                                            {client.service}
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            </AnimatePresence>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-1 items-center justify-center p-8 opacity-20">
-                                            <div className="text-center">
-                                                <div
-                                                    className={cn(
-                                                        'mb-2 text-4xl font-black tracking-widest uppercase',
-                                                        isDarkMode
-                                                            ? 'text-slate-500'
-                                                            : 'text-slate-400',
-                                                    )}
-                                                >
-                                                    Libre
-                                                </div>
-                                                <p
-                                                    className={cn(
-                                                        'font-bold',
-                                                        isDarkMode
-                                                            ? 'text-slate-600'
-                                                            : 'text-slate-500',
-                                                    )}
-                                                >
-                                                    En attente d'appel
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Pulse effect for most recent */}
-                                    {isActive && (
-                                        <div className="pointer-events-none absolute inset-0 animate-ping rounded-[3rem] border-4 border-blue-400/50 opacity-20" />
-                                    )}
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Bottom Area: Ads */}
-                    <div className="mb-1 h-64">
+            {/* Main Layout Area */}
+            <main className="relative z-10 flex flex-1 gap-6 overflow-hidden p-6 py-4">
+                {/* 1. ADVERTISING AREA - DOMINANT (75% Width) */}
+                <div className="relative flex h-full flex-[3] flex-col overflow-hidden rounded-[2rem] border shadow-2xl transition-all">
+                    <div className="absolute inset-0">
                         <AdCarousel isDarkMode={isDarkMode} />
                     </div>
                 </div>
 
-                {/* Right Side: Waiting List */}
-                <div
-                    className={cn(
-                        'shadow-3xl col-span-4 flex flex-col overflow-hidden rounded-[3rem] border backdrop-blur-3xl',
-                        isDarkMode
-                            ? 'border-white/10 bg-slate-950/60'
-                            : 'border-slate-200 bg-white/60',
-                    )}
-                >
+                {/* 2. RIGHT SIDEBAR - UPDATES & WAITING (25% Width) */}
+                <div className="flex min-w-[350px] flex-1 flex-col gap-4">
+                    {/* CURRENT CALL - HERO BOX */}
                     <div
                         className={cn(
-                            'flex items-center justify-between border-b p-8',
-                            isDarkMode ? 'border-white/5' : 'border-slate-200',
+                            'relative flex min-h-[300px] flex-col items-center justify-center overflow-hidden rounded-[2.5rem] border p-6 shadow-2xl',
+                            isDarkMode
+                                ? 'border-blue-500/30 bg-gradient-to-br from-blue-900/40 to-slate-900/90 backdrop-blur-xl'
+                                : 'border-blue-200 bg-white/80 backdrop-blur-xl',
                         )}
                     >
-                        <div className="flex items-center gap-4">
-                            <div
+                        {/* Glow effect */}
+                        <div className="absolute top-0 left-1/2 h-full w-full -translate-x-1/2 animate-pulse rounded-full bg-blue-500/20 blur-[100px]" />
+
+                        <div className="relative z-10 w-full text-center">
+                            <h2
                                 className={cn(
-                                    'rounded-2xl p-3 shadow-lg',
+                                    'mb-4 text-sm font-black tracking-[0.3em] uppercase',
                                     isDarkMode
-                                        ? 'bg-blue-600 shadow-blue-600/30'
-                                        : 'bg-blue-500 shadow-blue-500/30',
+                                        ? 'text-brand-cyan'
+                                        : 'text-brand-blue',
                                 )}
                             >
-                                <Users className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-black tracking-tight">
-                                    FILE D'ATTENTE
-                                </h2>
-                                <p
-                                    className={cn(
-                                        'text-sm font-bold tracking-wider',
-                                        isDarkMode
-                                            ? 'text-blue-400'
-                                            : 'text-blue-600',
-                                    )}
-                                >
-                                    {waitingClients.length} EN ATTENTE
-                                </p>
-                            </div>
+                                Appel En Cours
+                            </h2>
+
+                            <AnimatePresence mode="wait">
+                                {mostRecentCalled ? (
+                                    <motion.div
+                                        key={mostRecentCalled.id}
+                                        initial={{
+                                            scale: 0.8,
+                                            opacity: 0,
+                                            y: 20,
+                                        }}
+                                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                                        exit={{ scale: 1.1, opacity: 0 }}
+                                        className="flex flex-col items-center"
+                                    >
+                                        <div
+                                            className={cn(
+                                                'mb-4 text-[5rem] leading-none font-black tracking-tighter tabular-nums',
+                                                isDarkMode
+                                                    ? 'text-white drop-shadow-[0_0_30px_rgba(59,130,246,0.6)]'
+                                                    : 'text-slate-900',
+                                            )}
+                                        >
+                                            {mostRecentCalled.ticket_number}
+                                        </div>
+
+                                        <div
+                                            className={cn(
+                                                'flex items-center gap-2 rounded-full border px-6 py-3 backdrop-blur-md',
+                                                isDarkMode
+                                                    ? 'border-white/10 bg-white/10 text-white'
+                                                    : 'border-transparent bg-brand-blue text-white shadow-lg',
+                                            )}
+                                        >
+                                            <Monitor className="h-5 w-5" />
+                                            <span className="text-xl font-bold tracking-widest uppercase">
+                                                Guichet{' '}
+                                                {
+                                                    mostRecentCalled.counter_number
+                                                }
+                                            </span>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="opacity-50"
+                                    >
+                                        <div className="text-6xl font-black tracking-widest text-slate-500">
+                                            --
+                                        </div>
+                                        <div className="mt-2 text-sm font-bold tracking-widest text-slate-500 uppercase">
+                                            En attente
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </div>
 
-                    <div className="scrollbar-none flex-1 overflow-y-auto px-6 py-2">
-                        <div className="space-y-4 py-4">
+                    {/* WAITING LIST - COMPACT */}
+                    <div
+                        className={cn(
+                            'flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border',
+                            isDarkMode
+                                ? 'border-white/10 bg-brand-dark/60 backdrop-blur-xl'
+                                : 'border-slate-200 bg-white/60 backdrop-blur-xl',
+                        )}
+                    >
+                        <div
+                            className={cn(
+                                'flex items-center gap-3 border-b px-6 py-4',
+                                isDarkMode
+                                    ? 'border-white/5'
+                                    : 'border-slate-100',
+                            )}
+                        >
+                            <Users
+                                className={cn(
+                                    'h-5 w-5',
+                                    isDarkMode
+                                        ? 'text-slate-400'
+                                        : 'text-slate-500',
+                                )}
+                            />
+                            <span
+                                className={cn(
+                                    'text-xs font-black tracking-[0.2em] uppercase',
+                                    isDarkMode
+                                        ? 'text-slate-400'
+                                        : 'text-slate-500',
+                                )}
+                            >
+                                En Attente ({waitingClients.length})
+                            </span>
+                        </div>
+
+                        <div className="scrollbar-none flex-1 space-y-3 overflow-y-auto p-4">
                             <AnimatePresence>
-                                {waitingClients.map((client, idx) => (
-                                    <motion.div
-                                        key={client.id}
-                                        initial={{ opacity: 0, x: 30 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        className={cn(
-                                            'group relative flex items-center justify-between rounded-[2rem] border p-5 transition-all',
-                                            isDarkMode
-                                                ? 'border-white/5 bg-white/5 hover:bg-white/10'
-                                                : 'border-slate-200 bg-slate-50 hover:bg-slate-100',
-                                        )}
-                                    >
-                                        <div className="flex items-center gap-5">
-                                            <div
-                                                className={cn(
-                                                    'flex h-14 w-14 items-center justify-center rounded-2xl border font-mono text-2xl font-black shadow-sm',
-                                                    isDarkMode
-                                                        ? 'border-white/5 bg-slate-800 text-blue-400'
-                                                        : 'border-slate-200 bg-white text-blue-600',
-                                                )}
-                                            >
-                                                {client.ticket_number}
-                                            </div>
-                                            <div>
-                                                <div
-                                                    className={cn(
-                                                        'mb-0.5 text-lg font-black',
-                                                        isDarkMode
-                                                            ? 'text-slate-100'
-                                                            : 'text-slate-900',
-                                                    )}
-                                                >
-                                                    {client.first_name ||
-                                                        client.phone.slice(
-                                                            0,
-                                                            7,
-                                                        ) + '***'}
-                                                </div>
-                                                <div
-                                                    className={cn(
-                                                        'flex items-center gap-1 text-[10px] font-black tracking-[0.2em] uppercase',
-                                                        isDarkMode
-                                                            ? 'text-slate-500'
-                                                            : 'text-slate-400',
-                                                    )}
-                                                >
-                                                    <ChevronRight
-                                                        className={cn(
-                                                            'h-3 w-3',
-                                                            isDarkMode
-                                                                ? 'text-blue-500'
-                                                                : 'text-blue-600',
-                                                        )}
-                                                    />
-                                                    {client.service}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div
+                                {waitingClients
+                                    .slice(0, 5)
+                                    .map((client, idx) => (
+                                        <motion.div
+                                            key={client.id}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: idx * 0.05 }}
                                             className={cn(
-                                                'font-mono text-sm font-black',
+                                                'flex items-center justify-between rounded-2xl border p-3',
                                                 isDarkMode
-                                                    ? 'text-slate-700'
-                                                    : 'text-slate-400',
+                                                    ? 'border-white/5 bg-white/5'
+                                                    : 'border-slate-100 bg-white shadow-sm',
                                             )}
                                         >
-                                            #{idx + 1}
-                                        </div>
-                                    </motion.div>
-                                ))}
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className={cn(
+                                                        'flex h-10 w-10 items-center justify-center rounded-xl text-lg font-black',
+                                                        isDarkMode
+                                                            ? 'bg-slate-800 text-blue-400'
+                                                            : 'bg-blue-50 text-blue-600',
+                                                    )}
+                                                >
+                                                    {client.ticket_number}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span
+                                                        className={cn(
+                                                            'text-[10px] font-bold tracking-wider uppercase',
+                                                            isDarkMode
+                                                                ? 'text-slate-500'
+                                                                : 'text-slate-400',
+                                                        )}
+                                                    >
+                                                        Ticket
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div
+                                                className={cn(
+                                                    'flex items-center gap-1 text-xs font-bold uppercase',
+                                                    isDarkMode
+                                                        ? 'text-slate-400'
+                                                        : 'text-slate-500',
+                                                )}
+                                            >
+                                                <ChevronRight className="h-3 w-3" />
+                                                {client.service}
+                                            </div>
+                                        </motion.div>
+                                    ))}
                             </AnimatePresence>
-
                             {waitingClients.length === 0 && (
-                                <div className="flex h-full flex-col items-center justify-center py-20 opacity-20">
-                                    <Users className="mb-4 h-16 w-16" />
-                                    <p className="text-xl font-bold tracking-widest uppercase">
-                                        File Vide
-                                    </p>
+                                <div className="flex h-full items-center justify-center opacity-30">
+                                    <span className="text-xs font-black tracking-widest uppercase">
+                                        Aucune attente
+                                    </span>
                                 </div>
                             )}
                         </div>
                     </div>
-
-                    {/* Bottom Status bar for waiting list */}
-                    <div
-                        className={cn(
-                            'p-4 text-center text-[10px] font-black tracking-[0.3em] uppercase',
-                            isDarkMode
-                                ? 'bg-white/5 text-slate-600'
-                                : 'bg-slate-100 text-slate-500',
-                        )}
-                    >
-                        Veuillez surveiller l'affichage
-                    </div>
                 </div>
             </main>
 
+            {/* BOTTOM CASHIER STATUS BAR */}
+            <div className="px-6 pb-2">
+                <div
+                    className={cn(
+                        'scrollbar-hide mask-gradient-x flex items-center gap-4 overflow-x-auto rounded-2xl p-3',
+                        isDarkMode
+                            ? 'border border-white/5 bg-white/5'
+                            : 'border border-slate-200 bg-white/80',
+                    )}
+                >
+                    <div
+                        className={cn(
+                            'shrink-0 px-3 text-xs font-black tracking-widest uppercase',
+                            isDarkMode ? 'text-slate-500' : 'text-slate-400',
+                        )}
+                    >
+                        Statut des guichets
+                    </div>
+                    {/* Status Items */}
+                    {shopCounters.map((counter) => {
+                        const client = calledClients.find(
+                            (c) => c.counter_number === counter.counter_number,
+                        );
+                        const isActive = client?.id === mostRecentCalled?.id;
+
+                        return (
+                            <motion.div
+                                key={counter.id}
+                                layout
+                                className={cn(
+                                    'flex shrink-0 items-center gap-3 rounded-xl border px-4 py-2 transition-all',
+                                    isActive
+                                        ? 'border-blue-500 bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                        : isDarkMode
+                                          ? 'border-white/5 bg-slate-800/50 text-slate-400'
+                                          : 'border-slate-200 bg-white text-slate-600',
+                                )}
+                            >
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-bold tracking-wider uppercase opacity-70">
+                                        Guichet
+                                    </span>
+                                    <span className="text-lg leading-none font-black">
+                                        {counter.counter_number}
+                                    </span>
+                                </div>
+                                <div className="h-8 w-px bg-current opacity-20" />
+                                <div className="flex min-w-[3rem] flex-col items-end">
+                                    {client ? (
+                                        <>
+                                            <span className="text-sm font-black tracking-tight">
+                                                {client.ticket_number}
+                                            </span>
+                                            <span className="text-[9px] font-bold tracking-wider uppercase opacity-80">
+                                                En cours
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="text-[10px] font-black tracking-widest uppercase opacity-50">
+                                            Libre
+                                        </span>
+                                    )}
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Daily Rates Ticker */}
-            <div className="relative z-10 w-full">
+            <div className="relative z-10 mb-0 w-full shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
                 <RateTicker isDarkMode={isDarkMode} />
-                <NewsTicker />
+                <NewsTicker isDarkMode={isDarkMode} />
             </div>
 
             {/* Ambient Background Overlay (Vignette) */}
