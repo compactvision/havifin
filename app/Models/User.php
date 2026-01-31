@@ -165,6 +165,6 @@ class User extends Authenticatable
      */
     public function counter()
     {
-        return $this->hasOne(Counter::class, 'cashier_id');
+        return $this->belongsTo(Counter::class, 'counter_id');
     }
 }

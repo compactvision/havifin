@@ -17,7 +17,7 @@ class CounterController extends Controller
         $shop = Shop::findOrFail($shopId);
         
         $counters = Counter::where('shop_id', $shopId)
-            ->with('cashier:id,name,email')
+            ->with(['cashiers:id,name,email,counter_id'])
             ->orderBy('counter_number')
             ->get();
 

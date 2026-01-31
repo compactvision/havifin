@@ -44,9 +44,15 @@ export default function Cashier() {
     });
 
     const { data: calledClients = [] } = useQuery({
-        queryKey: ['clients', 'called'],
+        queryKey: ['clients', 'called', auth.user.id],
         queryFn: () =>
-            base44.entities.Client.filter({ status: 'called' }, '-called_at'),
+            base44.entities.Client.filter(
+                {
+                    status: 'called',
+                    cashier_id: auth.user.id.toString(),
+                },
+                '-called_at',
+            ),
         refetchInterval: 5000,
     });
 
@@ -96,7 +102,8 @@ export default function Cashier() {
             await base44.entities.Client.update(client.id, {
                 status: 'called',
                 called_at: new Date().toISOString(),
-                counter_number: 1, // Defaulting to 1 for now, should come from user session
+                counter_number: auth.user.counter_number || 1,
+                cashier_id: auth.user.id.toString(),
             });
             return client;
         },

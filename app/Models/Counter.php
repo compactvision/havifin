@@ -32,8 +32,8 @@ class Counter extends Model
     /**
      * Get the cashier assigned to this counter.
      */
-    public function cashier()
+    public function cashiers()
     {
-        return $this->belongsTo(User::class, 'cashier_id');
+        return $this->hasMany(User::class, 'counter_id');
     }
 }

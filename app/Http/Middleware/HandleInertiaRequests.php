@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                     'owner_id' => $request->user()->owner_id,
                     'shop' => $request->user()->shops()->first()?->name,
                     'counter' => $request->user()->counter?->name,
+                    'counter_number' => $request->user()->counter?->counter_number,
                 ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
