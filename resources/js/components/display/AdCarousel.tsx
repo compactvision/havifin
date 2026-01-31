@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -10,7 +11,7 @@ interface AdCarouselProps {
 }
 
 export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
-    const { data: ads = [] } = useQuery({
+    const { data: ads = [], isLoading } = useQuery({
         queryKey: ['active-ads'],
         queryFn: () => base44.entities.Advertisement.active(),
         refetchInterval: 60000,
@@ -27,6 +28,25 @@ export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
 
         return () => clearInterval(timer);
     }, [ads.length]);
+
+    if (isLoading) {
+        return (
+            <div
+                className={cn(
+                    'relative h-full w-full overflow-hidden rounded-[2.5rem] border shadow-2xl backdrop-blur-xl',
+                    isDarkMode
+                        ? 'border-white/10 bg-white/5'
+                        : 'border-slate-200 bg-white/60',
+                )}
+            >
+                <Skeleton className="h-full w-full" />
+                <div className="absolute inset-x-0 bottom-0 p-10">
+                    <Skeleton className="mb-4 h-10 w-2/3" />
+                    <Skeleton className="h-4 w-1/3" />
+                </div>
+            </div>
+        );
+    }
 
     if (ads.length === 0) {
         return (
@@ -84,12 +104,14 @@ export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
                             muted
                             loop
                             playsInline
+                            preload="auto"
                         />
                     ) : (
                         <img
                             src={ads[currentIndex].image_url}
                             alt={ads[currentIndex].title}
                             className="h-full w-full object-cover"
+                            loading="eager"
                         />
                     )}
 

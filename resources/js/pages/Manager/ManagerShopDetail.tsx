@@ -16,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -400,11 +401,20 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
         }
     };
 
-    if (isLoadingShop || isLoadingCounters) {
+    if (isLoadingShop && !shop) {
         return (
             <AppMain currentPageName="Manager">
-                <div className="flex h-screen items-center justify-center">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 px-6 py-8 md:px-10">
+                    <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+                        {[1, 2, 3].map((i) => (
+                            <Skeleton key={i} className="h-32 rounded-3xl" />
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <Skeleton key={i} className="h-48 rounded-3xl" />
+                        ))}
+                    </div>
                 </div>
             </AppMain>
         );
@@ -582,7 +592,16 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                         Configuration des Guichets
                     </h2>
 
-                    {counters && counters.length > 0 ? (
+                    {isLoadingCounters ? (
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2, 3].map((i) => (
+                                <Skeleton
+                                    key={i}
+                                    className="h-64 rounded-3xl"
+                                />
+                            ))}
+                        </div>
+                    ) : counters && counters.length > 0 ? (
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {counters.map((counter, index) => (
                                 <motion.div
@@ -735,6 +754,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                                                     muted
                                                     loop
+                                                    preload="metadata"
                                                     onMouseOver={(e) =>
                                                         (
                                                             e.target as HTMLVideoElement
@@ -751,6 +771,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                                     src={ad.image_url}
                                                     alt={ad.title}
                                                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                    loading="lazy"
                                                 />
                                             )
                                         ) : (
