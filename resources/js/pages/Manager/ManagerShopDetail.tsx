@@ -216,9 +216,10 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     const [videoPreview, setVideoPreview] = useState<string>('');
 
     // Fetch advertisements
-    const { data: advertisements = [] } = useQuery({
-        queryKey: ['advertisements'],
+    const { data: advertisements = [], isLoading: isLoadingAds } = useQuery({
+        queryKey: ['advertisements', shopId],
         queryFn: base44.entities.Advertisement.list,
+        enabled: !!shopId,
     });
 
     const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,9 +276,10 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     });
 
     // Fetch news
-    const { data: allNews = [] } = useQuery({
-        queryKey: ['news'],
+    const { data: allNews = [], isLoading: isLoadingNews } = useQuery({
+        queryKey: ['news', shopId],
         queryFn: base44.entities.News.list,
+        enabled: !!shopId,
     });
 
     // Create news mutation
@@ -735,7 +737,16 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                         </Button>
                     </div>
 
-                    {advertisements && advertisements.length > 0 ? (
+                    {isLoadingAds ? (
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2, 3].map((i) => (
+                                <Skeleton
+                                    key={i}
+                                    className="h-48 rounded-3xl"
+                                />
+                            ))}
+                        </div>
+                    ) : advertisements && advertisements.length > 0 ? (
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {advertisements.map((ad, index) => (
                                 <motion.div
@@ -875,7 +886,16 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                             </Button>
                         </div>
 
-                        {allNews && allNews.length > 0 ? (
+                        {isLoadingNews ? (
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {[1, 2, 3].map((i) => (
+                                    <Skeleton
+                                        key={i}
+                                        className="h-32 rounded-2xl"
+                                    />
+                                ))}
+                            </div>
+                        ) : allNews && allNews.length > 0 ? (
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {allNews.map((news, index) => (
                                     <motion.div

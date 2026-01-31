@@ -59,17 +59,19 @@ Route::middleware(['auth'])->group(function () {
     // Full CRUD for Clients & Transactions
     Route::apiResource('clients', ClientController::class);
     Route::apiResource('transactions', TransactionController::class);
+
+    // Advertisements & News (Authenticated)
+    Route::get('/advertisements/active', [AdvertisementController::class, 'active']);
+    Route::get('/advertisements', [AdvertisementController::class, 'index']);
+    Route::get('/news/active', [NewsController::class, 'active']);
+    Route::get('/news', [NewsController::class, 'index']);
+    Route::get('/institutions/active', [InstitutionController::class, 'active']);
+    Route::get('/institutions', [InstitutionController::class, 'index']);
 });
 
 // --- Public API Routes (No Auth Required) ---
 
-// TV Display & Public Info
-Route::get('/advertisements/active', [AdvertisementController::class, 'active']);
-Route::get('/advertisements', [AdvertisementController::class, 'index']);
-Route::get('/news/active', [NewsController::class, 'active']);
-Route::get('/news', [NewsController::class, 'index']);
-Route::get('/institutions/active', [InstitutionController::class, 'active']);
-Route::get('/institutions', [InstitutionController::class, 'index']);
+// Client Verification & Registration (Public for ClientForm)
 Route::apiResource('exchange-rates', ExchangeRateController::class);
 
 // Client Verification & Registration (Public for ClientForm)
