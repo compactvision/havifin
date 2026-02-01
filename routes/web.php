@@ -69,4 +69,17 @@ Route::middleware(['auth'])->group(function () {
             'id' => $id
         ]);
     })->middleware(['role:super-admin'])->name('admin.shops.show');
+
+    // Cash Management
+    Route::get('/cash/dashboard', function () {
+        return Inertia::render('Cash/Dashboard');
+    })->middleware(['role:manager,super-admin,cashier'])->name('cash.dashboard');
+
+    Route::get('/cash/sessions/{id}', function ($id) {
+        return Inertia::render('Cash/Session', ['id' => $id]);
+    })->middleware(['role:manager,super-admin,cashier'])->name('cash.sessions.show');
+
+    Route::get('/cash/registers/{id}/history', function ($id) {
+        return Inertia::render('Cash/RegisterHistory', ['id' => $id]);
+    })->middleware(['role:manager,super-admin'])->name('cash.registers.history');
 });

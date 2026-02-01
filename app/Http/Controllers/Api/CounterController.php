@@ -17,7 +17,7 @@ class CounterController extends Controller
         $shop = Shop::findOrFail($shopId);
         
         $counters = Counter::where('shop_id', $shopId)
-            ->with(['cashiers:id,name,email,counter_id'])
+            ->with(['cashier']) // Fixed: Load 'cashier' singular
             ->orderBy('counter_number')
             ->get();
 
@@ -72,7 +72,7 @@ class CounterController extends Controller
 
         // Specific handling for cashier_id to allow unassignment (null)
         if ($request->has('cashier_id')) {
-            $counter->cashier_id = $validation['cashier_id'] ?? $request->cashier_id;
+            $counter->cashier_id = $request->cashier_id; // Directly use request or validated
         }
 
         if ($request->has('name')) {

@@ -10,6 +10,7 @@ import {
     ShieldCheck,
     Store,
     User,
+    Users, // Added
     Wallet,
     X,
 } from 'lucide-react';
@@ -33,10 +34,19 @@ const navigation = [
     },
     {
         name: 'Cashier',
-        label: 'Caissier',
+        label: 'Guichet', // Was Caissier, now Guichet for clarity (Client Calling)
+        icon: Users, // Distinct icon
+        color: 'text-brand-orange',
+        bg: 'bg-brand-orange/10',
+        route: '/cashier',
+    },
+    {
+        name: 'CashMoney', // Newitem for Cash Management
+        label: 'Caisse',
         icon: Wallet,
         color: 'text-brand-pink',
         bg: 'bg-brand-pink/10',
+        route: '/cash/dashboard',
     },
     {
         name: 'Manager',
@@ -79,7 +89,7 @@ export default function AppMain({ children, currentPageName }: any) {
 
         if (userRole === 'cashier') {
             return navigation.filter((item) =>
-                ['Cashier', 'Display'].includes(item.name),
+                ['Cashier', 'CashMoney', 'Display'].includes(item.name),
             );
         }
 
@@ -203,14 +213,17 @@ export default function AppMain({ children, currentPageName }: any) {
                                         >
                                             <Link
                                                 href={
-                                                    item.name === 'Client'
-                                                        ? '/'
-                                                        : item.name === 'Admin'
-                                                          ? '/admin/shops'
+                                                    item.route
+                                                        ? item.route
+                                                        : item.name === 'Client'
+                                                          ? '/'
                                                           : item.name ===
-                                                              'ManagerShops'
-                                                            ? '/manager/shops'
-                                                            : `/${item.name.toLowerCase()}`
+                                                              'Admin'
+                                                            ? '/admin/shops'
+                                                            : item.name ===
+                                                                'ManagerShops'
+                                                              ? '/manager/shops'
+                                                              : `/${item.name.toLowerCase()}`
                                                 }
                                                 onClick={() =>
                                                     setIsMenuOpen(false)

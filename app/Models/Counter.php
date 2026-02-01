@@ -36,4 +36,12 @@ class Counter extends Model
     {
         return $this->hasMany(User::class, 'counter_id');
     }
+
+    /**
+     * Get the current cashier assigned to this counter.
+     */
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id');
+    }
 }

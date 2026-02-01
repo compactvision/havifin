@@ -16,6 +16,9 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\CounterController;
+use App\Http\Controllers\Api\CashRegisterController;
+use App\Http\Controllers\Api\CashSessionController;
+use App\Http\Controllers\Api\CashMovementController;
 use App\Http\Controllers\Api\NewsController;
 
 // Authentication & Session-Based API Routes
@@ -101,5 +104,12 @@ Route::post('/cashier-activities', [CashierActivityController::class, 'store']);
 // Help Requests
 Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);
 Route::get('/help-requests', [HelpRequestController::class, 'index']);
-Route::post('/help-requests', [HelpRequestController::class, 'store']);
+    // Cash Management Routes
+    Route::apiResource('cash-registers', CashRegisterController::class);
+    Route::get('/cash-sessions/current', [CashSessionController::class, 'current']);
+    Route::post('/cash-sessions/{session}/close', [CashSessionController::class, 'close']);
+    Route::apiResource('cash-sessions', CashSessionController::class)->except(['update', 'destroy']); // Update handled by close
+    Route::get('/cash-sessions/{session}/movements', [CashMovementController::class, 'index']);
+    Route::post('/cash-movements', [CashMovementController::class, 'store']); // Adjustments
 
+    Route::post('/help-requests', [HelpRequestController::class, 'store']);

@@ -142,7 +142,7 @@ export default function Cashier() {
     };
 
     return (
-        <AppMain currentPageName="Tableau de Bord Caissier">
+        <AppMain currentPageName="Cashier">
             <Head title="Tableau de Bord Caissier" />
             <div className="flex flex-col overflow-hidden bg-slate-50">
                 {/* Dashboard Header */}
