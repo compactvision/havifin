@@ -35,7 +35,7 @@ export default function Login() {
             } else if (data.role === 'manager') {
                 window.location.href = '/manager';
             } else if (data.role === 'cashier') {
-                window.location.href = '/cashier';
+                window.location.href = '/cashier/today';
             } else if (data.role === 'client') {
                 window.location.href = '/clientform';
             } else {
