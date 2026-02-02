@@ -17,6 +17,7 @@ import {
     ChevronLeft,
     Clock as ClockIcon,
     Copy,
+    CreditCard,
     Info,
     Loader2,
     Lock as LockIcon,
@@ -113,6 +114,26 @@ export default function ClientForm() {
 
         verify();
     }, [formData.phone, existingClient, showRegistration]);
+
+    // Handle operation type switch: clear specific fields
+    useEffect(() => {
+        if (formData.operation_type) {
+            setFormData((prev) => ({
+                ...prev,
+                institution_id: undefined,
+                amount: '',
+                reason: '',
+                beneficiary: '',
+                beneficiary_number: '',
+                account_number: '',
+                currency_from: '',
+                currency_to: '',
+                amount_from: 0,
+                exchange_rate: 0,
+                metadata: {},
+            }));
+        }
+    }, [formData.operation_type]);
 
     const registerMutation = useMutation({
         mutationFn: async () => {
@@ -761,13 +782,14 @@ export default function ClientForm() {
                                 />
                             </div>
 
-                            <AnimatePresence>
-                                {formData.operation_type === 'change' && (
+                            <AnimatePresence mode="wait">
+                                {formData.operation_type === 'change' ? (
                                     <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="space-y-6 overflow-hidden"
+                                        key="exchange-calculator"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="space-y-6"
                                     >
                                         <div className="text-center md:text-left">
                                             <h3 className="text-2xl font-black text-slate-800">
@@ -781,8 +803,8 @@ export default function ClientForm() {
                                                     : ''
                                             }
                                             onSelect={(data: any) => {
-                                                setFormData({
-                                                    ...formData,
+                                                setFormData((prev) => ({
+                                                    ...prev,
                                                     currency_from:
                                                         data.currency_from,
                                                     currency_to:
@@ -792,33 +814,21 @@ export default function ClientForm() {
                                                     amount_from:
                                                         data.amount_from,
                                                     amount: data.amount_to.toString(),
-                                                });
+                                                }));
                                             }}
                                         />
                                     </motion.div>
-                                )}
-
-                                {formData.operation_type &&
-                                    formData.operation_type !== 'change' && (
-                                        <motion.div
-                                            key="service-selector-container"
-                                            initial={{
-                                                opacity: 0,
-                                                height: 0,
-                                                y: 20,
-                                            }}
-                                            animate={{
-                                                opacity: 1,
-                                                height: 'auto',
-                                                y: 0,
-                                            }}
-                                            exit={{
-                                                opacity: 0,
-                                                height: 0,
-                                                y: 20,
-                                            }}
-                                            className="space-y-4 overflow-hidden"
-                                        >
+                                ) : formData.operation_type &&
+                                  formData.operation_type !== 'paiement' ? (
+                                    <motion.div
+                                        key="standard-operation"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="space-y-10"
+                                    >
+                                        {/* Service Selector */}
+                                        <div className="space-y-4">
                                             <Label className="ml-4 block text-sm font-black tracking-widest text-slate-400 uppercase">
                                                 Partenaire Bancaire / Mobile
                                             </Label>
@@ -828,249 +838,91 @@ export default function ClientForm() {
                                                     formData.institution_id
                                                 }
                                                 onSelect={(id) =>
-                                                    setFormData({
-                                                        ...formData,
+                                                    setFormData((prev) => ({
+                                                        ...prev,
                                                         institution_id: id,
-                                                    })
+                                                    }))
                                                 }
                                                 operationType={
                                                     formData.operation_type
                                                 }
                                             />
-                                        </motion.div>
-                                    )}
+                                        </div>
 
-                                {/* Operation Fields (Amount, Reason, Account Number, Custom Fields) */}
-                                <AnimatePresence>
-                                    {(formData.operation_type === 'depot' ||
-                                        formData.operation_type ===
-                                            'retrait') &&
-                                        formData.institution_id && (
-                                            <motion.div
-                                                key="operation-fields-container"
-                                                initial={{
-                                                    opacity: 0,
-                                                    height: 0,
-                                                    y: 20,
-                                                }}
-                                                animate={{
-                                                    opacity: 1,
-                                                    height: 'auto',
-                                                    y: 0,
-                                                }}
-                                                exit={{
-                                                    opacity: 0,
-                                                    height: 0,
-                                                    y: 20,
-                                                }}
-                                                className="space-y-4 pt-4"
-                                            >
-                                                {(() => {
-                                                    const inst =
-                                                        institutions.find(
-                                                            (i) =>
-                                                                i.id ===
-                                                                formData.institution_id,
-                                                        );
-                                                    const settings = (
-                                                        inst as any
-                                                    )?.settings;
-                                                    const required =
-                                                        settings?.required_fields;
-
-                                                    const isVisible = (
-                                                        fieldId: string,
-                                                    ) => {
-                                                        // For withdrawals, hide most standard fields except amount
-                                                        if (
-                                                            formData.operation_type ===
-                                                            'retrait'
-                                                        )
-                                                            return false;
-
-                                                        // If settings defined, show only if in required_fields
-                                                        if (required)
-                                                            return required.includes(
-                                                                fieldId,
+                                        {/* Dynamic Operation Fields */}
+                                        <AnimatePresence mode="wait">
+                                            {formData.institution_id && (
+                                                <motion.div
+                                                    key={`fields-${formData.institution_id}-${formData.operation_type}`}
+                                                    initial={{
+                                                        opacity: 0,
+                                                        height: 0,
+                                                    }}
+                                                    animate={{
+                                                        opacity: 1,
+                                                        height: 'auto',
+                                                    }}
+                                                    exit={{
+                                                        opacity: 0,
+                                                        height: 0,
+                                                    }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    {(() => {
+                                                        const inst =
+                                                            institutions.find(
+                                                                (i) =>
+                                                                    i.id ===
+                                                                    formData.institution_id,
                                                             );
-                                                        // Fallback for banks
-                                                        if (
-                                                            inst?.type ===
-                                                            'bank'
-                                                        ) {
+                                                        const settings = (
+                                                            inst as any
+                                                        )?.settings;
+                                                        const required =
+                                                            settings?.required_fields;
+                                                        const isVisible = (
+                                                            fieldId: string,
+                                                        ) => {
+                                                            if (
+                                                                formData.operation_type ===
+                                                                'retrait'
+                                                            )
+                                                                return false;
+                                                            if (required)
+                                                                return required.includes(
+                                                                    fieldId,
+                                                                );
+                                                            if (
+                                                                inst?.type ===
+                                                                'bank'
+                                                            )
+                                                                return [
+                                                                    'account_number',
+                                                                    'beneficiary',
+                                                                    'reason',
+                                                                ].includes(
+                                                                    fieldId,
+                                                                );
                                                             return [
-                                                                'account_number',
+                                                                'beneficiary_number',
                                                                 'beneficiary',
                                                                 'reason',
                                                             ].includes(fieldId);
-                                                        }
-                                                        // Fallback for mobile money
-                                                        return [
-                                                            'beneficiary_number',
-                                                            'beneficiary',
-                                                            'reason',
-                                                        ].includes(fieldId);
-                                                    };
-
-                                                    return (
-                                                        <div className="grid gap-6">
-                                                            {isVisible(
-                                                                'account_number',
-                                                            ) && (
-                                                                <div className="space-y-2">
-                                                                    <Label className="ml-2 font-bold text-slate-800">
-                                                                        Numéro
-                                                                        de
-                                                                        compte
-                                                                    </Label>
-                                                                    <Input
-                                                                        value={
-                                                                            formData.account_number
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            setFormData(
-                                                                                {
-                                                                                    ...formData,
-                                                                                    account_number:
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                },
-                                                                            )
-                                                                        }
-                                                                        placeholder="Compte bancaire..."
-                                                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                                    />
-                                                                </div>
-                                                            )}
-
-                                                            {isVisible(
-                                                                'beneficiary_number',
-                                                            ) && (
-                                                                <div className="space-y-2">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <Label className="ml-2 font-bold text-slate-800">
-                                                                            Numéro
-                                                                            du
-                                                                            bénéficiaire
-                                                                        </Label>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                setFormData(
-                                                                                    {
-                                                                                        ...formData,
-                                                                                        beneficiary_number:
-                                                                                            formData.phone,
-                                                                                    },
-                                                                                )
-                                                                            }
-                                                                            className="text-xs font-bold text-cyan-800 transition-colors hover:text-cyan-900"
-                                                                        >
-                                                                            Utiliser
-                                                                            le
-                                                                            mien
-                                                                        </button>
-                                                                    </div>
-                                                                    <Input
-                                                                        value={
-                                                                            formData.beneficiary_number
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            setFormData(
-                                                                                {
-                                                                                    ...formData,
-                                                                                    beneficiary_number:
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                },
-                                                                            )
-                                                                        }
-                                                                        placeholder="08..."
-                                                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                                    />
-                                                                </div>
-                                                            )}
-
-                                                            <div className="grid gap-4 md:grid-cols-2">
-                                                                <div className="space-y-2">
-                                                                    <Label className="ml-2 font-bold text-slate-800">
-                                                                        Montant
-                                                                    </Label>
-                                                                    <div className="relative">
-                                                                        <Input
-                                                                            type="number"
-                                                                            value={
-                                                                                formData.amount
-                                                                            }
-                                                                            onChange={(
-                                                                                e,
-                                                                            ) =>
-                                                                                setFormData(
-                                                                                    {
-                                                                                        ...formData,
-                                                                                        amount: e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    },
-                                                                                )
-                                                                            }
-                                                                            placeholder="0.00"
-                                                                            className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 pr-24 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                                        />
-                                                                        <div className="absolute top-1 right-1 bottom-1 flex rounded-xl bg-slate-100 p-1">
-                                                                            {[
-                                                                                'USD',
-                                                                                'CDF',
-                                                                            ].map(
-                                                                                (
-                                                                                    curr,
-                                                                                ) => (
-                                                                                    <button
-                                                                                        key={
-                                                                                            curr
-                                                                                        }
-                                                                                        onClick={() =>
-                                                                                            setFormData(
-                                                                                                {
-                                                                                                    ...formData,
-                                                                                                    currency:
-                                                                                                        curr,
-                                                                                                },
-                                                                                            )
-                                                                                        }
-                                                                                        className={`relative z-10 w-12 rounded-lg text-sm font-black transition-all ${
-                                                                                            formData.currency ===
-                                                                                            curr
-                                                                                                ? 'bg-white text-slate-900 shadow-sm'
-                                                                                                : 'text-slate-400 hover:text-slate-600'
-                                                                                        }`}
-                                                                                    >
-                                                                                        {
-                                                                                            curr
-                                                                                        }
-                                                                                    </button>
-                                                                                ),
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
+                                                        };
+                                                        return (
+                                                            <div className="grid gap-6">
                                                                 {isVisible(
-                                                                    'beneficiary',
+                                                                    'account_number',
                                                                 ) && (
                                                                     <div className="space-y-2">
                                                                         <Label className="ml-2 font-bold text-slate-800">
-                                                                            Bénéficiaire
+                                                                            Numéro
+                                                                            de
+                                                                            compte
                                                                         </Label>
                                                                         <Input
                                                                             value={
-                                                                                formData.beneficiary
+                                                                                formData.account_number
                                                                             }
                                                                             onChange={(
                                                                                 e,
@@ -1078,208 +930,78 @@ export default function ClientForm() {
                                                                                 setFormData(
                                                                                     {
                                                                                         ...formData,
-                                                                                        beneficiary:
+                                                                                        account_number:
                                                                                             e
                                                                                                 .target
                                                                                                 .value,
                                                                                     },
                                                                                 )
                                                                             }
-                                                                            placeholder="Nom du bénéficiaire"
+                                                                            placeholder="Compte bancaire..."
                                                                             className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
                                                                         />
                                                                     </div>
                                                                 )}
-                                                            </div>
-
-                                                            {formData.operation_type ===
-                                                                'retrait' && (
-                                                                <div className="rounded-[2.5rem] border-2 border-indigo-100/50 bg-white/40 p-10 shadow-[0_20px_50px_rgba(79,70,229,0.1)] backdrop-blur-2xl transition-all hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)]">
-                                                                    <div className="mb-8 flex items-center justify-between">
-                                                                        <div className="flex items-center gap-4">
-                                                                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-600/20">
-                                                                                <Building2 className="h-7 w-7 text-white" />
-                                                                            </div>
-                                                                            <div className="text-left">
-                                                                                <h4 className="text-base font-black tracking-tight text-slate-900 uppercase">
-                                                                                    Infos
-                                                                                    de
-                                                                                    l'Agent
-                                                                                </h4>
-                                                                                <p className="text-[10px] font-bold tracking-widest text-indigo-500 uppercase">
-                                                                                    Transaction
-                                                                                    Sécurisée
-                                                                                </p>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="rounded-full bg-slate-100 px-4 py-1.5 text-[11px] font-black tracking-widest text-slate-600 uppercase">
-                                                                            {
-                                                                                inst?.name
-                                                                            }
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="grid gap-6 md:grid-cols-2">
-                                                                        <div className="group flex flex-col gap-2 text-left">
-                                                                            <span className="ml-2 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
-                                                                                Nom
-                                                                                de
-                                                                                l'Agent
-                                                                            </span>
-                                                                            <div className="flex h-16 items-center rounded-2xl border-2 border-slate-100 bg-white/80 px-6 text-lg font-black tracking-tight text-slate-900 shadow-sm transition-all group-hover:border-indigo-100 group-hover:bg-white">
-                                                                                {settings?.withdrawal_agent_name ||
-                                                                                    'NON CONFIGURÉ'}
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div className="group flex flex-col gap-2 text-left">
-                                                                            <div className="mb-0 flex items-center justify-between px-2">
-                                                                                <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
-                                                                                    Numéro
-                                                                                    Agent
-                                                                                </span>
-                                                                                <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[8px] font-black text-emerald-600 uppercase">
-                                                                                    <ShieldCheck className="h-2.5 w-2.5" />
-                                                                                    Vérifié
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="flex h-16 items-center justify-between rounded-2xl border-2 border-slate-100 bg-white/50 px-6 shadow-sm backdrop-blur-sm transition-all group-hover:border-indigo-100 group-hover:bg-white">
-                                                                                <span className="text-xl font-black tracking-[0.2em] text-indigo-900">
-                                                                                    {settings?.withdrawal_agent_number ||
-                                                                                        '---'}
-                                                                                </span>
-                                                                                <Button
-                                                                                    variant="ghost"
-                                                                                    size="icon"
-                                                                                    className="h-10 w-10 shrink-0 rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
-                                                                                    onClick={() => {
-                                                                                        if (
-                                                                                            settings?.withdrawal_agent_number
-                                                                                        ) {
-                                                                                            navigator.clipboard.writeText(
-                                                                                                settings.withdrawal_agent_number,
-                                                                                            );
-                                                                                            toast.success(
-                                                                                                'Copié !',
-                                                                                            );
-                                                                                        }
-                                                                                    }}
-                                                                                >
-                                                                                    <Copy className="h-5 w-5" />
-                                                                                </Button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="mt-8 flex items-start gap-4 rounded-3xl border border-indigo-100/30 bg-indigo-50/50 p-5 text-left">
-                                                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
-                                                                            <Info className="h-4 w-4 text-indigo-500" />
-                                                                        </div>
-                                                                        <p className="text-[11px] leading-relaxed font-semibold text-indigo-900/70">
-                                                                            Veuillez
-                                                                            effectuer
-                                                                            votre
-                                                                            retrait
-                                                                            vers
-                                                                            ce
-                                                                            numéro
-                                                                            d'agent.
-                                                                            Une
-                                                                            fois
-                                                                            terminé,
-                                                                            indiquez
-                                                                            le
-                                                                            montant
-                                                                            ci-dessous
-                                                                            pour
-                                                                            validation
-                                                                            par
-                                                                            notre
-                                                                            équipe.
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-
-                                                            {isVisible(
-                                                                'reason',
-                                                            ) && (
-                                                                <div className="space-y-2">
-                                                                    <Label className="ml-2 font-bold text-slate-800">
-                                                                        Motif /
-                                                                        Raison
-                                                                    </Label>
-                                                                    <Input
-                                                                        value={
-                                                                            formData.reason
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            setFormData(
-                                                                                {
-                                                                                    ...formData,
-                                                                                    reason: e
-                                                                                        .target
-                                                                                        .value,
-                                                                                },
-                                                                            )
-                                                                        }
-                                                                        placeholder="Raison du dépôt..."
-                                                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
-                                                                    />
-                                                                </div>
-                                                            )}
-
-                                                            {/* Custom Dynamic Fields (Deposits only) */}
-                                                            {(() => {
-                                                                if (
-                                                                    formData.operation_type ===
-                                                                    'retrait'
-                                                                )
-                                                                    return null;
-                                                                const customFields =
-                                                                    (
-                                                                        (
-                                                                            inst as any
-                                                                        )
-                                                                            ?.settings
-                                                                            ?.custom_fields ||
-                                                                        []
-                                                                    ).filter(
-                                                                        (
-                                                                            f: any,
-                                                                        ) =>
-                                                                            !f.operation_type ||
-                                                                            f.operation_type ===
-                                                                                'both' ||
-                                                                            f.operation_type ===
-                                                                                'depot',
-                                                                    );
-
-                                                                return customFields.map(
-                                                                    (
-                                                                        field: any,
-                                                                    ) => (
-                                                                        <div
-                                                                            key={
-                                                                                field.id
-                                                                            }
-                                                                            className="space-y-2"
-                                                                        >
+                                                                {isVisible(
+                                                                    'beneficiary_number',
+                                                                ) && (
+                                                                    <div className="space-y-2">
+                                                                        <div className="flex items-center justify-between">
                                                                             <Label className="ml-2 font-bold text-slate-800">
-                                                                                {
-                                                                                    field.label
-                                                                                }
+                                                                                Numéro
+                                                                                du
+                                                                                bénéficiaire
                                                                             </Label>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    setFormData(
+                                                                                        {
+                                                                                            ...formData,
+                                                                                            beneficiary_number:
+                                                                                                formData.phone,
+                                                                                        },
+                                                                                    )
+                                                                                }
+                                                                                className="text-xs font-bold text-cyan-800 transition-colors hover:text-cyan-900"
+                                                                            >
+                                                                                Utiliser
+                                                                                le
+                                                                                mien
+                                                                            </button>
+                                                                        </div>
+                                                                        <Input
+                                                                            value={
+                                                                                formData.beneficiary_number
+                                                                            }
+                                                                            onChange={(
+                                                                                e,
+                                                                            ) =>
+                                                                                setFormData(
+                                                                                    {
+                                                                                        ...formData,
+                                                                                        beneficiary_number:
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                            placeholder="08..."
+                                                                            className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                <div className="grid gap-4 md:grid-cols-2">
+                                                                    <div className="space-y-2">
+                                                                        <Label className="ml-2 font-bold text-slate-800">
+                                                                            Montant
+                                                                        </Label>
+                                                                        <div className="relative">
                                                                             <Input
+                                                                                type="number"
                                                                                 value={
-                                                                                    formData
-                                                                                        .metadata[
-                                                                                        field
-                                                                                            .id
-                                                                                    ] ||
-                                                                                    ''
+                                                                                    formData.amount
                                                                                 }
                                                                                 onChange={(
                                                                                     e,
@@ -1287,30 +1009,311 @@ export default function ClientForm() {
                                                                                     setFormData(
                                                                                         {
                                                                                             ...formData,
-                                                                                            metadata:
-                                                                                                {
-                                                                                                    ...formData.metadata,
-                                                                                                    [field.id]:
-                                                                                                        e
-                                                                                                            .target
-                                                                                                            .value,
-                                                                                                },
+                                                                                            amount: e
+                                                                                                .target
+                                                                                                .value,
                                                                                         },
                                                                                     )
                                                                                 }
-                                                                                placeholder={`Entrez ${field.label.toLowerCase()}...`}
+                                                                                placeholder="0.00"
+                                                                                className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 pr-24 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                            />
+                                                                            <div className="absolute top-1 right-1 bottom-1 flex rounded-xl bg-slate-100 p-1">
+                                                                                {[
+                                                                                    'USD',
+                                                                                    'CDF',
+                                                                                ].map(
+                                                                                    (
+                                                                                        curr,
+                                                                                    ) => (
+                                                                                        <button
+                                                                                            key={
+                                                                                                curr
+                                                                                            }
+                                                                                            onClick={() =>
+                                                                                                setFormData(
+                                                                                                    {
+                                                                                                        ...formData,
+                                                                                                        currency:
+                                                                                                            curr,
+                                                                                                    },
+                                                                                                )
+                                                                                            }
+                                                                                            className={`relative z-10 w-12 rounded-lg text-sm font-black transition-all ${formData.currency === curr ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                                                                        >
+                                                                                            {
+                                                                                                curr
+                                                                                            }
+                                                                                        </button>
+                                                                                    ),
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    {isVisible(
+                                                                        'beneficiary',
+                                                                    ) && (
+                                                                        <div className="space-y-2">
+                                                                            <Label className="ml-2 font-bold text-slate-800">
+                                                                                Bénéficiaire
+                                                                            </Label>
+                                                                            <Input
+                                                                                value={
+                                                                                    formData.beneficiary
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    setFormData(
+                                                                                        {
+                                                                                            ...formData,
+                                                                                            beneficiary:
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value,
+                                                                                        },
+                                                                                    )
+                                                                                }
+                                                                                placeholder="Nom du bénéficiaire"
                                                                                 className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
                                                                             />
                                                                         </div>
-                                                                    ),
-                                                                );
-                                                            })()}
-                                                        </div>
-                                                    );
-                                                })()}
-                                            </motion.div>
-                                        )}
-                                </AnimatePresence>
+                                                                    )}
+                                                                </div>
+                                                                {formData.operation_type ===
+                                                                    'retrait' && (
+                                                                    <div className="rounded-[2.5rem] border-2 border-indigo-100/50 bg-white/40 p-10 shadow-[0_20px_50px_rgba(79,70,229,0.1)] backdrop-blur-2xl transition-all hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)]">
+                                                                        <div className="mb-8 flex items-center justify-between">
+                                                                            <div className="flex items-center gap-4">
+                                                                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-600/20">
+                                                                                    <Building2 className="h-7 w-7 text-white" />
+                                                                                </div>
+                                                                                <div className="text-left">
+                                                                                    <h4 className="text-base font-black tracking-tight text-slate-900 uppercase">
+                                                                                        Infos
+                                                                                        de
+                                                                                        l'Agent
+                                                                                    </h4>
+                                                                                    <p className="text-[10px] font-bold tracking-widest text-indigo-500 uppercase">
+                                                                                        Transaction
+                                                                                        Sécurisée
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="rounded-full bg-slate-100 px-4 py-1.5 text-[11px] font-black tracking-widest text-slate-600 uppercase">
+                                                                                {
+                                                                                    inst?.name
+                                                                                }
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="grid gap-6 md:grid-cols-2">
+                                                                            <div className="group flex flex-col gap-2 text-left">
+                                                                                <span className="ml-2 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                                                                                    Nom
+                                                                                    de
+                                                                                    l'Agent
+                                                                                </span>
+                                                                                <div className="flex h-16 items-center rounded-2xl border-2 border-slate-100 bg-white/80 px-6 text-lg font-black tracking-tight text-slate-900 shadow-sm transition-all group-hover:border-indigo-100 group-hover:bg-white">
+                                                                                    {settings?.withdrawal_agent_name ||
+                                                                                        'NON CONFIGURÉ'}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="group flex flex-col gap-2 text-left">
+                                                                                <div className="mb-0 flex items-center justify-between px-2">
+                                                                                    <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                                                                                        Numéro
+                                                                                        Agent
+                                                                                    </span>
+                                                                                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[8px] font-black text-emerald-600 uppercase">
+                                                                                        <ShieldCheck className="h-2.5 w-2.5" />
+                                                                                        Vérifié
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="flex h-16 items-center justify-between rounded-2xl border-2 border-slate-100 bg-white/50 px-6 shadow-sm backdrop-blur-sm transition-all group-hover:border-indigo-100 group-hover:bg-white">
+                                                                                    <span className="text-xl font-black tracking-[0.2em] text-indigo-900">
+                                                                                        {settings?.withdrawal_agent_number ||
+                                                                                            '---'}
+                                                                                    </span>
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="icon"
+                                                                                        className="h-10 w-10 shrink-0 rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                                                                                        onClick={() => {
+                                                                                            if (
+                                                                                                settings?.withdrawal_agent_number
+                                                                                            ) {
+                                                                                                navigator.clipboard.writeText(
+                                                                                                    settings.withdrawal_agent_number,
+                                                                                                );
+                                                                                                toast.success(
+                                                                                                    'Copié !',
+                                                                                                );
+                                                                                            }
+                                                                                        }}
+                                                                                    >
+                                                                                        <Copy className="h-5 w-5" />
+                                                                                    </Button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="mt-8 flex items-start gap-4 rounded-3xl border border-indigo-100/30 bg-indigo-50/50 p-5 text-left">
+                                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+                                                                                <Info className="h-4 w-4 text-indigo-500" />
+                                                                            </div>
+                                                                            <p className="text-[11px] leading-relaxed font-semibold text-indigo-900/70">
+                                                                                Veuillez
+                                                                                effectuer
+                                                                                votre
+                                                                                retrait
+                                                                                vers
+                                                                                ce
+                                                                                numéro
+                                                                                d'agent.
+                                                                                Une
+                                                                                fois
+                                                                                terminé,
+                                                                                indiquez
+                                                                                le
+                                                                                montant
+                                                                                ci-dessous
+                                                                                pour
+                                                                                validation
+                                                                                par
+                                                                                notre
+                                                                                équipe.
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {isVisible(
+                                                                    'reason',
+                                                                ) && (
+                                                                    <div className="space-y-2">
+                                                                        <Label className="ml-2 font-bold text-slate-800">
+                                                                            Motif
+                                                                            /
+                                                                            Raison
+                                                                        </Label>
+                                                                        <Input
+                                                                            value={
+                                                                                formData.reason
+                                                                            }
+                                                                            onChange={(
+                                                                                e,
+                                                                            ) =>
+                                                                                setFormData(
+                                                                                    {
+                                                                                        ...formData,
+                                                                                        reason: e
+                                                                                            .target
+                                                                                            .value,
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                            placeholder="Raison du dépôt..."
+                                                                            className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                {(() => {
+                                                                    if (
+                                                                        formData.operation_type ===
+                                                                        'retrait'
+                                                                    )
+                                                                        return null;
+                                                                    const customFields =
+                                                                        (
+                                                                            (
+                                                                                inst as any
+                                                                            )
+                                                                                ?.settings
+                                                                                ?.custom_fields ||
+                                                                            []
+                                                                        ).filter(
+                                                                            (
+                                                                                f: any,
+                                                                            ) =>
+                                                                                !f.operation_type ||
+                                                                                f.operation_type ===
+                                                                                    'both' ||
+                                                                                f.operation_type ===
+                                                                                    'depot',
+                                                                        );
+                                                                    return customFields.map(
+                                                                        (
+                                                                            field: any,
+                                                                        ) => (
+                                                                            <div
+                                                                                key={
+                                                                                    field.id
+                                                                                }
+                                                                                className="space-y-2"
+                                                                            >
+                                                                                <Label className="ml-2 font-bold text-slate-800">
+                                                                                    {
+                                                                                        field.label
+                                                                                    }
+                                                                                </Label>
+                                                                                <Input
+                                                                                    value={
+                                                                                        formData
+                                                                                            .metadata[
+                                                                                            field
+                                                                                                .id
+                                                                                        ] ||
+                                                                                        ''
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        e,
+                                                                                    ) =>
+                                                                                        setFormData(
+                                                                                            {
+                                                                                                ...formData,
+                                                                                                metadata:
+                                                                                                    {
+                                                                                                        ...formData.metadata,
+                                                                                                        [field.id]:
+                                                                                                            e
+                                                                                                                .target
+                                                                                                                .value,
+                                                                                                    },
+                                                                                            },
+                                                                                        )
+                                                                                    }
+                                                                                    placeholder={`Entrez ${field.label.toLowerCase()}...`}
+                                                                                    className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-slate-900 shadow-xl backdrop-blur-xl placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                                                                />
+                                                                            </div>
+                                                                        ),
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.div>
+                                ) : formData.operation_type === 'paiement' ? (
+                                    <motion.div
+                                        key="paiement-placeholder"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="py-20 text-center"
+                                    >
+                                        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-purple-50 text-purple-600">
+                                            <CreditCard className="h-10 w-10" />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-slate-800">
+                                            Service de Paiement
+                                        </h3>
+                                        <p className="mx-auto mt-2 max-w-sm font-medium text-slate-500">
+                                            Ce service sera bientôt disponible.
+                                            Veuillez contacter un agent pour
+                                            plus d'informations.
+                                        </p>
+                                    </motion.div>
+                                ) : null}
                             </AnimatePresence>
                         </div>
                     </motion.div>

@@ -44,24 +44,27 @@ export default function ExchangeCalculator({
         queryFn: () => base44.entities.ExchangeRate.getAll(),
     });
 
+    const currencies = selection?.rate.currency_pair?.split('/') || [
+        'USD',
+        'CDF',
+    ];
+    const appliedRate = selection
+        ? selection.side === 'buy'
+            ? selection.rate.buy_rate
+            : selection.rate.sell_rate
+        : 0;
+
     useEffect(() => {
-        if (selection && amountFrom) {
-            const { rate, side } = selection;
-            const appliedRate = side === 'buy' ? rate.buy_rate : rate.sell_rate;
+        if (selection && amountFrom && appliedRate) {
             const numAmount = parseFloat(amountFrom);
 
-            if (!isNaN(numAmount) && appliedRate) {
+            if (!isNaN(numAmount)) {
                 let finalResult = 0;
-                const currencies = rate.currency_pair?.split('/') || [
-                    'USD',
-                    'CDF',
-                ];
-
-                if (side === 'buy') {
-                    // USD -> CDF (Client gives USD)
+                if (selection.side === 'buy') {
+                    // Client gives USD -> receives CDF
                     finalResult = numAmount * appliedRate;
                 } else {
-                    // CDF -> USD (Client gives CDF)
+                    // Client gives CDF -> receives USD
                     finalResult = numAmount / appliedRate;
                 }
 
@@ -69,8 +72,13 @@ export default function ExchangeCalculator({
 
                 onSelect({
                     currency_from:
-                        side === 'buy' ? currencies[0] : currencies[1],
-                    currency_to: side === 'buy' ? currencies[1] : currencies[0],
+                        selection.side === 'buy'
+                            ? currencies[0]
+                            : currencies[1],
+                    currency_to:
+                        selection.side === 'buy'
+                            ? currencies[1]
+                            : currencies[0],
                     exchange_rate: appliedRate,
                     amount_from: numAmount,
                     amount_to: finalResult,
@@ -81,7 +89,7 @@ export default function ExchangeCalculator({
         } else {
             setResult(null);
         }
-    }, [selection, amountFrom]);
+    }, [selection, amountFrom, appliedRate]);
 
     if (isLoading) {
         return (
@@ -116,7 +124,7 @@ export default function ExchangeCalculator({
 
                             return (
                                 <React.Fragment
-                                    key={`exchange-rate-select-${rate.id}-${index}`}
+                                    key={`rate-${rate.id || index}`}
                                 >
                                     {/* USD -> CDF */}
                                     <button
@@ -158,9 +166,8 @@ export default function ExchangeCalculator({
                                         </div>
                                         <div className="mt-6 rounded-2xl bg-indigo-50 px-6 py-2">
                                             <span className="text-sm font-black text-indigo-600">
-                                                Taux : {rate.sell_rate}{' '}
-                                                {currencies[1]} = 1{' '}
-                                                {currencies[0]}
+                                                Taux : 1 {currencies[0]} ={' '}
+                                                {rate.sell_rate} {currencies[1]}
                                             </span>
                                         </div>
                                     </button>
@@ -230,10 +237,12 @@ export default function ExchangeCalculator({
                                 <div className="flex items-center gap-3 rounded-2xl bg-indigo-50 p-5 px-6">
                                     <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
                                     <span className="text-sm font-black text-indigo-600 italic">
-                                        Taux appliqué :{' '}
+                                        Libellé :{' '}
                                         {selection.side === 'buy'
-                                            ? `1 USD = ${selection.rate.buy_rate} CDF`
-                                            : `${selection.rate.sell_rate} CDF = 1 USD`}
+                                            ? `Client donne ${currencies[0]}, reçoit ${currencies[1]}`
+                                            : `Client donne ${currencies[1]}, reçoit ${currencies[0]}`}
+                                        {' | '} Taux : 1 {currencies[0]} ={' '}
+                                        {appliedRate} {currencies[1]}
                                     </span>
                                 </div>
                             </div>

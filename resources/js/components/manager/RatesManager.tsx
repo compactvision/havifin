@@ -187,7 +187,17 @@ export default function RatesManager() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                        Taux d'Achat (Client donne USD, 1 USD =)
+                                        Taux d'Achat (Le client donne{' '}
+                                        {newRate.currency_pair === 'CDF_USD'
+                                            ? 'CDF'
+                                            : 'USD'}
+                                        , 1{' '}
+                                        {newRate.currency_pair === 'CDF_USD'
+                                            ? 'USD'
+                                            : newRate.currency_pair.split(
+                                                  '_',
+                                              )[0] || 'Unité'}{' '}
+                                        =)
                                     </Label>
                                     <div className="relative">
                                         <TrendingDown className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-emerald-400" />
@@ -207,7 +217,16 @@ export default function RatesManager() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                        Taux de Vente (Bureau donne USD, 1 USD
+                                        Taux de Vente (Le bureau donne{' '}
+                                        {newRate.currency_pair === 'CDF_USD'
+                                            ? 'CDF'
+                                            : 'USD'}
+                                        , 1{' '}
+                                        {newRate.currency_pair === 'CDF_USD'
+                                            ? 'USD'
+                                            : newRate.currency_pair.split(
+                                                  '_',
+                                              )[0] || 'Unité'}{' '}
                                         =)
                                     </Label>
                                     <div className="relative">
@@ -309,7 +328,9 @@ export default function RatesManager() {
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between px-1">
                                         <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                                            Achat (1 USD =)
+                                            Achat (1{' '}
+                                            {rate.currency_pair.split('_')[0]}{' '}
+                                            =)
                                         </span>
                                         <TrendingDown className="h-3 w-3 text-emerald-500" />
                                     </div>
@@ -331,7 +352,9 @@ export default function RatesManager() {
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between px-1">
                                         <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                                            Vente (1 USD =)
+                                            Vente (1{' '}
+                                            {rate.currency_pair.split('_')[0]}{' '}
+                                            =)
                                         </span>
                                         <TrendingUp className="h-3 w-3 text-blue-500" />
                                     </div>
