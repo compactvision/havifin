@@ -19,10 +19,16 @@ class CashSessionController extends Controller
 
     public function current(Request $request)
     {
-        // Get active session for the authenticated user
-        // They might have multiple if system allows (unlikely for cashier), but usually one.
-        // Or get session for a specific register if passed.
-        $session = CashSession::where('user_id', $request->user()->id)
+        // Global Shop Session Logic:
+        // Find the active session for the authenticated user's shop.
+        // We assume the user belongs to a shop.
+        $user = $request->user();
+        $shopIds = $user->shops()->pluck('shops.id'); // If many-to-many, gets all. If belongsTo, just one. 
+        // Assuming single shop context for cashier usually.
+        
+        $session = CashSession::whereHas('register', function ($q) use ($shopIds) {
+                $q->whereIn('shop_id', $shopIds);
+            })
             ->where('status', 'open')
             ->with(['register', 'amounts'])
             ->latest()
@@ -44,14 +50,16 @@ class CashSessionController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $register = CashRegister::findOrFail($validated['cash_register_id']);
+        $register = CashRegister::with('counter.cashier')->findOrFail($validated['cash_register_id']);
         
-        // Authorization check: User must be able to access this register (e.g. assigned to counter)
-        // For now, assuming if they can see it, they can open it, or add Policy check later.
+        // Determine who the session is for.
+        // If the register has a specific cashier assigned via its counter, assign the session to them.
+        // Otherwise, fallback to the authenticated user (likely Manager opening their own session or unassigned).
+        $user = $register->counter?->cashier ?? $request->user();
 
         try {
             $session = $this->cashService->openSession(
-                $request->user(),
+                $user,
                 $register,
                 $validated['opening_amounts'],
                 $validated['notes'] ?? null
@@ -90,6 +98,43 @@ class CashSessionController extends Controller
     public function show(CashSession $session)
     {
         // Policy check needed
-        return $session->load(['register', 'amounts', 'movements', 'user', 'workSession']);
+        return $session->load(['register', 'amounts', 'movements.transaction', 'user', 'workSession']);
+    }
+
+    public function report(CashSession $session)
+    {
+        $movements = $session->movements()->with('transaction.client')->get();
+
+        // 1. Summary by Operation Type (from Transactions)
+        // Group movements by the type stored in the movement itself, 
+        // but for reporting "Bilan", we'll use the transaction data if available.
+        $summary = $movements->groupBy('type')->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'sum' => $group->sum('amount'),
+                'currency' => $group->first()->currency,
+            ];
+        });
+
+        // 2. Breakdown by Institution (for withdrawals/retraits)
+        // We look at transactions linked to these movements
+        $institutionBreakdown = $movements->filter(function($m) {
+            return $m->transaction_id !== null && strtolower($m->type) === 'withdrawal';
+        })->groupBy(function($m) {
+            return $m->transaction->service; // Institution name
+        })->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'sum' => abs($group->sum('amount')),
+                'currency' => $group->first()->currency,
+            ];
+        });
+
+        return response()->json([
+            'session_id' => $session->id,
+            'summary' => $summary,
+            'institution_breakdown' => $institutionBreakdown,
+            'total_movements' => $movements->count(),
+        ]);
     }
 }

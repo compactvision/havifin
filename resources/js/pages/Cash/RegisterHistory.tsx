@@ -1,3 +1,4 @@
+import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +13,6 @@ import AppMain from '@/layouts/app-main';
 import { CashRegister, CashSession } from '@/types/cash';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { ArrowLeft, Eye, Lock, Unlock } from 'lucide-react';
 import moment from 'moment';
 
@@ -26,27 +26,15 @@ export default function RegisterHistory({ id }: Props) {
     const { data: register, isLoading: isLoadingRegister } =
         useQuery<CashRegister>({
             queryKey: ['cash-register', id],
-            queryFn: async () => {
-                const { data } = await axios.get(`/api/cash-registers/${id}`);
-                return data;
-            },
+            queryFn: () => base44.entities.CashRegister.show(Number(id)),
         });
 
     const { data: sessions = [], isLoading: isLoadingSessions } = useQuery<
         CashSession[]
     >({
         queryKey: ['cash-register-sessions', id],
-        queryFn: async () => {
-            /*
-             * We need a route for this: /api/cash-registers/{id}/sessions
-             * For now, assuming we might need to add it or use general sessions filter
-             * Let's use general sessions list with query param
-             */
-            const { data } = await axios.get(
-                `/api/cash-sessions?cash_register_id=${id}`,
-            );
-            return data.data || data;
-        },
+        queryFn: () =>
+            base44.entities.CashSession.list({ cash_register_id: id }),
     });
 
     const isLoading = isLoadingRegister || isLoadingSessions;

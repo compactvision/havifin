@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
+    protected $cashService;
+
+    public function __construct(\App\Services\CashService $cashService)
+    {
+        $this->cashService = $cashService;
+    }
+
     public function index(Request $request)
     {
         // Global scope in Transaction model handles the filtering by owner/shop
@@ -52,6 +59,9 @@ class TransactionController extends Controller
         }
 
         $transaction = Transaction::create($validated);
+
+        // Sync with cash register
+        $this->cashService->syncTransaction($transaction);
 
         return response()->json($transaction, 201);
     }

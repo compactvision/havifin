@@ -23,6 +23,8 @@ class Client extends Model
         'currency_from',
         'currency_to',
         'amount',
+        'amount_from',
+        'exchange_rate',
         'status',
         'called_at',
         'completed_at',
@@ -39,6 +41,8 @@ class Client extends Model
         'called_at' => 'datetime',
         'completed_at' => 'datetime',
         'amount' => 'decimal:2',
+        'amount_from' => 'decimal:2',
+        'exchange_rate' => 'decimal:4',
         'is_registered' => 'boolean',
         'metadata' => 'array',
     ];

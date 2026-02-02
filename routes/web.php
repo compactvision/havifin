@@ -39,9 +39,9 @@ Route::middleware(['auth'])->group(function () {
     })->middleware(['role:client,cashier,manager,super-admin'])->name('clientform');
 
     // Cashier can access Cashier and ClientForm
-    Route::get('/cashier', [App\Http\Controllers\CashierController::class, 'index'])
-        ->middleware(['role:cashier,manager,super-admin'])
-        ->name('cashier.index');
+    Route::get('/cashier', function () {
+        return Inertia::render('Cashier');
+    })->middleware(['role:cashier,manager,super-admin'])->name('cashier.index');
     Route::get('/cashier/today', function () {
         return Inertia::render('Cashier/TodaySession');
     })->middleware(['role:cashier,manager,super-admin'])->name('cashier.today');

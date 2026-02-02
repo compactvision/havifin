@@ -52,6 +52,8 @@ class ClientController extends Controller
             'service' => 'required|string',
             'status' => 'string',
             'amount' => 'nullable|numeric',
+            'amount_from' => 'nullable|numeric',
+            'exchange_rate' => 'nullable|numeric',
             'currency_from' => 'nullable|string',
             'currency_to' => 'nullable|string',
             'first_name' => 'nullable|string',

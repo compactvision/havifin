@@ -1,4 +1,5 @@
 import { base44, Client, ClientPhone } from '@/api/base44Client';
+import ExchangeCalculator from '@/components/client/ExchangeCalculator';
 import MultiPhoneSelector from '@/components/client/MultiPhoneSelector';
 import OperationSelector from '@/components/client/OperationSelector';
 import ServiceSelector from '@/components/client/ServiceSelector';
@@ -70,6 +71,10 @@ export default function ClientForm() {
         beneficiary: '',
         beneficiary_number: '',
         account_number: '',
+        currency_from: '',
+        currency_to: '',
+        amount_from: 0,
+        exchange_rate: 0,
         metadata: {} as Record<string, string>,
     });
 
@@ -233,6 +238,13 @@ export default function ClientForm() {
                 createClientMutation.mutate({
                     ...formData,
                     service: 'bureau',
+                    amount: formData.amount
+                        ? Number(formData.amount)
+                        : undefined,
+                    amount_from: formData.amount_from,
+                    exchange_rate: formData.exchange_rate,
+                    currency_from: formData.currency_from,
+                    currency_to: formData.currency_to,
                 });
             } else if (formData.operation_type && formData.institution_id) {
                 const inst = institutions.find(
@@ -295,11 +307,14 @@ export default function ClientForm() {
             return !!existingClient;
         }
         if (step === 2) {
-            if (
-                formData.operation_type === 'change' ||
-                formData.operation_type === 'paiement'
-            )
-                return true;
+            if (formData.operation_type === 'change')
+                return !!(
+                    formData.amount &&
+                    formData.amount_from &&
+                    formData.exchange_rate
+                );
+
+            if (formData.operation_type === 'paiement') return true;
 
             const hasBasicFields = !!(
                 formData.operation_type && formData.institution_id
@@ -743,6 +758,37 @@ export default function ClientForm() {
                             </div>
 
                             <AnimatePresence>
+                                {formData.operation_type === 'change' && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="overflow-hidden"
+                                    >
+                                        <ExchangeCalculator
+                                            initialAmount={
+                                                formData.amount_from > 0
+                                                    ? formData.amount_from.toString()
+                                                    : ''
+                                            }
+                                            onSelect={(data: any) => {
+                                                setFormData({
+                                                    ...formData,
+                                                    currency_from:
+                                                        data.currency_from,
+                                                    currency_to:
+                                                        data.currency_to,
+                                                    exchange_rate:
+                                                        data.exchange_rate,
+                                                    amount_from:
+                                                        data.amount_from,
+                                                    amount: data.amount_to.toString(),
+                                                });
+                                            }}
+                                        />
+                                    </motion.div>
+                                )}
+
                                 {formData.operation_type &&
                                     formData.operation_type !== 'change' && (
                                         <motion.div

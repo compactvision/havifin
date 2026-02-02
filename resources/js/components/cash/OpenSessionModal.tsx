@@ -44,7 +44,7 @@ export default function OpenSessionModal({
 
         setIsLoading(true);
         try {
-            await axios.post('/api/cash-sessions', {
+            await axios.post('/api/cash/sessions', {
                 cash_register_id: register.id,
                 opening_amounts: amounts,
                 notes: notes,

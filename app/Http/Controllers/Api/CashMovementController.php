@@ -37,16 +37,20 @@ class CashMovementController extends Controller
         // Check auth to perform movement on this session
         
         try {
+            $amount = $validated['amount'];
+            $type = $validated['type'];
+
+            // Handle signs:
+            // adjustment_in, deposit, exchange_in => positive
+            // adjustment_out, withdrawal, exchange_out => negative
+            $finalAmount = in_array($type, ['withdrawal', 'exchange_out', 'adjustment_out']) 
+                ? -abs($amount) 
+                : abs($amount);
+
             $movement = $this->cashService->recordMovement(
                 $session,
-                $validated['type'],
-                $validated['amount'], // Service handles sign? No, requirement said "Logic: In is +, Out is -".
-                // Adjustment In is +, Adjustment Out is -
-                // Currently service adds amount. So for Out we should probably pass negative or handle it.
-                // Let's assume for now we pass positive and service adds it, so for adjustment_out we should negate it?
-                // Step 97 service code: "$balance->amount += $amount;"
-                // So yes, I must pass negative for withdrawals.
-                in_array($validated['type'], ['withdrawal', 'exchange_out', 'adjustment_out']) ? -$validated['amount'] : $validated['amount'],
+                $type,
+                $finalAmount,
                 $validated['currency'],
                 $validated['description']
             );

@@ -1,4 +1,5 @@
 import axios from '@/lib/axios';
+import { CashMovement, CashRegister, CashSession } from '@/types/cash';
 
 // Define types for our entities
 export interface ClientPhone {
@@ -23,6 +24,7 @@ export interface Client {
     currency_to?: string;
     amount?: number;
     amount_from?: number;
+    exchange_rate?: number;
     status: string;
     created_date: string;
     called_at?: string;
@@ -507,6 +509,58 @@ export const base44 = {
                     .then(handleResponse<Counter>),
             delete: (id: number) =>
                 axios.delete(`/api/counters/${id}`).then(handleResponse<void>),
+        },
+        CashRegister: {
+            list: () =>
+                axios
+                    .get<CashRegister[]>('/api/cash/registers')
+                    .then(handleResponse<CashRegister[]>),
+            create: (data: Partial<CashRegister>) =>
+                axios
+                    .post<CashRegister>('/api/cash/registers', data)
+                    .then(handleResponse<CashRegister>),
+            show: (id: number) =>
+                axios
+                    .get<CashRegister>(`/api/cash/registers/${id}`)
+                    .then(handleResponse<CashRegister>),
+        },
+        CashSession: {
+            current: () =>
+                axios
+                    .get<CashSession | null>('/api/cash/sessions/current')
+                    .then(handleResponse<CashSession | null>),
+            list: (params?: any) =>
+                axios
+                    .get<CashSession[]>('/api/cash/sessions', { params })
+                    .then(handleResponse<CashSession[]>),
+            show: (id: number | string) =>
+                axios
+                    .get<CashSession>(`/api/cash/sessions/${id}`)
+                    .then(handleResponse<CashSession>),
+            create: (data: any) =>
+                axios
+                    .post<CashSession>('/api/cash/sessions', data)
+                    .then(handleResponse<CashSession>),
+            close: (id: number | string, data: any) =>
+                axios
+                    .post<CashSession>(`/api/cash/sessions/${id}/close`, data)
+                    .then(handleResponse<CashSession>),
+            movements: (id: number | string) =>
+                axios
+                    .get<{
+                        data: CashMovement[];
+                    }>(`/api/cash/sessions/${id}/movements`)
+                    .then(handleResponse),
+            report: (id: number | string) =>
+                axios
+                    .get<any>(`/api/cash/sessions/${id}/report`)
+                    .then(handleResponse<any>),
+        },
+        CashMovement: {
+            store: (data: any) =>
+                axios
+                    .post<CashMovement>('/api/cash/movements', data)
+                    .then(handleResponse<CashMovement>),
         },
     },
 };

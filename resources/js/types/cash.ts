@@ -32,6 +32,7 @@ export interface CashSession {
     register?: CashRegister;
     amounts?: CashSessionAmount[];
     movements?: CashMovement[];
+    user?: any;
 }
 
 export interface CashSessionAmount {

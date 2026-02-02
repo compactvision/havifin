@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     AlertCircle,
@@ -31,6 +32,7 @@ import {
 import moment from 'moment';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import OpenShopSessionModal from './OpenShopSessionModal';
 
 interface SessionReport {
     session: any;
@@ -50,6 +52,7 @@ export default function SessionManager() {
     );
     const [isOpening, setIsOpening] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
+    const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
 
     // Filters & Pagination State
     const [page, setPage] = useState(1);
@@ -84,6 +87,13 @@ export default function SessionManager() {
         enabled: !!selectedShopId,
     });
 
+    // Fetch counters for the selected shop (for opening cash sessions)
+    const { data: counters } = useQuery({
+        queryKey: ['counters', selectedShopId],
+        queryFn: () => base44.entities.Counter.list(selectedShopId!),
+        enabled: !!selectedShopId,
+    });
+
     const sessions = sessionData?.data || [];
     const pagination = sessionData;
 
@@ -99,18 +109,81 @@ export default function SessionManager() {
         });
 
     const activeSession = sessions.find((s) => s.status === 'open');
+    const [isShopModalOpen, setIsShopModalOpen] = useState(false);
 
-    const handleOpenSession = async () => {
+    // Fetch registers to map counter -> register
+    const { data: registers } = useQuery({
+        queryKey: ['registers', selectedShopId],
+        queryFn: () =>
+            axios
+                .get(`/api/cash/registers?shop_id=${selectedShopId}`)
+                .then((res) => res.data),
+        enabled: !!selectedShopId && isShopModalOpen,
+    });
+
+    const handleOpenSessionFlow = async (data: {
+        notes: string;
+        globalAmounts: any;
+    }) => {
         if (!selectedShopId) return;
         setIsOpening(true);
         try {
+            // 1. Open Work Session
             await base44.entities.Session.create({
                 session_date: moment().format('YYYY-MM-DD'),
                 shop_id: selectedShopId,
-                notes: notes,
+                notes: data.notes,
             });
-            toast.success('Session ouverte avec succès');
+
+            // 2. Open ONE Global Cash Session
+            // Find a register for this shop. We use the first one available as the "Global Shop Register".
+            let registerId = registers?.[0]?.id;
+
+            // If no register exists, AUTO-CREATE one to unblock the user
+            if (!registerId) {
+                try {
+                    toast.info(
+                        'Configuration automatique de la caisse principale...',
+                    );
+                    const newRegisterRes = await axios.post(
+                        '/api/cash/registers',
+                        {
+                            shop_id: selectedShopId,
+                            name: 'Caisse Principale',
+                        },
+                    );
+                    registerId = newRegisterRes.data.id;
+                    toast.success('Caisse principale créée avec succès');
+                    queryClient.invalidateQueries({
+                        queryKey: ['registers', selectedShopId],
+                    });
+                } catch (err) {
+                    console.error('Failed to auto-create register', err);
+                    toast.error('Impossible de créer la caisse automatique.');
+                    // Don't return here, let it fail below to keep flow consistent or handle error
+                }
+            }
+
+            if (registerId) {
+                try {
+                    await axios.post('/api/cash/sessions', {
+                        cash_register_id: registerId,
+                        opening_amounts: data.globalAmounts,
+                        notes: 'Session Caisse Globale',
+                    });
+                    toast.success('Session ouverte avec succès (Globale)');
+                } catch (err) {
+                    console.error('Failed to open global cash session', err);
+                    toast.error('Erreur ouverture caisse globale');
+                }
+            } else {
+                toast.warning(
+                    'Attention: Aucune caisse n’a pu être configurée. Seule la session administrative est ouverte.',
+                );
+            }
+
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            setIsShopModalOpen(false);
             setNotes('');
         } catch (error: any) {
             const message =
@@ -293,15 +366,31 @@ export default function SessionManager() {
                                         Arrêter le flux de transactions
                                     </span>
                                 </Button>
-                                <Button
-                                    variant="ghost"
-                                    onClick={() =>
-                                        setSelectedSessionId(activeSession.id)
-                                    }
-                                    className="rounded-2xl font-bold text-indigo-600 hover:bg-indigo-50"
-                                >
-                                    Consulter les statistiques en direct
-                                </Button>
+
+                                <div className="flex w-full gap-4">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            setIsAdjustmentModalOpen(true)
+                                        }
+                                        className="h-14 flex-1 rounded-2xl border-slate-200 bg-white font-black tracking-widest text-slate-900 uppercase shadow-sm transition-all hover:border-indigo-500 hover:text-indigo-600"
+                                    >
+                                        <ArrowRightLeft className="mr-2 h-4 w-4 text-indigo-500" />
+                                        Ajustement
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            setSelectedSessionId(
+                                                activeSession.id,
+                                            )
+                                        }
+                                        className="h-14 flex-1 rounded-2xl border-slate-200 bg-white font-black tracking-widest text-slate-900 uppercase shadow-sm transition-all hover:border-indigo-500 hover:text-indigo-600"
+                                    >
+                                        <Eye className="mr-2 h-4 w-4 text-indigo-500" />
+                                        Stats
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -359,7 +448,7 @@ export default function SessionManager() {
                                         </div>
                                     </div>
                                     <Button
-                                        onClick={handleOpenSession}
+                                        onClick={() => setIsShopModalOpen(true)}
                                         disabled={isOpening || !selectedShopId}
                                         className="flex h-20 w-full items-center justify-center gap-3 rounded-[2rem] bg-white text-xs font-black tracking-[0.2em] text-indigo-600 uppercase shadow-xl transition-all hover:bg-slate-50 active:scale-95"
                                     >
@@ -378,6 +467,15 @@ export default function SessionManager() {
                         </div>
                     )}
                 </CardContent>
+
+                <OpenShopSessionModal
+                    isOpen={isShopModalOpen}
+                    onClose={() => setIsShopModalOpen(false)}
+                    onConfirm={handleOpenSessionFlow}
+                    shopName={currentShop?.name || 'Boutique'}
+                    counters={counters || []}
+                    isLoading={isOpening}
+                />
             </Card>
 
             {/* History Header & Filters */}

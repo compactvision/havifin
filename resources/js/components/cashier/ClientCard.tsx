@@ -88,7 +88,7 @@ export default function ClientCard({
                         {!isCalled && !isExpanded && (
                             <p className="truncate text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                                 {client.service} •{' '}
-                                {moment(client.created_date).fromNow()}
+                                {moment(client.created_date).format('HH:mm')}
                             </p>
                         )}
                     </div>

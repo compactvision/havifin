@@ -6,8 +6,9 @@ import { CashRegister } from '@/types/cash';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { ArrowLeft, Store } from 'lucide-react';
+import { ArrowLeft, Plus, Store } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function CashDashboard() {
     const queryClient = useQueryClient();
@@ -15,7 +16,7 @@ export default function CashDashboard() {
     const { data: registers = [], isLoading } = useQuery<CashRegister[]>({
         queryKey: ['cash-registers'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/cash-registers');
+            const { data } = await axios.get('/api/cash/registers');
             return data;
         },
     });
@@ -31,6 +32,21 @@ export default function CashDashboard() {
 
     const handleSessionSuccess = () => {
         queryClient.invalidateQueries({ queryKey: ['cash-registers'] });
+    };
+
+    const handleCreateDefaultRegister = async () => {
+        try {
+            toast.info('Initialisation de la caisse par défaut...');
+            await axios.post('/api/cash/registers', {
+                shop_id: auth.user.shop_id || 1, // Fallback to 1 if not set, or handle better
+                name: 'Caisse Principale',
+            });
+            toast.success('Caisse configurée avec succès !');
+            queryClient.invalidateQueries({ queryKey: ['cash-registers'] });
+        } catch (err) {
+            console.error(err);
+            toast.error('Erreur lors de la configuration.');
+        }
     };
 
     return (
@@ -98,15 +114,25 @@ export default function CashDashboard() {
                         ))}
 
                         {registers.length === 0 && (
-                            <div className="col-span-full flex flex-col items-center justify-center py-12 text-center text-slate-400">
-                                <Store className="mb-4 h-16 w-16 text-slate-200" />
-                                <h3 className="text-lg font-bold text-slate-900">
-                                    Aucune caisse trouvée
-                                </h3>
-                                <p>
-                                    Contactez un administrateur pour configurer
-                                    une caisse.
-                                </p>
+                            <div className="col-span-full flex flex-col items-center justify-center space-y-6 py-20 text-center">
+                                <div className="rounded-full bg-slate-100 p-8">
+                                    <Store className="h-16 w-16 text-slate-300" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                                        Aucune caisse trouvée
+                                    </h3>
+                                    <p className="mt-2 font-medium text-slate-500">
+                                        Une caisse doit être configurée pour commencer à gérer les fonds.
+                                    </p>
+                                </div>
+                                <Button 
+                                    onClick={handleCreateDefaultRegister}
+                                    className="h-14 rounded-2xl bg-indigo-600 px-10 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:scale-105"
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Configurer la Caisse Principale
+                                </Button>
                             </div>
                         )}
                     </div>

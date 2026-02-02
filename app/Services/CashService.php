@@ -144,4 +144,67 @@ class CashService
 
         return $balance ? (float) $balance->amount : 0.0;
     }
+
+    /**
+     * Synchronize a transaction with the cash register.
+     */
+    public function syncTransaction(\App\Models\Transaction $transaction): void
+    {
+        // 1. Find active cash session for this shop/cashier
+        // We look for an open session in the transaction's shop
+        $session = CashSession::where('status', 'open')
+            ->whereHas('register', function ($q) use ($transaction) {
+                $q->where('shop_id', $transaction->shop_id);
+            })
+            ->latest()
+            ->first();
+
+        if (!$session) {
+            return;
+        }
+
+        $type = strtolower($transaction->operation_type); // retrait, depot, change
+
+        if ($type === 'retrait') {
+            // Withdrawal: Cashier gives cash (Subtract from register)
+            $this->recordMovement(
+                $session,
+                'withdrawal',
+                -abs($transaction->amount_from),
+                $transaction->currency_from,
+                "Retrait #{$transaction->ticket_number}",
+                $transaction->id
+            );
+        } elseif ($type === 'depot') {
+            // Deposit: Client gives cash (Add to register)
+            $this->recordMovement(
+                $session,
+                'deposit',
+                abs($transaction->amount_from),
+                $transaction->currency_from,
+                "Dépôt #{$transaction->ticket_number}",
+                $transaction->id
+            );
+        } elseif ($type === 'change') {
+            // Exchange: 
+            // 1. Add currency received from client
+            $this->recordMovement(
+                $session,
+                'exchange_in',
+                abs($transaction->amount_from),
+                $transaction->currency_from,
+                "Change #{$transaction->ticket_number} (Reçu)",
+                $transaction->id
+            );
+            // 2. Subtract currency given to client
+            $this->recordMovement(
+                $session,
+                'exchange_out',
+                -abs($transaction->amount_to),
+                $transaction->currency_to,
+                "Change #{$transaction->ticket_number} (Donné)",
+                $transaction->id
+            );
+        }
+    }
 }

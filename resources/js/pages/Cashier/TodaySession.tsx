@@ -1,10 +1,10 @@
+import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
 import { CashSession } from '@/types/cash';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import {
     ArrowRight,
     Banknote,
@@ -20,12 +20,9 @@ export default function CashierTodaySession() {
     const { auth } = usePage().props as any;
 
     // Fetch current active session for this user
-    const { data: session, isLoading } = useQuery<CashSession>({
+    const { data: session, isLoading } = useQuery<CashSession | null>({
         queryKey: ['cash-session-current'],
-        queryFn: async () => {
-            const { data } = await axios.get('/api/cash-sessions/current');
-            return data;
-        },
+        queryFn: () => base44.entities.CashSession.current(),
         retry: false,
     });
 

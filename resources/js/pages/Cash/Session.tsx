@@ -1,3 +1,4 @@
+import { base44 } from '@/api/base44Client';
 import CloseSessionModal from '@/components/cash/CloseSessionModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,6 @@ import AppMain from '@/layouts/app-main';
 import { CashMovement, CashSession } from '@/types/cash';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -40,20 +40,21 @@ export default function CashSessionDetail({ id }: Props) {
 
     const { data: session, isLoading } = useQuery<CashSession>({
         queryKey: ['cash-session', id],
-        queryFn: async () => {
-            const { data } = await axios.get(`/api/cash-sessions/${id}`);
-            return data;
-        },
+        queryFn: () => base44.entities.CashSession.show(id),
     });
 
     const { data: movements = [] } = useQuery<CashMovement[]>({
         queryKey: ['cash-movements', id],
         queryFn: async () => {
-            const { data } = await axios.get(
-                `/api/cash-sessions/${id}/movements`,
-            );
-            return data.data; // Paginated response usually has data property
+            const response = await base44.entities.CashSession.movements(id);
+            return (response as { data: CashMovement[] }).data;
         },
+        enabled: !!session,
+    });
+
+    const { data: report } = useQuery({
+        queryKey: ['cash-session-report', id],
+        queryFn: () => base44.entities.CashSession.report(id),
         enabled: !!session,
     });
 

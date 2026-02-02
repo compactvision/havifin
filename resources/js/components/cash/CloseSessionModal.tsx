@@ -1,3 +1,4 @@
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -11,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CashSession } from '@/types/cash';
-import axios from 'axios';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -52,7 +52,7 @@ export default function CloseSessionModal({
 
         setIsLoading(true);
         try {
-            await axios.post(`/api/cash-sessions/${session.id}/close`, {
+            await base44.entities.CashSession.close(session.id, {
                 closing_amounts: amounts,
                 notes: notes,
             });

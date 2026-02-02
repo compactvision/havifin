@@ -105,11 +105,18 @@ Route::post('/cashier-activities', [CashierActivityController::class, 'store']);
 Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);
 Route::get('/help-requests', [HelpRequestController::class, 'index']);
     // Cash Management Routes
-    Route::apiResource('cash-registers', CashRegisterController::class);
-    Route::get('/cash-sessions/current', [CashSessionController::class, 'current']);
-    Route::post('/cash-sessions/{session}/close', [CashSessionController::class, 'close']);
-    Route::apiResource('cash-sessions', CashSessionController::class)->except(['update', 'destroy']); // Update handled by close
-    Route::get('/cash-sessions/{session}/movements', [CashMovementController::class, 'index']);
-    Route::post('/cash-movements', [CashMovementController::class, 'store']); // Adjustments
+    Route::get('cash/registers', [CashRegisterController::class, 'index']);
+    Route::post('cash/registers', [CashRegisterController::class, 'store']);
+    Route::get('cash/registers/{cash_register}', [CashRegisterController::class, 'show']);
+    
+    Route::get('/cash/sessions/current', [CashSessionController::class, 'current']);
+    Route::post('/cash/sessions/{session}/close', [CashSessionController::class, 'close']);
+    Route::get('cash/sessions', [CashSessionController::class, 'index']);
+    Route::post('cash/sessions', [CashSessionController::class, 'store']);
+    Route::get('cash/sessions/{session}/report', [CashSessionController::class, 'report']);
+    Route::get('cash/sessions/{session}', [CashSessionController::class, 'show']);
+    
+    Route::get('/cash/sessions/{session}/movements', [CashMovementController::class, 'index']);
+    Route::post('/cash/movements', [CashMovementController::class, 'store']); // Adjustments
 
     Route::post('/help-requests', [HelpRequestController::class, 'store']);
