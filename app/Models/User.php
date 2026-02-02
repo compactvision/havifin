@@ -144,6 +144,12 @@ class User extends Authenticatable
             $user = auth()->user();
             if ($user) {
                 $table = $query->getModel()->getTable();
+                
+                // Determine the effective owner ID (the Tenant Root)
+                $ownerId = ($user->role === 'super-admin' || ($user->role === 'manager' && !$user->owner_id)) 
+                    ? $user->id 
+                    : $user->owner_id;
+
                 if ($user->role === 'super-admin') {
                     // Super-admin sees their own data (based on owner_id matching their ID)
                     // OR records where they ARE the owner (for users table self-reference)
@@ -154,7 +160,10 @@ class User extends Authenticatable
                     });
                 } elseif (in_array($user->role, ['manager', 'cashier', 'client'])) {
                     // Manager/Cashier/Client sees data belonging to their owner
-                    $query->where($table . '.owner_id', $user->owner_id);
+                    $query->where(function ($q) use ($ownerId, $table) {
+                        $q->where($table . '.owner_id', $ownerId)
+                          ->orWhere($table . '.id', auth()->id());
+                    });
                 }
             }
         });

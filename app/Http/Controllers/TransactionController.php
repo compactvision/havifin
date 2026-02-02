@@ -16,8 +16,57 @@ class TransactionController extends Controller
 
     public function index(Request $request)
     {
+        $query = Transaction::query();
+        $user = $request->user();
+
+        if ($user) {
+            $shopIds = $user->shops()->pluck('shops.id');
+            if ($shopIds->isNotEmpty() && !$request->has('session_id') && !$request->has('date')) {
+                $activeSessionIds = \App\Models\Session::open()
+                    ->latest('session_date')
+                    ->whereIn('shop_id', $shopIds)
+                    ->pluck('id');
+                
+                if ($activeSessionIds->isNotEmpty()) {
+                    $query->whereIn('session_id', $activeSessionIds);
+                }
+            }
+        }
+
+        if ($request->has('session_id')) {
+            $query->where('session_id', $request->session_id);
+        }
+
+        if ($request->has('date')) {
+            $date = $request->date;
+            $query->whereHas('session', function ($q) use ($date) {
+                $q->whereDate('session_date', $date);
+            });
+        }
+
+        // Handle sorting
+        if ($request->has('sort')) {
+            $sort = $request->sort;
+            $direction = 'asc';
+            if (str_starts_with($sort, '-')) {
+                $sort = substr($sort, 1);
+                $direction = 'desc';
+            }
+            if ($sort === 'created_date') {
+                $sort = 'created_at';
+            }
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->latest();
+        }
+
+        // Handle limit
+        if ($request->has('limit')) {
+            $query->limit($request->limit);
+        }
+
         // Global scope in Transaction model handles the filtering by owner/shop
-        return Transaction::latest()->get();
+        return $query->with('client')->get();
     }
 
     public function store(Request $request)
@@ -40,7 +89,6 @@ class TransactionController extends Controller
 
         if ($user) {
             $validated['cashier_email'] = $user->email;
-            $validated['owner_id'] = $user->owner_id ?: $user->id;
             
             $shopId = $user->shops()->first()?->id;
             if ($shopId) {

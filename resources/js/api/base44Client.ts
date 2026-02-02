@@ -52,6 +52,7 @@ export interface Transaction {
     service?: string;
     client_phone?: string;
     client_name?: string;
+    client?: Client;
 }
 
 export interface ExchangeRate {
@@ -213,9 +214,9 @@ export const base44 = {
                 axios
                     .put<Client>(`/api/clients/${id}`, data)
                     .then(handleResponse<Client>),
-            list: (sort?: string, limit?: number) =>
+            list: (params?: { sort?: string; limit?: number; date?: string }) =>
                 axios
-                    .get<Client[]>('/api/clients', { params: { sort, limit } })
+                    .get<Client[]>('/api/clients', { params })
                     .then(handleResponse<Client[]>),
             filter: (params: Partial<Client>, sort?: string, limit?: number) =>
                 axios
@@ -256,11 +257,9 @@ export const base44 = {
                 axios
                     .post<Transaction>('/api/transactions', data)
                     .then(handleResponse<Transaction>),
-            list: (sort?: string, limit?: number) =>
+            list: (params?: { sort?: string; limit?: number; date?: string }) =>
                 axios
-                    .get<
-                        Transaction[]
-                    >('/api/transactions', { params: { sort, limit } })
+                    .get<Transaction[]>('/api/transactions', { params })
                     .then(handleResponse<Transaction[]>),
         },
         ExchangeRate: {
@@ -388,6 +387,7 @@ export const base44 = {
                 session_id?: number;
                 start_date?: string;
                 end_date?: string;
+                date?: string;
             }) =>
                 axios
                     .get<
@@ -402,6 +402,7 @@ export const base44 = {
                 session_id?: number;
                 start_date?: string;
                 end_date?: string;
+                date?: string;
             }) =>
                 axios
                     .get('/api/cashier-activities/stats', { params })
@@ -550,6 +551,12 @@ export const base44 = {
                     .get<{
                         data: CashMovement[];
                     }>(`/api/cash/sessions/${id}/movements`)
+                    .then(handleResponse),
+            listMovements: (params?: { date?: string }) =>
+                axios
+                    .get<{ data: CashMovement[] }>('/api/cash/movements', {
+                        params,
+                    })
                     .then(handleResponse),
             report: (id: number | string) =>
                 axios

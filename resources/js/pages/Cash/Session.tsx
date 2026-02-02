@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import AddMovementModal from '@/components/cash/AddMovementModal';
 import CloseSessionModal from '@/components/cash/CloseSessionModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ export default function CashSessionDetail({ id }: Props) {
     const { auth } = usePage().props as any;
     const queryClient = useQueryClient();
     const [isClosingSession, setIsClosingSession] = useState(false);
+    const [isAddingMovement, setIsAddingMovement] = useState(false);
 
     const { data: session, isLoading } = useQuery<CashSession>({
         queryKey: ['cash-session', id],
@@ -58,9 +60,10 @@ export default function CashSessionDetail({ id }: Props) {
         enabled: !!session,
     });
 
-    const handleCloseSuccess = () => {
+    const handleSuccess = () => {
         queryClient.invalidateQueries({ queryKey: ['cash-session', id] });
-        queryClient.invalidateQueries({ queryKey: ['cash-registers'] }); // Update dashboard
+        queryClient.invalidateQueries({ queryKey: ['cash-movements', id] });
+        queryClient.invalidateQueries({ queryKey: ['cash-registers'] });
     };
 
     if (isLoading || !session) {
@@ -170,7 +173,10 @@ export default function CashSessionDetail({ id }: Props) {
                     <div className="flex items-center gap-3">
                         {isOpen && (
                             <>
-                                <Button className="h-11 rounded-xl bg-white text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50">
+                                <Button
+                                    onClick={() => setIsAddingMovement(true)}
+                                    className="h-11 rounded-xl bg-white text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+                                >
                                     <Banknote className="mr-2 h-4 w-4" />
                                     Ajouter Mouvement
                                 </Button>
@@ -383,6 +389,7 @@ export default function CashSessionDetail({ id }: Props) {
                                 <TableHead>Heure</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Description</TableHead>
+                                <TableHead>Acteur</TableHead>
                                 <TableHead>Montant</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -405,6 +412,9 @@ export default function CashSessionDetail({ id }: Props) {
                                     <TableCell className="font-medium text-slate-700">
                                         {movement.description}
                                     </TableCell>
+                                    <TableCell className="text-sm font-bold text-slate-500">
+                                        {movement.user?.name || '-'}
+                                    </TableCell>
                                     <TableCell>
                                         <span
                                             className={`font-black ${parseFloat(movement.amount) < 0 ? 'text-red-500' : 'text-green-500'}`}
@@ -421,7 +431,7 @@ export default function CashSessionDetail({ id }: Props) {
                             {movements.length === 0 && (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={4}
+                                        colSpan={5}
                                         className="py-12 text-center text-slate-400"
                                     >
                                         <History className="mx-auto mb-3 h-12 w-12 text-slate-200" />
@@ -435,12 +445,19 @@ export default function CashSessionDetail({ id }: Props) {
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Modals */}
+            <AddMovementModal
+                isOpen={isAddingMovement}
+                onClose={() => setIsAddingMovement(false)}
+                session={session}
+                onSuccess={handleSuccess}
+            />
+
             <CloseSessionModal
                 isOpen={isClosingSession}
                 onClose={() => setIsClosingSession(false)}
                 session={session}
-                onSuccess={handleCloseSuccess}
+                onSuccess={handleSuccess}
             />
         </AppMain>
     );

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\HasOwner;
 
 class CashMovement extends Model
 {
     /** @use HasFactory<\Database\Factories\CashMovementFactory> */
+    use HasFactory, HasOwner;
+
     protected $fillable = [
         'cash_session_id',
         'transaction_id',
@@ -17,6 +20,7 @@ class CashMovement extends Model
         'amount',
         'description',
         'metadata',
+        'owner_id',
     ];
 
     protected $casts = [

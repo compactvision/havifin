@@ -292,6 +292,10 @@ export default function ClientForm() {
             beneficiary: '',
             beneficiary_number: '',
             account_number: '',
+            currency_from: '',
+            currency_to: '',
+            amount_from: 0,
+            exchange_rate: 0,
             metadata: {},
         });
     };
@@ -763,8 +767,13 @@ export default function ClientForm() {
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
                                         exit={{ opacity: 0, height: 0 }}
-                                        className="overflow-hidden"
+                                        className="space-y-6 overflow-hidden"
                                     >
+                                        <div className="text-center md:text-left">
+                                            <h3 className="text-2xl font-black text-slate-800">
+                                                Bureau de Change
+                                            </h3>
+                                        </div>
                                         <ExchangeCalculator
                                             initialAmount={
                                                 formData.amount_from > 0

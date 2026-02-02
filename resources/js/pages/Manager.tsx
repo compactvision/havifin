@@ -1,4 +1,6 @@
 import { base44 } from '@/api/base44Client';
+import ActivityLog from '@/components/manager/ActivityLog';
+import { CashMovementsTable } from '@/components/manager/CashMovementsTable';
 import InstitutionManager from '@/components/manager/InstitutionManager';
 import RatesManager from '@/components/manager/RatesManager';
 import SessionManager from '@/components/manager/SessionManager';
@@ -15,6 +17,7 @@ import { motion } from 'framer-motion';
 import {
     Activity,
     ArrowLeftRight,
+    Banknote,
     ChevronRight,
     Download,
     Landmark,
@@ -40,55 +43,80 @@ export default function Manager() {
     const [activeTab, setActiveTab] = useState(
         isSuperAdmin ? 'shops' : 'overview',
     ); // overview, rates, users, shops
+    const [selectedDate, setSelectedDate] = useState(
+        moment().format('YYYY-MM-DD'),
+    );
 
     // Data Fetching
     const { data: clients = [], isLoading: loadingClients } = useQuery({
-        queryKey: ['all-clients'],
-        queryFn: () => base44.entities.Client.list('-created_date', 500),
+        queryKey: ['all-clients', selectedDate],
+        queryFn: () =>
+            base44.entities.Client.list({
+                sort: '-created_at',
+                limit: 500,
+                date: selectedDate,
+            }),
         refetchInterval: 30000,
     });
 
     const { data: transactions = [], isLoading: loadingTx } = useQuery({
-        queryKey: ['all-transactions'],
-        queryFn: () => base44.entities.Transaction.list('-created_date', 500),
+        queryKey: ['all-transactions', selectedDate],
+        queryFn: () =>
+            base44.entities.Transaction.list({
+                sort: '-created_at',
+                limit: 500,
+                date: selectedDate,
+            }),
+        refetchInterval: 30000,
+    });
+
+    const { data: cashMovements = [], isLoading: loadingMovements } = useQuery({
+        queryKey: ['all-cash-movements', selectedDate],
+        queryFn: async () => {
+            const response = await base44.entities.CashSession.listMovements({
+                date: selectedDate,
+            } as any);
+            return (response as any).data || [];
+        },
         refetchInterval: 30000,
     });
 
     // Stats Logic
     const stats = useMemo(() => {
-        const today = moment().startOf('day');
-        const todayClients = clients.filter((c) =>
-            moment(c.created_date).isSameOrAfter(today),
-        );
-        const todayTx = transactions.filter((t) =>
-            moment(t.created_date).isSameOrAfter(today),
-        );
+        const targetDate = moment(selectedDate).startOf('day');
+        const isCurrentDay = targetDate.isSame(moment().startOf('day'));
 
-        const volumeUSD = todayTx
+        // Since the backend now filters by date, these lists already contain data for the target date
+        const dayClients = clients;
+        const dayTx = transactions;
+
+        const volumeUSD = dayTx
             .filter((t) => t.currency_from === 'USD')
             .reduce((sum, t) => sum + (t.amount_from || 0), 0);
 
-        const volumeCDF = todayTx
+        const volumeCDF = dayTx
             .filter((t) => t.currency_from === 'CDF')
             .reduce((sum, t) => sum + (t.amount_from || 0), 0);
 
-        const totalCommissions = todayTx.reduce(
+        const totalCommissions = dayTx.reduce(
             (sum, t) => sum + (parseFloat(t.commission as any) || 0),
             0,
         );
 
         return {
-            todayClients: todayClients.length,
-            waiting: clients.filter((c) => c.status === 'waiting').length,
+            todayClients: dayClients.length,
+            waiting: dayClients.filter((c) => c.status === 'waiting').length,
             volumeUSD,
             volumeCDF,
             commissions: totalCommissions,
+            isCurrentDay,
         };
-    }, [clients, transactions]);
+    }, [clients, transactions, selectedDate]);
 
     const handleRefresh = () => {
         queryClient.invalidateQueries({ queryKey: ['all-clients'] });
         queryClient.invalidateQueries({ queryKey: ['all-transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['all-cash-movements'] });
         toast.success('Tableau de bord actualisé');
     };
 
@@ -159,6 +187,18 @@ export default function Manager() {
                             Actualiser
                         </Button>
 
+                        <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition-all focus-within:border-indigo-500">
+                            <Search className="h-4 w-4 text-slate-400" />
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) =>
+                                    setSelectedDate(e.target.value)
+                                }
+                                className="border-none bg-transparent text-xs font-black tracking-widest text-slate-600 uppercase focus:ring-0"
+                            />
+                        </div>
+
                         <Button className="h-12 rounded-2xl bg-slate-900 px-6 text-xs font-black tracking-widest text-white uppercase shadow-xl shadow-slate-900/10 transition-all hover:bg-black active:scale-95">
                             <Download className="mr-2 h-4 w-4 text-emerald-400" />
                             Exporter Rapport
@@ -217,6 +257,11 @@ export default function Manager() {
                                                 id: 'transactions',
                                                 label: 'Flux Transactions',
                                                 icon: ArrowLeftRight,
+                                            },
+                                            {
+                                                id: 'movements',
+                                                label: 'Mouvements Manuels',
+                                                icon: Banknote,
                                             },
                                             {
                                                 id: 'rates',
@@ -314,21 +359,18 @@ export default function Manager() {
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <h3 className="text-2xl font-black tracking-tight text-slate-800">
-                                                            Performances du Jour
+                                                            Performances du{' '}
+                                                            {moment(
+                                                                selectedDate,
+                                                            ).format(
+                                                                'DD/MM/YYYY',
+                                                            )}
                                                         </h3>
                                                         <p className="text-sm font-medium text-slate-400">
-                                                            Aperçu rapide des
-                                                            flux financiers et
-                                                            des clients.
+                                                            Aperçu des flux
+                                                            financiers et des
+                                                            clients.
                                                         </p>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <span className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-xs font-black tracking-wider text-indigo-600 uppercase">
-                                                            Hebdomadaire
-                                                        </span>
-                                                        <span className="cursor-pointer rounded-xl border border-slate-100 bg-white px-4 py-2 text-xs font-black tracking-wider text-slate-400 uppercase hover:bg-slate-50">
-                                                            Mensuel
-                                                        </span>
                                                     </div>
                                                 </div>
 
@@ -358,12 +400,43 @@ export default function Manager() {
                                                         <Button
                                                             variant="ghost"
                                                             className="font-bold text-indigo-600 hover:bg-indigo-50"
+                                                            onClick={() =>
+                                                                setActiveTab(
+                                                                    'transactions',
+                                                                )
+                                                            }
                                                         >
                                                             Voir tout
                                                         </Button>
                                                     </div>
                                                     <TransactionsTable
                                                         transactions={transactions.slice(
+                                                            0,
+                                                            5,
+                                                        )}
+                                                    />
+                                                </div>
+
+                                                <div className="border-t border-slate-100 pt-8">
+                                                    <div className="mb-6 flex items-center justify-between">
+                                                        <h4 className="text-lg font-black tracking-tight text-slate-800">
+                                                            Mouvements de Caisse
+                                                            Récents
+                                                        </h4>
+                                                        <Button
+                                                            variant="ghost"
+                                                            className="font-bold text-indigo-600 hover:bg-indigo-50"
+                                                            onClick={() =>
+                                                                setActiveTab(
+                                                                    'movements',
+                                                                )
+                                                            }
+                                                        >
+                                                            Voir tout
+                                                        </Button>
+                                                    </div>
+                                                    <CashMovementsTable
+                                                        movements={cashMovements.slice(
                                                             0,
                                                             5,
                                                         )}
@@ -388,6 +461,20 @@ export default function Manager() {
                                                 </div>
                                                 <TransactionsTable
                                                     transactions={transactions}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'movements' && (
+                                            <div className="animate-in space-y-6 duration-300 fade-in">
+                                                <div className="mb-4 flex items-center justify-between">
+                                                    <h3 className="text-2xl font-black tracking-tight text-slate-800">
+                                                        Mouvements Manuels
+                                                        (Ajustements)
+                                                    </h3>
+                                                </div>
+                                                <CashMovementsTable
+                                                    movements={cashMovements}
                                                 />
                                             </div>
                                         )}
@@ -423,13 +510,9 @@ export default function Manager() {
                                         )}
 
                                         {activeTab === 'logs' && (
-                                            <div className="flex h-96 animate-in flex-col items-center justify-center space-y-4 opacity-40 duration-300 zoom-in-95">
-                                                <Activity className="h-20 w-20 text-slate-200" />
-                                                <p className="text-xs font-black tracking-[0.3em] text-slate-400 uppercase">
-                                                    Journal d'audit Manager
-                                                    bientôt disponible
-                                                </p>
-                                            </div>
+                                            <ActivityLog
+                                                selectedDate={selectedDate}
+                                            />
                                         )}
                                     </div>
                                 </div>

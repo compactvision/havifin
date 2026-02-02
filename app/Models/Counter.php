@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\HasOwner;
+
 class Counter extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOwner;
 
     protected $fillable = [
         'shop_id',

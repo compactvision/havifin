@@ -92,9 +92,6 @@ class SessionController extends Controller
             'shop_id' => $shopId,
         ];
 
-        // Set owner_id
-        $sessionData['owner_id'] = $user->role === 'super-admin' ? $user->id : $user->owner_id;
-
         $session = Session::create($sessionData);
 
         return response()->json($session, 201);

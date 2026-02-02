@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\CashRegister;
+use App\Traits\HasOwner;
 
 class CashBalance extends Model
 {
+    use HasOwner;
+
     protected $fillable = [
         'cash_register_id',
         'currency',
         'amount',
+        'owner_id',
     ];
 
     protected $casts = [

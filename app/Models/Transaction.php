@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\HasOwner;
 
 class Transaction extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOwner;
 
     protected $fillable = [
         'client_id',
@@ -65,38 +65,5 @@ class Transaction extends Model
     public function session()
     {
         return $this->belongsTo(Session::class);
-    }
-
-    /**
-     * The "booted" method of the model.
-     */
-    protected static function booted()
-    {
-        static::addGlobalScope('owner', function (Builder $query) {
-            // Prevent infinite recursion: only apply scope if user is already authenticated/loaded
-            if (!auth()->hasUser()) {
-                return;
-            }
-
-            $user = auth()->user();
-            if ($user) {
-                $table = $query->getModel()->getTable();
-                if ($user->role === 'super-admin') {
-                    // Super-admin sees transactions they own
-                    $query->where($table . '.owner_id', $user->id);
-                } elseif (in_array($user->role, ['manager', 'cashier', 'client'])) {
-                    // Manager/Cashier/Client sees data belonging to their owner
-                    $query->where($table . '.owner_id', $user->owner_id);
-
-                    // Further filter by shop if it's a cashier or client
-                    if (in_array($user->role, ['cashier', 'client'])) {
-                        $shopId = $user->shops()->first()?->id;
-                        if ($shopId) {
-                            $query->where($table . '.shop_id', $shopId);
-                        }
-                    }
-                }
-            }
-        });
     }
 }

@@ -16,13 +16,13 @@ class CashService
     /**
      * Open a new cash session for a user on a register.
      */
-    public function openSession(User $user, CashRegister $register, array $openingAmounts, ?string $notes = null): CashSession
+    public function openSession(User $user, CashRegister $register, array $openingAmounts, ?string $notes = null, ?int $workSessionId = null): CashSession
     {
         if ($register->activeSession) {
             throw new InvalidArgumentException("A session is already open on this register.");
         }
 
-        return DB::transaction(function () use ($user, $register, $openingAmounts, $notes) {
+        return DB::transaction(function () use ($user, $register, $openingAmounts, $notes, $workSessionId) {
             // 1. Create the session
             $session = CashSession::create([
                 'cash_register_id' => $register->id,
@@ -30,7 +30,8 @@ class CashService
                 'status' => 'open',
                 'opened_at' => now(),
                 'opening_notes' => $notes,
-                // 'work_session_id' => ... (This should be linked if available context)
+                'work_session_id' => $workSessionId,
+                'owner_id' => $register->shop->owner_id, // Inherit from shop
             ]);
 
             // 2. Record opening amounts (e.g. counting the physical cash)
@@ -39,10 +40,8 @@ class CashService
                     'cash_session_id' => $session->id,
                     'currency' => $currency,
                     'opening_amount' => $amount,
+                    'owner_id' => $register->shop->owner_id,
                 ]);
-                
-                // Verify against theoretical balance (optional check, or just log discrepancy later)
-                // For now, we just initialize the amounts
             }
 
             return $session;
@@ -77,6 +76,7 @@ class CashService
                         'closing_amount_real' => $amount,
                         'closing_amount_theoretical' => $theoreticalBalance,
                         'difference' => $amount - $theoreticalBalance,
+                        'owner_id' => $session->owner_id,
                     ]
                 );
             }
@@ -112,22 +112,28 @@ class CashService
                 'amount' => $amount,
                 'description' => $description,
                 'metadata' => $metadata,
+                'owner_id' => $session->owner_id,
             ]);
 
             // 2. Update Real-time Balance
             $balance = CashBalance::firstOrCreate(
                 ['cash_register_id' => $session->cash_register_id, 'currency' => $currency],
-                ['amount' => 0]
+                ['amount' => 0, 'owner_id' => $session->owner_id]
             );
 
             // In is +, Out is -
-            // If movement amount is already signed correctly (e.g. -100 for withdrawal), just add.
-            // Requirement says "Logic: In is + (deposit), Out is - (withdrawal)" in migration
-            // We assume the caller provides the correct sign or we enforce it based on type.
-            // Let's enforce sign based on type for safety if needed, or assume caller is correct.
-            // For now, simply add.
             $balance->amount += $amount;
             $balance->save();
+
+            // 3. Automatically record Activity for consistent logging
+            // We only log if it's not a background sync (optional, but requested to track all)
+            \App\Models\CashierActivity::create([
+                'cashier_id' => auth()->id() ?? $session->user_id,
+                'session_id' => $session->work_session_id,
+                'activity_type' => 'complete_transaction',
+                'description' => "Mouvement de caisse ($type): " . ($metadata['performed_by'] ?? 'Système') . " - $amount $currency - $description",
+                'created_at' => now(),
+            ]);
 
             return $movement;
         });

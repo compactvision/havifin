@@ -116,6 +116,7 @@ Route::get('/help-requests', [HelpRequestController::class, 'index']);
     Route::get('cash/sessions/{session}/report', [CashSessionController::class, 'report']);
     Route::get('cash/sessions/{session}', [CashSessionController::class, 'show']);
     
+    Route::get('/cash/movements', [CashMovementController::class, 'index']);
     Route::get('/cash/sessions/{session}/movements', [CashMovementController::class, 'index']);
     Route::post('/cash/movements', [CashMovementController::class, 'store']); // Adjustments
 

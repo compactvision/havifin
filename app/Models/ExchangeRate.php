@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\HasOwner;
 
 class ExchangeRate extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOwner;
 
     protected $fillable = [
         'currency_pair',
@@ -23,22 +23,4 @@ class ExchangeRate extends Model
         'sell_rate' => 'decimal:4',
         'is_active' => 'boolean',
     ];
-
-    /**
-     * The "booted" method of the model.
-     */
-    protected static function booted()
-    {
-        static::addGlobalScope('owner', function (Builder $query) {
-            $user = auth()->user();
-            if ($user) {
-                $table = $query->getModel()->getTable();
-                if ($user->role === 'super-admin') {
-                    $query->where($table . '.owner_id', $user->id);
-                } elseif (in_array($user->role, ['manager', 'cashier', 'client'])) {
-                    $query->where($table . '.owner_id', $user->owner_id);
-                }
-            }
-        });
-    }
 }

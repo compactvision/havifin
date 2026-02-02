@@ -6,8 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\Builder;
 
+use App\Traits\HasOwner;
+
 class Institution extends Model
 {
+    use HasOwner;
+
     protected $fillable = [
         'name',
         'type',
@@ -53,23 +57,5 @@ class Institution extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
-    }
-
-    /**
-     * The "booted" method of the model.
-     */
-    protected static function booted()
-    {
-        static::addGlobalScope('owner', function (Builder $query) {
-            $user = auth()->user();
-            if ($user) {
-                $table = $query->getModel()->getTable();
-                if ($user->role === 'super-admin') {
-                    $query->where($table . '.owner_id', $user->id);
-                } elseif (in_array($user->role, ['manager', 'cashier', 'client'])) {
-                    $query->where($table . '.owner_id', $user->owner_id);
-                }
-            }
-        });
     }
 }

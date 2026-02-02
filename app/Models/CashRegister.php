@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\HasOwner;
 
 class CashRegister extends Model
 {
     /** @use HasFactory<\Database\Factories\CashRegisterFactory> */
+    use HasFactory, HasOwner;
+
     protected $fillable = [
         'shop_id',
         'counter_id',
         'name',
         'is_active',
+        'owner_id',
     ];
 
     protected $casts = [
@@ -41,6 +45,6 @@ class CashRegister extends Model
 
     public function activeSession()
     {
-        return $this->hasOne(CashSession::class)->where('status', 'open')->latest();
+        return $this->hasOne(CashSession::class)->where('status', 'open')->orderBy('opened_at', 'desc');
     }
 }

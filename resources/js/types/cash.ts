@@ -30,6 +30,7 @@ export interface CashSession {
     opening_notes?: string;
     closing_notes?: string;
     register?: CashRegister;
+    work_session?: any; // You can define a WorkSession interface if needed
     amounts?: CashSessionAmount[];
     movements?: CashMovement[];
     user?: any;

@@ -22,9 +22,9 @@ return new class extends Migration
             $table->foreignId('session_id')->nullable()->constrained('work_sessions')->onDelete('set null');
             $table->timestamps();
 
-            $table->index(['currency_from', 'currency_to']);
-            $table->index('effective_from');
-            $table->index(['currency_from', 'currency_to', 'effective_from']);
+            $table->index(['currency_from', 'currency_to'], 'erh_currencies_idx');
+            $table->index('effective_from', 'erh_eff_from_idx');
+            $table->index(['currency_from', 'currency_to', 'effective_from'], 'erh_cur_eff_idx');
         });
     }
 

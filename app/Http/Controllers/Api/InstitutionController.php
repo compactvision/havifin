@@ -73,6 +73,8 @@ class InstitutionController extends Controller
 
         $institution = Institution::create($data);
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Partenaire créé: {$institution->name} ({$institution->type})");
+
         return response()->json($institution, 201);
     }
 
@@ -129,6 +131,8 @@ class InstitutionController extends Controller
 
         $institution->update($data);
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Partenaire mis à jour: {$institution->name}");
+
         return response()->json($institution);
     }
 
@@ -138,6 +142,8 @@ class InstitutionController extends Controller
     public function destroy(Institution $institution)
     {
         $institution->delete();
+
+        \App\Models\CashierActivity::logAction('complete_transaction', "Partenaire supprimé: {$institution->name}");
 
         return response()->json([
             'success' => true,

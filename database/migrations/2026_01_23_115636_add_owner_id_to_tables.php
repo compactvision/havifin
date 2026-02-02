@@ -36,6 +36,12 @@ return new class extends Migration
             $table->index('owner_id');
         });
 
+        // Add owner_id to work_sessions table
+        Schema::table('work_sessions', function (Blueprint $table) {
+            $table->foreignId('owner_id')->nullable()->after('id')->constrained('users')->onDelete('cascade');
+            $table->index('owner_id');
+        });
+
         // Note: counters inherit owner through shops, so no need for direct owner_id
         // Note: clients can be global or shop-specific, keeping them global for now
     }
@@ -64,6 +70,12 @@ return new class extends Migration
         });
 
         Schema::table('advertisements', function (Blueprint $table) {
+            $table->dropForeign(['owner_id']);
+            $table->dropIndex(['owner_id']);
+            $table->dropColumn('owner_id');
+        });
+
+        Schema::table('work_sessions', function (Blueprint $table) {
             $table->dropForeign(['owner_id']);
             $table->dropIndex(['owner_id']);
             $table->dropColumn('owner_id');

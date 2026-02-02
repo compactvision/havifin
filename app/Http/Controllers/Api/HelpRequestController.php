@@ -26,7 +26,19 @@ class HelpRequestController extends Controller
             }
         }
 
-        // Filter by cashier
+        if (!$request->has('cashier_id') && !$request->has('status')) {
+            $user = $request->user();
+            $shopIds = $user->shops()->pluck('shops.id');
+            $activeSession = \App\Models\Session::open()->latest('session_date')->whereIn('shop_id', $shopIds)->first();
+            if ($activeSession) {
+                // Since HelpRequest doesn't have session_id yet (implied by date/cashier)
+                // we filter by date of the session or today
+                $query->whereDate('created_at', $activeSession->session_date);
+            } else {
+                $query->whereDate('created_at', today());
+            }
+        }
+
         if ($request->has('cashier_id')) {
             $query->where('cashier_id', $request->cashier_id);
         }
@@ -61,6 +73,13 @@ class HelpRequestController extends Controller
             'status' => 'pending',
         ]);
 
+        \App\Models\CashierActivity::create([
+            'cashier_id' => Auth::id(),
+            'activity_type' => 'help_request',
+            'description' => "Demande d'aide pour le client {$helpRequest->client_phone}: {$helpRequest->description}",
+            'created_at' => now(),
+        ]);
+
         return response()->json($helpRequest, 201);
     }
 
@@ -78,6 +97,8 @@ class HelpRequestController extends Controller
         }
 
         $helpRequest->resolve();
+
+        \App\Models\CashierActivity::logAction('complete_transaction', "Demande d'aide résolue pour {$helpRequest->client_phone}");
 
         return response()->json($helpRequest);
     }

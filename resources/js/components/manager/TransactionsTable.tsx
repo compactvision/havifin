@@ -59,7 +59,11 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                                     </div>
                                     <div className="flex min-w-0 flex-col">
                                         <span className="truncate text-sm font-black text-slate-900">
-                                            {tx.client_name || 'Utilisateur'}
+                                            {tx.client
+                                                ? `${tx.client.first_name || ''} ${tx.client.last_name || ''}`.trim() ||
+                                                  'Client'
+                                                : tx.client_name ||
+                                                  'Utilisateur'}
                                         </span>
                                         <span className="flex items-center gap-1 text-[10px] font-bold tracking-tight text-slate-400 uppercase">
                                             <Hash className="h-2.5 w-2.5" /> ID-

@@ -71,6 +71,8 @@ class UserController extends Controller
             $user->shops()->sync($shopIds);
         }
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Utilisateur créé: {$user->name} ({$user->role})");
+
         return response()->json([
             'user' => $user->load('roles'),
             'message' => 'Utilisateur créé avec succès',
@@ -102,6 +104,8 @@ class UserController extends Controller
 
         $user->update($validated);
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Utilisateur mis à jour: {$user->name}");
+
         return response()->json([
             'user' => $user->load('roles'),
             'message' => 'Utilisateur mis à jour avec succès',
@@ -114,6 +118,8 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->update(['is_active' => false]);
+
+        \App\Models\CashierActivity::logAction('complete_transaction', "Utilisateur désactivé: {$user->name}");
 
         return response()->json([
             'message' => 'Utilisateur désactivé avec succès',

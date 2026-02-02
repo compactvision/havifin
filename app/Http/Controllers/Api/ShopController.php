@@ -47,6 +47,8 @@ class ShopController extends Controller
             $shop->users()->sync($validated['user_ids']);
         }
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Boutique créée: {$shop->name}");
+
         return response()->json($shop->load('users'), 201);
     }
 
@@ -86,6 +88,8 @@ class ShopController extends Controller
         if (isset($validated['user_ids'])) {
             $shop->users()->sync($validated['user_ids']);
         }
+
+        \App\Models\CashierActivity::logAction('complete_transaction', "Boutique mise à jour: {$shop->name}");
 
         return response()->json($shop->load('users'));
     }

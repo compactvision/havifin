@@ -23,22 +23,69 @@ class CashSessionController extends Controller
         // Find the active session for the authenticated user's shop.
         // We assume the user belongs to a shop.
         $user = $request->user();
-        $shopIds = $user->shops()->pluck('shops.id'); // If many-to-many, gets all. If belongsTo, just one. 
-        // Assuming single shop context for cashier usually.
+        $shopIds = $user->shops()->pluck('shops.id'); 
         
-        $session = CashSession::whereHas('register', function ($q) use ($shopIds) {
+        $query = CashSession::whereHas('register', function ($q) use ($shopIds) {
                 $q->whereIn('shop_id', $shopIds);
             })
             ->where('status', 'open')
-            ->with(['register', 'amounts'])
-            ->latest()
-            ->first();
+            ->with(['register.shop', 'amounts', 'workSession']);
+
+        // 1. Prioritize sessions linked to the current active work session of the shop.
+        $shopId = $shopIds->first();
+        if ($shopId) {
+            $workSession = \App\Models\Session::open()->latest('session_date')->where('shop_id', $shopId)->first();
+            if ($workSession) {
+                $query->orderByRaw('CASE WHEN work_session_id = ? THEN 0 ELSE 1 END', [$workSession->id]);
+            }
+        }
+
+        // 2. Prioritize the user's OWN session if they are a cashier.
+        if ($user->isCashier()) {
+            $query->orderByRaw('CASE WHEN user_id = ? THEN 0 ELSE 1 END', [$user->id]);
+        }
+
+        $session = $query->latest()->first();
 
         if (!$session) {
             return response()->json(['message' => 'No active session found.'], 404);
         }
 
-        return $session;
+        return $session->load('workSession');
+    }
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $shopIds = collect(); // Initialize shopIds as an empty collection
+
+        if ($user->isManager() || $user->isCashier()) {
+            $shopIds = $user->shops()->pluck('shops.id');
+        } else {
+            // Assuming other roles (e.g., Admin) can see all shops
+            $shopIds = \App\Models\Shop::pluck('id');
+        }
+        
+        $query = CashSession::whereHas('register', function ($q) use ($shopIds) {
+            $q->whereIn('shop_id', $shopIds);
+        })->with(['register', 'user', 'amounts']);
+
+        // Default to current active work session if no historical date range provided
+        if (!$request->has('date')) {
+            $workSession = \App\Models\Session::open()->latest('session_date')->whereIn('shop_id', $shopIds)->first();
+            if ($workSession) {
+                $query->where('work_session_id', $workSession->id);
+            } else {
+                // If no active session, maybe show today's anyway?
+                $query->whereDate('opened_at', today());
+            }
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return $query->latest()->get();
     }
 
     public function store(Request $request)
@@ -57,12 +104,16 @@ class CashSessionController extends Controller
         // Otherwise, fallback to the authenticated user (likely Manager opening their own session or unassigned).
         $user = $register->counter?->cashier ?? $request->user();
 
+        // Link to current active work session for this shop
+        $workSession = \App\Models\Session::open()->latest('session_date')->where('shop_id', $register->shop_id)->first();
+
         try {
             $session = $this->cashService->openSession(
                 $user,
                 $register,
                 $validated['opening_amounts'],
-                $validated['notes'] ?? null
+                $validated['notes'] ?? null,
+                $workSession?->id
             );
             return response()->json($session, 201);
         } catch (\InvalidArgumentException $e) {
@@ -72,8 +123,18 @@ class CashSessionController extends Controller
 
     public function close(Request $request, CashSession $session)
     {
-        // Ensure user owns the session or is manager
-        if ($request->user()->id !== $session->user_id && !$request->user()->isManager()) {
+        $user = $request->user();
+        // Ensure user owns the session, is manager/admin, or is a cashier in the same shop
+        $canClose = $user->id === $session->user_id || $user->isManager() || $user->isSuperAdmin();
+        
+        if (!$canClose) {
+            $shopIds = $user->shops()->pluck('shops.id');
+            if ($shopIds->contains($session->register->shop_id)) {
+                $canClose = true;
+            }
+        }
+
+        if (!$canClose) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

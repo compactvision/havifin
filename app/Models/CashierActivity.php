@@ -5,8 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Traits\HasOwner;
+
 class CashierActivity extends Model
 {
+    use HasOwner;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -60,5 +64,21 @@ class CashierActivity extends Model
     public function scopeForSession($query, int $sessionId)
     {
         return $query->where('session_id', $sessionId);
+    }
+
+    /**
+     * Log a generic activity action.
+     */
+    public static function logAction(string $type, string $description, ?int $clientId = null, ?int $sessionId = null): self
+    {
+        $user = auth()->user();
+        return self::create([
+            'cashier_id' => $user?->id,
+            'session_id' => $sessionId,
+            'activity_type' => $type,
+            'client_id' => $clientId,
+            'description' => $description,
+            'created_at' => now(),
+        ]);
     }
 }

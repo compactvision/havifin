@@ -85,6 +85,14 @@ class ExchangeRateHistoryController extends Controller
                 'owner_id' => $ownerId,
             ]);
 
+            // Log the action
+            \App\Models\CashierActivity::logAction(
+                'complete_transaction', // Re-using existing type for now as requested
+                "Nouveau taux: {$request->currency_from}/{$request->currency_to} à {$request->rate}",
+                null,
+                $request->session_id
+            );
+
             DB::commit();
 
             return response()->json($rate, 201);

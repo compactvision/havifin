@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::table('work_sessions', function (Blueprint $table) {
             try {
+                // Ensure a non-unique index exists for shop_id before dropping the unique constraint 
+                // that MySQL might be using for the foreign key.
+                if (!collect(DB::select("SHOW INDEXES FROM work_sessions"))->contains('Key_name', 'work_sessions_shop_id_index')) {
+                    $table->index('shop_id', 'work_sessions_shop_id_index');
+                }
+            } catch (\Exception $e) {}
+
+            try {
                 // Remove the unique constraint on (shop_id, session_date)
                 $table->dropUnique(['shop_id', 'session_date']);
             } catch (\Exception $e) {

@@ -55,6 +55,8 @@ class AdvertisementController extends Controller
 
         $advertisement = Advertisement::create($data);
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Publicité créée: {$advertisement->title}");
+
         return response()->json($advertisement, 201);
     }
 
@@ -88,6 +90,8 @@ class AdvertisementController extends Controller
 
         $advertisement->update($request->all());
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Publicité mise à jour: {$advertisement->title}");
+
         return response()->json($advertisement);
     }
 
@@ -97,6 +101,8 @@ class AdvertisementController extends Controller
     public function destroy(Advertisement $advertisement)
     {
         $advertisement->delete();
+
+        \App\Models\CashierActivity::logAction('complete_transaction', "Publicité supprimée: {$advertisement->title}");
 
         return response()->json([
             'success' => true,

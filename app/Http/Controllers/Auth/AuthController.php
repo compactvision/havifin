@@ -48,6 +48,14 @@ class AuthController extends Controller
         // Load roles for frontend
         $user->load('roles');
         
+        // Log Login Activity
+        \App\Models\CashierActivity::create([
+            'cashier_id' => $user->id,
+            'activity_type' => 'login',
+            'description' => "Connexion utilisateur: {$user->name}",
+            'created_at' => now(),
+        ]);
+
         // Get primary role
         $role = 'cashier';
         if ($user->hasRole('super-admin')) {
@@ -72,6 +80,16 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        $user = auth()->user();
+        if ($user) {
+            \App\Models\CashierActivity::create([
+                'cashier_id' => $user->id,
+                'activity_type' => 'logout',
+                'description' => "Déconnexion utilisateur: {$user->name}",
+                'created_at' => now(),
+            ]);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

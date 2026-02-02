@@ -58,12 +58,12 @@ export default function CashierTodaySession() {
                         moment. Veuillez demander à un manager de vous ouvrir
                         une caisse.
                     </p>
-                    <Link href="/logout" method="post" as="button">
-                        <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="gap-2" asChild>
+                        <Link href="/logout" method="post">
                             <LogOut className="h-4 w-4" />
                             Se déconnecter
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
                 </div>
             </AppMain>
         );
@@ -129,6 +129,24 @@ export default function CashierTodaySession() {
                                             {session.register?.name} •{' '}
                                             {session.register?.shop?.name}
                                         </p>
+                                        {session.work_session?.session_date &&
+                                            moment(
+                                                session.work_session
+                                                    .session_date,
+                                            ).isBefore(moment(), 'day') && (
+                                                <Badge
+                                                    variant="destructive"
+                                                    className="mt-1 text-[10px] font-black uppercase"
+                                                >
+                                                    Session d'une date
+                                                    antérieure (
+                                                    {moment(
+                                                        session.work_session
+                                                            .session_date,
+                                                    ).format('DD/MM')}
+                                                    )
+                                                </Badge>
+                                            )}
                                     </div>
                                 </div>
                                 <Badge className="bg-green-100 px-4 py-2 text-sm font-black text-green-700 hover:bg-green-100">
@@ -180,7 +198,7 @@ export default function CashierTodaySession() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-end">
+                            <div className="mt-8 flex flex-col gap-4 md:flex-row md:justify-end">
                                 <Link
                                     href="/cashier"
                                     className="w-full md:w-auto"
@@ -190,6 +208,13 @@ export default function CashierTodaySession() {
                                         <ArrowRight className="ml-2 h-5 w-5" />
                                     </Button>
                                 </Link>
+
+                                {session.work_session?.status === 'closed' && (
+                                    <p className="text-center text-xs font-bold text-red-500 italic md:text-right">
+                                        Note: Cette session appartient à une
+                                        journée clôturée par le manager.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>

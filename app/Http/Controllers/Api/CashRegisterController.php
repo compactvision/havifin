@@ -16,12 +16,23 @@ class CashRegisterController extends Controller
         $query = CashRegister::query();
 
         if ($user->isManager() || $user->isCashier()) {
-            // Filter by user's shop(s)
             $shopIds = $user->shops()->pluck('shops.id');
             $query->whereIn('shop_id', $shopIds);
+        } else {
+            $shopIds = \App\Models\Shop::pluck('id');
         }
 
-        return $query->with(['shop', 'counter', 'activeSession'])->get();
+        $workSession = \App\Models\Session::open()->latest('session_date')->whereIn('shop_id', $shopIds)->first();
+
+        return $query->with(['shop', 'counter', 'activeSession' => function($q) use ($user, $workSession) {
+            if ($workSession) {
+                // Return session from CURRENT work session
+                $q->where('work_session_id', $workSession->id);
+            } else {
+                // Or fallback to current day
+                $q->whereDate('opened_at', today());
+            }
+        }])->get();
     }
 
     public function store(Request $request)
@@ -37,8 +48,15 @@ class CashRegisterController extends Controller
         return response()->json($register, 201);
     }
 
-    public function show(CashRegister $cashRegister)
+    public function show(CashRegister $cashRegister, Request $request)
     {
-        return $cashRegister->load(['shop', 'counter', 'balances', 'activeSession']);
+        $user = $request->user();
+        $workSession = \App\Models\Session::open()->where('shop_id', $cashRegister->shop_id)->first();
+
+        return $cashRegister->load(['shop', 'counter', 'balances', 'activeSession' => function($q) use ($user, $workSession) {
+            if ($workSession) {
+                $q->orderByRaw('CASE WHEN work_session_id = ? THEN 0 ELSE 1 END', [$workSession->id]);
+            }
+        }]);
     }
 }

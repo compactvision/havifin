@@ -15,12 +15,33 @@ class ClientController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->has('created_date')) {
-            // Check if created_date param is meant for sorting ('created_date' or '-created_date')
-            // or filtering. Usually frontend passes it as sort. The base44Client sends sort param.
-            // But base44Client.ts filter method sends params object AND sort separate.
-            // If created_date is in params, we filter.
-            // Here, usually we filter by exact date if provided.
+        // Default to current active session if not filtering by date/session specifically
+        if (!$request->has('session_id') && !$request->has('date')) {
+            $user = $request->user();
+            if ($user) {
+                $shopIds = $user->shops()->pluck('shops.id');
+                if ($shopIds->isNotEmpty()) {
+                    $activeSessionIds = \App\Models\Session::open()
+                        ->latest('session_date')
+                        ->whereIn('shop_id', $shopIds)
+                        ->pluck('id');
+                    
+                    if ($activeSessionIds->isNotEmpty()) {
+                        $query->whereIn('session_id', $activeSessionIds);
+                    }
+                }
+            }
+        }
+
+        if ($request->has('session_id')) {
+            $query->where('session_id', $request->session_id);
+        }
+
+        if ($request->has('date')) {
+            $date = $request->date;
+            $query->whereHas('session', function ($q) use ($date) {
+                $q->whereDate('session_date', $date);
+            });
         }
 
         // Handle sorting
@@ -30,6 +51,10 @@ class ClientController extends Controller
             if (str_starts_with($sort, '-')) {
                 $sort = substr($sort, 1);
                 $direction = 'desc';
+            }
+            // Map frontend naming to DB naming if necessary
+            if ($sort === 'created_date') {
+                $sort = 'created_at';
             }
             $query->orderBy($sort, $direction);
         } else {
@@ -64,7 +89,6 @@ class ClientController extends Controller
         ]);
 
         $user = $request->user();
-        $validated['owner_id'] = $user ? ($user->role === 'super-admin' ? $user->id : $user->owner_id) : null; // Handle unauth case if needed, or rely on auth middleware
         
         // Handle unauthenticated kiosk requests possibly? 
         // Assuming auth middleware is present or user is derived. 

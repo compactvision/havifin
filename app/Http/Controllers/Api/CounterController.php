@@ -54,6 +54,8 @@ class CounterController extends Controller
             ...$validated,
         ]);
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Guichet créé: {$counter->name} (Boutique: {$shop->name})");
+
         return response()->json($counter->load('cashier'), 201);
     }
 
@@ -85,6 +87,8 @@ class CounterController extends Controller
 
         $counter->save();
 
+        \App\Models\CashierActivity::logAction('complete_transaction', "Guichet mis à jour: {$counter->name}");
+
         return response()->json($counter->load('cashier'));
     }
 
@@ -94,7 +98,10 @@ class CounterController extends Controller
     public function destroy($id)
     {
         $counter = Counter::findOrFail($id);
+        $name = $counter->name;
         $counter->delete();
+
+        \App\Models\CashierActivity::logAction('complete_transaction', "Guichet supprimé: {$name}");
 
         return response()->json(['message' => 'Guichet supprimé avec succès']);
     }

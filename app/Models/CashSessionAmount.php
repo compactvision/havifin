@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\CashSession;
+use App\Traits\HasOwner;
 
 class CashSessionAmount extends Model
 {
+    use HasOwner;
+
     protected $fillable = [
         'cash_session_id',
         'currency',
@@ -14,6 +16,7 @@ class CashSessionAmount extends Model
         'closing_amount_theoretical',
         'closing_amount_real',
         'difference',
+        'owner_id',
     ];
 
     protected $casts = [
