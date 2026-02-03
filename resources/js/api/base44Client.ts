@@ -223,6 +223,7 @@ export const base44 = {
                 limit?: number;
                 date?: string;
                 search?: string;
+                shop_id?: number | string;
             }) =>
                 axios
                     .get<Client[]>('/api/clients', { params })
@@ -272,6 +273,7 @@ export const base44 = {
                 date?: string;
                 client_id?: number | string;
                 client_phone?: string;
+                shop_id?: number | string;
             }) =>
                 axios
                     .get<Transaction[]>('/api/transactions', { params })
@@ -567,12 +569,15 @@ export const base44 = {
                         data: CashMovement[];
                     }>(`/api/cash/sessions/${id}/movements`)
                     .then(handleResponse),
-            listMovements: (params?: { date?: string }) =>
+            listMovements: (params?: {
+                date?: string;
+                shop_id?: number | string;
+            }): Promise<CashMovement[]> =>
                 axios
                     .get<{ data: CashMovement[] }>('/api/cash/movements', {
                         params,
                     })
-                    .then(handleResponse),
+                    .then((res) => res.data.data),
             report: (id: number | string) =>
                 axios
                     .get<any>(`/api/cash/sessions/${id}/report`)

@@ -15,6 +15,10 @@ class ClientController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->has('shop_id')) {
+            $query->where('shop_id', $request->shop_id);
+        }
+
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {

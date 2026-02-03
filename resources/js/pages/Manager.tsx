@@ -48,40 +48,58 @@ export default function Manager() {
         moment().format('YYYY-MM-DD'),
     );
     const [clientSearch, setClientSearch] = useState('');
+    const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
+
+    // Fetch shops for super-admin/manager
+    const { data: shops = [] } = useQuery({
+        queryKey: ['manager-shops'],
+        queryFn: () => base44.entities.Shop.list(),
+    });
+
+    // Set default shop for managers or if none selected
+    useMemo(() => {
+        if (shops.length > 0 && !selectedShopId) {
+            setSelectedShopId(shops[0].id);
+        }
+    }, [shops, selectedShopId]);
 
     // Data Fetching
     const { data: clients = [], isLoading: loadingClients } = useQuery({
-        queryKey: ['all-clients', selectedDate, clientSearch],
+        queryKey: ['all-clients', selectedDate, clientSearch, selectedShopId],
         queryFn: () =>
             base44.entities.Client.list({
                 sort: '-created_at',
                 limit: 500,
                 date: activeTab === 'clients' ? undefined : selectedDate,
                 search: clientSearch,
+                shop_id: selectedShopId || undefined,
             }),
         refetchInterval: 30000,
+        enabled: !!selectedShopId || isSuperAdmin,
     });
 
     const { data: transactions = [], isLoading: loadingTx } = useQuery({
-        queryKey: ['all-transactions', selectedDate],
+        queryKey: ['all-transactions', selectedDate, selectedShopId],
         queryFn: () =>
             base44.entities.Transaction.list({
                 sort: '-created_at',
                 limit: 500,
                 date: selectedDate,
+                shop_id: selectedShopId || undefined,
             }),
         refetchInterval: 30000,
+        enabled: !!selectedShopId || isSuperAdmin,
     });
 
     const { data: cashMovements = [], isLoading: loadingMovements } = useQuery({
-        queryKey: ['all-cash-movements', selectedDate],
-        queryFn: async () => {
-            const response = await base44.entities.CashSession.listMovements({
+        queryKey: ['all-cash-movements', selectedDate, selectedShopId],
+        queryFn: () =>
+            base44.entities.CashSession.listMovements({
                 date: selectedDate,
-            } as any);
-            return (response as any).data || [];
-        },
+                shop_id: selectedShopId || undefined,
+            }),
         refetchInterval: 30000,
+        enabled: !!selectedShopId || isSuperAdmin,
     });
 
     // Stats Logic
@@ -175,12 +193,36 @@ export default function Manager() {
                             </div>
                             <p className="mt-1 flex items-center gap-2 text-[10px] font-black tracking-[0.15em] text-slate-400 uppercase">
                                 {auth.user.role} •{' '}
-                                {auth.user.shop || 'Supervision & Reporting'}
+                                {isSuperAdmin
+                                    ? 'Supervision Globale'
+                                    : auth.user.shop || 'Boutique'}
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4">
+                        {shops.length > 0 && (
+                            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+                                <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
+                                    <Store className="h-4 w-4 text-slate-500" />
+                                </div>
+                                <select
+                                    className="cursor-pointer border-none bg-transparent pr-10 text-sm font-black text-slate-700 uppercase focus:ring-0"
+                                    value={selectedShopId || ''}
+                                    onChange={(e) =>
+                                        setSelectedShopId(
+                                            Number(e.target.value),
+                                        )
+                                    }
+                                >
+                                    {shops.map((shop: any) => (
+                                        <option key={shop.id} value={shop.id}>
+                                            {shop.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <div className="hidden items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 pr-5 xl:flex">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-400 shadow-sm">
                                 <RefreshCw
@@ -558,7 +600,7 @@ export default function Manager() {
                                                 </div>
                                                 <ClientsTable
                                                     clients={uniqueClients}
-                                                    isLoading={loadingClients}
+                                                    isLoading={loadingClients || (shops.length > 0 && !selectedShopId)}
                                                 />
                                             </div>
                                         )}
