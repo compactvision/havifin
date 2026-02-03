@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import ActivityLog from '@/components/manager/ActivityLog';
 import { CashMovementsTable } from '@/components/manager/CashMovementsTable';
+import { ClientsTable } from '@/components/manager/ClientsTable';
 import InstitutionManager from '@/components/manager/InstitutionManager';
 import RatesManager from '@/components/manager/RatesManager';
 import SessionManager from '@/components/manager/SessionManager';
@@ -16,7 +17,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
     Activity,
-    ArrowLeftRight,
+    ArrowRightLeft,
     Banknote,
     ChevronRight,
     Download,
@@ -46,15 +47,17 @@ export default function Manager() {
     const [selectedDate, setSelectedDate] = useState(
         moment().format('YYYY-MM-DD'),
     );
+    const [clientSearch, setClientSearch] = useState('');
 
     // Data Fetching
     const { data: clients = [], isLoading: loadingClients } = useQuery({
-        queryKey: ['all-clients', selectedDate],
+        queryKey: ['all-clients', selectedDate, clientSearch],
         queryFn: () =>
             base44.entities.Client.list({
                 sort: '-created_at',
                 limit: 500,
-                date: selectedDate,
+                date: activeTab === 'clients' ? undefined : selectedDate,
+                search: clientSearch,
             }),
         refetchInterval: 30000,
     });
@@ -112,6 +115,26 @@ export default function Manager() {
             isCurrentDay,
         };
     }, [clients, transactions, selectedDate]);
+
+    // Deduplicate clients by phone number as requested
+    const uniqueClients = useMemo(() => {
+        const map = new Map();
+        clients.forEach((c) => {
+            const key = c.phone;
+            if (!key) return; // Skip clients without phone
+
+            if (!map.has(key)) {
+                map.set(key, c);
+            } else {
+                const existing = map.get(key);
+                // Prioritize registered clients
+                if (c.is_registered && !existing.is_registered) {
+                    map.set(key, c);
+                }
+            }
+        });
+        return Array.from(map.values());
+    }, [clients]);
 
     const handleRefresh = () => {
         queryClient.invalidateQueries({ queryKey: ['all-clients'] });
@@ -256,7 +279,7 @@ export default function Manager() {
                                             {
                                                 id: 'transactions',
                                                 label: 'Flux Transactions',
-                                                icon: ArrowLeftRight,
+                                                icon: ArrowRightLeft,
                                             },
                                             {
                                                 id: 'movements',
@@ -271,6 +294,11 @@ export default function Manager() {
                                             {
                                                 id: 'users',
                                                 label: 'Utilisateurs',
+                                                icon: Users,
+                                            },
+                                            {
+                                                id: 'clients',
+                                                label: 'Base Clients',
                                                 icon: Users,
                                             },
                                             {
@@ -297,41 +325,45 @@ export default function Manager() {
                                                       },
                                                   ]
                                                 : []),
-                                        ].map((item) => (
-                                            <button
-                                                key={item.id}
-                                                onClick={() =>
-                                                    setActiveTab(item.id)
-                                                }
-                                                className={cn(
-                                                    'flex w-full items-center justify-between rounded-2xl border p-4 text-sm font-bold transition-all duration-300',
-                                                    activeTab === item.id
-                                                        ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                                                        : 'border-slate-100 bg-white/40 text-slate-500 hover:border-slate-200 hover:bg-white',
-                                                )}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <item.icon
+                                        ].map((item) => {
+                                            const Icon = item.icon;
+                                            return (
+                                                <button
+                                                    key={item.id}
+                                                    onClick={() =>
+                                                        setActiveTab(item.id)
+                                                    }
+                                                    className={cn(
+                                                        'flex w-full items-center justify-between rounded-2xl border p-4 text-sm font-bold transition-all duration-300',
+                                                        activeTab === item.id
+                                                            ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                                                            : 'border-slate-100 bg-white/40 text-slate-500 hover:border-slate-200 hover:bg-white',
+                                                    )}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <Icon
+                                                            className={cn(
+                                                                'h-5 w-5',
+                                                                activeTab ===
+                                                                    item.id
+                                                                    ? 'text-white'
+                                                                    : 'text-slate-400',
+                                                            )}
+                                                        />
+                                                        {item.label}
+                                                    </div>
+                                                    <ChevronRight
                                                         className={cn(
-                                                            'h-5 w-5',
+                                                            'h-4 w-4 transition-transform',
                                                             activeTab ===
                                                                 item.id
-                                                                ? 'text-white'
-                                                                : 'text-slate-400',
+                                                                ? 'translate-x-1'
+                                                                : 'opacity-0',
                                                         )}
                                                     />
-                                                    {item.label}
-                                                </div>
-                                                <ChevronRight
-                                                    className={cn(
-                                                        'h-4 w-4 transition-transform',
-                                                        activeTab === item.id
-                                                            ? 'translate-x-1'
-                                                            : 'opacity-0',
-                                                    )}
-                                                />
-                                            </button>
-                                        ))}
+                                                </button>
+                                            );
+                                        })}
                                     </nav>
                                 </div>
 
@@ -500,6 +532,34 @@ export default function Manager() {
                                         {activeTab === 'shops' && (
                                             <div className="animate-in duration-300 fade-in">
                                                 <ShopManager />
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'clients' && (
+                                            <div className="animate-in space-y-6 duration-300 fade-in">
+                                                <div className="mb-4 flex items-center justify-between">
+                                                    <h3 className="text-2xl font-black tracking-tight text-slate-800">
+                                                        Base de Données Clients
+                                                    </h3>
+                                                    <div className="relative w-72">
+                                                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                                        <input
+                                                            placeholder="Rechercher un client..."
+                                                            className="h-10 w-full rounded-xl border-slate-200 pr-4 pl-10 text-sm focus:ring-indigo-500"
+                                                            value={clientSearch}
+                                                            onChange={(e) =>
+                                                                setClientSearch(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <ClientsTable
+                                                    clients={uniqueClients}
+                                                    isLoading={loadingClients}
+                                                />
                                             </div>
                                         )}
 

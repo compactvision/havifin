@@ -62,6 +62,12 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->middleware(['role:manager,super-admin'])->name('manager.shops.show');
 
+    Route::get('/manager/clients/{id}', function ($id) {
+        return Inertia::render('Manager/ClientDetail', [
+            'id' => $id
+        ]);
+    })->middleware(['role:manager,super-admin'])->name('manager.clients.show');
+
     // Super Admin dedicated shop management
     Route::get('/admin/shops', function () {
         return Inertia::render('SuperAdmin/Shops');

@@ -15,6 +15,15 @@ class ClientController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
         // Default to current active session if not filtering by date/session specifically
         if (!$request->has('session_id') && !$request->has('date')) {
             $user = $request->user();

@@ -44,6 +44,14 @@ class TransactionController extends Controller
             });
         }
 
+        if ($request->has('client_id')) {
+            $query->where('client_id', $request->client_id);
+        }
+
+        if ($request->has('client_phone')) {
+            $query->where('client_phone', $request->client_phone);
+        }
+
         // Handle sorting
         if ($request->has('sort')) {
             $sort = $request->sort;

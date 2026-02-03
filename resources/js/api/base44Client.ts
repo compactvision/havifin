@@ -214,7 +214,16 @@ export const base44 = {
                 axios
                     .put<Client>(`/api/clients/${id}`, data)
                     .then(handleResponse<Client>),
-            list: (params?: { sort?: string; limit?: number; date?: string }) =>
+            show: (id: number) =>
+                axios
+                    .get<Client>(`/api/clients/${id}`)
+                    .then(handleResponse<Client>),
+            list: (params?: {
+                sort?: string;
+                limit?: number;
+                date?: string;
+                search?: string;
+            }) =>
                 axios
                     .get<Client[]>('/api/clients', { params })
                     .then(handleResponse<Client[]>),
@@ -257,7 +266,13 @@ export const base44 = {
                 axios
                     .post<Transaction>('/api/transactions', data)
                     .then(handleResponse<Transaction>),
-            list: (params?: { sort?: string; limit?: number; date?: string }) =>
+            list: (params?: {
+                sort?: string;
+                limit?: number;
+                date?: string;
+                client_id?: number | string;
+                client_phone?: string;
+            }) =>
                 axios
                     .get<Transaction[]>('/api/transactions', { params })
                     .then(handleResponse<Transaction[]>),
