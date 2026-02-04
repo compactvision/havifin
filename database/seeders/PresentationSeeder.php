@@ -105,9 +105,7 @@ class PresentationSeeder extends Seeder
         $cashRegister = \App\Models\CashRegister::firstOrCreate(
             ['name' => 'Caisse Principale', 'shop_id' => $shop->id],
             [
-                'status' => 'open',
-                'currency' => 'USD',
-                'balance' => 0,
+                'is_active' => true,
                 'owner_id' => $manager->owner_id,
             ]
         );
