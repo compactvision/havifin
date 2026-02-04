@@ -32,16 +32,19 @@ class CashierActivityController extends Controller
             $user = $request->user();
             $shopIds = $user->shops()->pluck('shops.id');
             
-            if ($shopIds->isNotEmpty()) {
-                $activeSession = \App\Models\Session::open()->whereIn('shop_id', $shopIds)->first();
-                if ($activeSession) {
-                    $query->where('session_id', $activeSession->id);
-                } else {
-                    $query->whereDate('created_at', today());
+            // Allow seeing today's activities even if not in session (login/logout often happens outside session)
+            $query->where(function($q) use ($shopIds) {
+                // Activities for today
+                $q->whereDate('created_at', today());
+                
+                // OR activities in open sessions
+                if ($shopIds->isNotEmpty()) {
+                    $activeSession = \App\Models\Session::open()->whereIn('shop_id', $shopIds)->first();
+                    if ($activeSession) {
+                        $q->orWhere('session_id', $activeSession->id);
+                    }
                 }
-            } else {
-                 $query->whereDate('created_at', today());
-            }
+            });
         }
 
         if ($request->has('date')) {
@@ -108,12 +111,19 @@ class CashierActivityController extends Controller
         if (!$request->has('session_id') && !$request->has('start_date') && !$request->has('end_date')) {
             $user = $request->user();
             $shopIds = $user->shops()->pluck('shops.id');
-            $activeSession = \App\Models\Session::open()->whereIn('shop_id', $shopIds)->first();
-            if ($activeSession) {
-                $query->where('session_id', $activeSession->id);
-            } else {
-                $query->whereDate('created_at', today());
-            }
+
+            $query->where(function($q) use ($shopIds) {
+                 // Activities for today
+                 $q->whereDate('created_at', today());
+                 
+                 // OR activities in open sessions
+                 if ($shopIds->isNotEmpty()) {
+                     $activeSession = \App\Models\Session::open()->whereIn('shop_id', $shopIds)->first();
+                     if ($activeSession) {
+                         $q->orWhere('session_id', $activeSession->id);
+                     }
+                 }
+            });
         }
 
         if ($request->has('date')) {

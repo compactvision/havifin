@@ -98,7 +98,7 @@ class InstitutionController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|in:mobile_money,bank,payment,other',
-            'code' => 'sometimes|required|string|max:255|unique:institutions,code,' . $institution->id,
+            'code' => ['sometimes', 'required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('institutions', 'code')->ignore($institution->id)],
             'logo' => $logoValidation,
             'is_active' => 'sometimes', // Can be boolean or "1"/"0" string from FormData
             'settings' => 'sometimes|nullable|array',
