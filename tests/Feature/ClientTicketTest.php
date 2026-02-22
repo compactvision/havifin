@@ -113,4 +113,50 @@ class ClientTicketTest extends TestCase
         $response->assertStatus(201)
             ->assertJson(['ticket_number' => '001']);
     }
+
+    public function test_waiting_ahead_count_is_correct()
+    {
+        // Setup Owner and Manager
+        $owner = User::factory()->create(['role' => 'super-admin']);
+        $user = User::factory()->create(['role' => 'manager', 'owner_id' => $owner->id]);
+        $shop = Shop::create(['name' => 'Demo Shop', 'owner_id' => $owner->id, 'slug' => 'demo-shop-waiting']);
+        $user->shops()->attach($shop);
+        $user->refresh();
+        $this->actingAs($user);
+
+        // Open Session
+        $session = Session::create([
+            'shop_id' => $shop->id,
+            'owner_id' => $owner->id,
+            'opened_by' => $user->id,
+            'status' => 'open',
+            'opening_balance' => 0,
+            'session_date' => now()->toDateString(),
+            'opened_at' => now(),
+        ]);
+
+        // Create Client 1 (0 people ahead)
+        $response1 = $this->postJson('/api/clients', [
+            'phone' => '1111111111',
+            'operation_type' => 'depot',
+            'service' => 'bank',
+        ]);
+        $response1->assertJson(['waiting_ahead' => 0]);
+
+        // Create Client 2 (1 person ahead - Client 1)
+        $response2 = $this->postJson('/api/clients', [
+            'phone' => '2222222222',
+            'operation_type' => 'depot',
+            'service' => 'bank',
+        ]);
+        $response2->assertJson(['waiting_ahead' => 1]);
+
+        // Create Client 3 (2 people ahead - Client 1 and 2)
+        $response3 = $this->postJson('/api/clients', [
+            'phone' => '3333333333',
+            'operation_type' => 'depot',
+            'service' => 'bank',
+        ]);
+        $response3->assertJson(['waiting_ahead' => 2]);
+    }
 }

@@ -153,6 +153,14 @@ class ClientController extends Controller
 
         $client = Client::create($validated);
 
+        // Add waiting_ahead to the response
+        $waitingAhead = Client::where('session_id', $client->session_id)
+            ->whereIn('status', ['waiting', 'calling'])
+            ->where('id', '<', $client->id)
+            ->count();
+        
+        $client->waiting_ahead = $waitingAhead;
+
         return response()->json($client, 201);
     }
 

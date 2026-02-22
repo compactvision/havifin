@@ -453,9 +453,13 @@ export default function SessionManager() {
                                         className="flex h-20 w-full items-center justify-center gap-3 rounded-[2rem] bg-white text-xs font-black tracking-[0.2em] text-indigo-600 uppercase shadow-xl transition-all hover:bg-slate-50 active:scale-95"
                                     >
                                         {isOpening ? (
-                                            <Clock className="h-5 w-5 animate-spin" />
+                                            <span>
+                                                <Clock className="h-5 w-5 animate-spin" />
+                                            </span>
                                         ) : (
-                                            <Play className="h-5 w-5 fill-indigo-600" />
+                                            <span>
+                                                <Play className="h-5 w-5 fill-indigo-600" />
+                                            </span>
                                         )}
                                         Ouvrir Session
                                     </Button>

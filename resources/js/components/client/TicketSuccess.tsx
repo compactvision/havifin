@@ -6,11 +6,13 @@ import { PrintableTicket } from './PrintableTicket';
 
 interface TicketSuccessProps {
     ticketNumber: string | null;
+    waitingAhead?: number;
     onNewTicket: () => void;
 }
 
 export default function TicketSuccess({
     ticketNumber,
+    waitingAhead = 0,
     onNewTicket,
 }: TicketSuccessProps) {
     useEffect(() => {
@@ -114,7 +116,10 @@ export default function TicketSuccess({
                 </Button>
 
                 {ticketNumber && (
-                    <PrintableTicket ticketNumber={ticketNumber} />
+                    <PrintableTicket
+                        ticketNumber={ticketNumber}
+                        waitingAhead={waitingAhead}
+                    />
                 )}
             </motion.div>
         </motion.div>

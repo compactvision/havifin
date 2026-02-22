@@ -29,11 +29,14 @@ export default function Login() {
 
             toast.success('Connexion réussie!');
 
-            // Redirect based on role
+            // Small delay to ensure session cookie is committed before redirect
+            await new Promise((resolve) => setTimeout(resolve, 300));
+
+            // Redirect based on role - must match routes in web.php
             if (data.role === 'super-admin') {
                 window.location.href = '/admin/shops';
             } else if (data.role === 'manager') {
-                window.location.href = '/manager';
+                window.location.href = '/manager/shops';
             } else if (data.role === 'cashier') {
                 window.location.href = '/cashier/today';
             } else if (data.role === 'client') {
@@ -69,6 +72,7 @@ export default function Login() {
 
             <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-6">
                 <motion.div
+                    key="login-card"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full max-w-md"
@@ -112,7 +116,10 @@ export default function Login() {
                                     />
                                 </div>
                                 {errors.email && (
-                                    <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                                    <div
+                                        key="email-error"
+                                        className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+                                    >
                                         <AlertCircle className="h-4 w-4" />
                                         {errors.email}
                                     </div>
@@ -140,7 +147,10 @@ export default function Login() {
                                     />
                                 </div>
                                 {errors.password && (
-                                    <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                                    <div
+                                        key="password-error"
+                                        className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300"
+                                    >
                                         <AlertCircle className="h-4 w-4" />
                                         {errors.password}
                                     </div>
@@ -152,30 +162,32 @@ export default function Login() {
                                 disabled={isLoading}
                                 className="h-14 w-full rounded-2xl border border-white/30 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-lg font-bold text-white shadow-2xl shadow-cyan-500/30 backdrop-blur-xl transition-all hover:scale-[1.02] hover:border-white/50 hover:shadow-cyan-500/50 active:scale-[0.98]"
                             >
-                                {isLoading ? (
-                                    <>
-                                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                        Connexion en cours...
-                                    </>
-                                ) : (
-                                    <>
-                                        Se connecter
-                                        <LogIn className="ml-2 h-5 w-5" />
-                                    </>
-                                )}
+                                <span className="flex items-center justify-center">
+                                    {isLoading ? (
+                                        <span className="flex items-center">
+                                            <span className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                            Connexion en cours...
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center">
+                                            Se connecter
+                                            <LogIn className="ml-2 h-5 w-5" />
+                                        </span>
+                                    )}
+                                </span>
                             </Button>
                         </form>
 
                         <div className="mt-6 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-center text-sm text-cyan-900">
                             <p className="font-medium">Comptes de test</p>
                             <p className="mt-1 text-xs text-cyan-800/80">
-                                SuperAdmin: superadmin@havifin.com / password
+                                SuperAdmin: superadmin1@havifin.com / password
                             </p>
                             <p className="text-xs text-cyan-800/80">
-                                Manager: admin@havifin.com / password
+                                Manager: manager1@havifin.com / password
                             </p>
                             <p className="text-xs text-cyan-800/80">
-                                Cashier: cashier@havifin.com / password
+                                Cashier: cashier1@havifin.com / password
                             </p>
                         </div>
                     </div>

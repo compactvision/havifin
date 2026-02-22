@@ -174,37 +174,37 @@
 @media print {
     @page {
         margin: 0;
-        size: 58mm auto; /* Explicit thermal paper size */
+        size: 58mm auto;
     }
 
-    /* Hide EVERYTHING by default */
-    html,
-    body,
-    #app,
-    main,
-    div,
-    section,
+    /* Hide everything using visibility (allows child exceptions) */
+    body * {
+        visibility: hidden !important;
+    }
+
+    /* Hide structural UI elements completely */
+    .no-print,
+    nav,
     header,
-    footer,
-    button,
-    nav {
+    footer {
         display: none !important;
     }
 
-    /* ONLY show the printable ticket */
+    /* Show the ticket and all its children */
     #printable-ticket,
     #printable-ticket * {
-        display: block !important;
         visibility: visible !important;
+        display: revert !important;
     }
 
+    /* Override any display:block that was inherited wrongly */
     #printable-ticket {
-        position: absolute;
+        position: fixed;
         left: 0;
         top: 0;
         width: 58mm !important;
-        margin: 0;
-        padding: 5px;
+        margin: 0 !important;
+        padding: 5px !important;
         background: white !important;
         color: black !important;
     }

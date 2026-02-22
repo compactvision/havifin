@@ -2,6 +2,7 @@ import React from 'react';
 
 interface PrintableTicketProps {
     ticketNumber: string;
+    waitingAhead?: number;
     details?: {
         operation_type?: string;
         service?: string;
@@ -13,6 +14,7 @@ interface PrintableTicketProps {
 
 export const PrintableTicket: React.FC<PrintableTicketProps> = ({
     ticketNumber,
+    waitingAhead = 0,
     details,
 }) => {
     const now = new Date();
@@ -64,6 +66,19 @@ export const PrintableTicket: React.FC<PrintableTicketProps> = ({
                 <div style={{ fontSize: '32px', fontWeight: 'bold' }}>
                     {ticketNumber}
                 </div>
+                {waitingAhead > 0 && (
+                    <div
+                        style={{
+                            fontSize: '11px',
+                            marginTop: '4px',
+                            fontWeight: 'bold',
+                        }}
+                    >
+                        {waitingAhead === 1
+                            ? 'Il y a 1 personne devant vous'
+                            : `Il y a ${waitingAhead} personnes devant vous`}
+                    </div>
+                )}
             </div>
 
             <div style={{ marginBottom: '8px' }}>

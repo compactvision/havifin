@@ -26,6 +26,7 @@ export interface Client {
     amount_from?: number;
     exchange_rate?: number;
     status: string;
+    waiting_ahead?: number;
     created_date: string;
     called_at?: string;
     completed_at?: string;

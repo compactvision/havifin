@@ -34,6 +34,7 @@ export default function ClientForm() {
     const { auth } = usePage().props as any;
     const [step, setStep] = useState(1);
     const [ticketNumber, setTicketNumber] = useState<string | null>(null);
+    const [waitingAhead, setWaitingAhead] = useState<number>(0);
     const [isVerifying, setIsVerifying] = useState(false);
     const [existingClient, setExistingClient] = useState<Client | null>(null);
     const [showRegistration, setShowRegistration] = useState(false);
@@ -188,10 +189,11 @@ export default function ClientForm() {
                 metadata: formData.metadata,
             };
             const response = await base44.entities.Client.create(clientData);
-            return response.ticket_number;
+            return response;
         },
-        onSuccess: (ticket) => {
-            setTicketNumber(ticket);
+        onSuccess: (client) => {
+            setTicketNumber(client.ticket_number);
+            setWaitingAhead(client.waiting_ahead || 0);
             setStep(3);
         },
         onError: (error: any) => {
@@ -414,6 +416,7 @@ export default function ClientForm() {
             case 1:
                 return (
                     <motion.div
+                        key="step-1"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
@@ -660,6 +663,7 @@ export default function ClientForm() {
             case 2:
                 return (
                     <motion.div
+                        key="step-2"
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
@@ -1322,7 +1326,9 @@ export default function ClientForm() {
             case 3:
                 return (
                     <TicketSuccess
+                        key="step-3"
                         ticketNumber={ticketNumber}
+                        waitingAhead={waitingAhead}
                         onNewTicket={handleNewTicket}
                     />
                 );
