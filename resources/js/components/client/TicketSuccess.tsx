@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { usePrinter } from '@/hooks/usePrinter';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Clock, Printer, RefreshCw, Ticket } from 'lucide-react';
 import { useEffect } from 'react';
@@ -15,18 +16,36 @@ export default function TicketSuccess({
     waitingAhead = 0,
     onNewTicket,
 }: TicketSuccessProps) {
+    const { printTicket } = usePrinter();
+
     useEffect(() => {
         if (ticketNumber) {
             // Short delay to ensure component is rendered
             const timer = setTimeout(() => {
-                window.print();
+                printTicket({
+                    shopName: 'Bienvenue chez Havifin',
+                    address: 'Prenez place, on vous appelle bientôt.',
+                    reference: String(ticketNumber),
+                    date: new Date().toLocaleString(),
+                    amount: '',
+                    currency: '',
+                    items: [],
+                });
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [ticketNumber]);
+    }, [ticketNumber, printTicket]);
 
     const handleManualPrint = () => {
-        window.print();
+        printTicket({
+            shopName: 'Bienvenue chez Havifin',
+            address: 'Prenez place, on vous appelle bientôt.',
+            reference: String(ticketNumber),
+            date: new Date().toLocaleString(),
+            amount: '',
+            currency: '',
+            items: [],
+        });
     };
     return (
         <motion.div

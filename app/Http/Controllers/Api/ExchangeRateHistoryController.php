@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashierActivity;
 use App\Models\ExchangeRateHistory;
+use App\Models\Session;
+use App\Support\TenantAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +75,12 @@ class ExchangeRateHistoryController extends Controller
 
             // Create new rate
             $user = $request->user();
-            $ownerId = $user ? ($user->role === 'super-admin' ? $user->id : $user->owner_id) : 1;
+            $ownerId = TenantAccess::ownerId($user);
+
+            if ($request->session_id) {
+                $workSession = Session::findOrFail($request->session_id);
+                TenantAccess::authorizeShop($user, $workSession->shop_id);
+            }
 
             $rate = ExchangeRateHistory::create([
                 'currency_from' => $request->currency_from,
@@ -80,14 +88,14 @@ class ExchangeRateHistoryController extends Controller
                 'rate' => $request->rate,
                 'effective_from' => $effectiveFrom,
                 'effective_to' => null,
-                'created_by' => Auth::id() ?? 1,
+                'created_by' => Auth::id(),
                 'session_id' => $request->session_id,
                 'owner_id' => $ownerId,
             ]);
 
             // Log the action
-            \App\Models\CashierActivity::logAction(
-                'complete_transaction', // Re-using existing type for now as requested
+            CashierActivity::logAction(
+                'configuration_change',
                 "Nouveau taux: {$request->currency_from}/{$request->currency_to} à {$request->rate}",
                 null,
                 $request->session_id
@@ -98,9 +106,11 @@ class ExchangeRateHistoryController extends Controller
             return response()->json($rate, 201);
         } catch (\Exception $e) {
             DB::rollBack();
+            report($e);
+
             return response()->json([
                 'error' => 'Erreur lors de la création du taux',
-                'message' => $e->getMessage(),
+                'message' => 'La création du taux a échoué.',
             ], 500);
         }
     }
@@ -126,7 +136,7 @@ class ExchangeRateHistoryController extends Controller
             ->active()
             ->first();
 
-        if (!$rate) {
+        if (! $rate) {
             return response()->json([
                 'error' => 'Aucun taux actif trouvé pour cette paire de devises',
             ], 404);

@@ -13,28 +13,28 @@ class CheckUserRole
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!$request->user()) {
-            return redirect('/login');
+        $user = $request->user();
+
+        if (! $user) {
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Non authentifié.'], 401)
+                : redirect()->route('login');
         }
 
-        // Check if user has any of the allowed roles
-        foreach ($roles as $role) {
-            if ($request->user()->hasRole($role)) {
-                return $next($request);
-            }
+        if (! $user->isActive()) {
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Compte désactivé.'], 403)
+                : redirect()->route('login');
         }
 
-        // If user doesn't have required role, redirect based on their role
-        if ($request->user()->hasRole('super-admin')) {
-            return redirect('/admin/shops');
-        } elseif ($request->user()->hasRole('client')) {
-            return redirect('/clientform');
-        } elseif ($request->user()->hasRole('cashier')) {
-            return redirect('/cashier');
-        } elseif ($request->user()->hasRole('manager')) {
-            return redirect('/manager');
+        if ($user->hasApplicationRole(...$roles)) {
+            return $next($request);
         }
 
-        return redirect('/login');
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
+        return redirect($user->homePath());
     }
 }

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Session;
 use App\Models\CashierActivity;
+use App\Models\CashSession;
 use App\Models\Client;
+use App\Models\Session;
+use App\Models\Shop;
 use App\Models\Transaction;
+use App\Support\TenantAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,23 +23,16 @@ class SessionController extends Controller
     public function current(Request $request)
     {
         $user = $request->user();
-        $shopId = $request->query('shop_id');
-
-        if (!$shopId && $user && ($user->role === 'cashier' || $user->role === 'client')) {
-            $shopId = $user->shops()->first()?->id;
-        }
+        $shopId = TenantAccess::resolveShopId($user, $request->query('shop_id'));
 
         $query = Session::open()
-            ->with(['opener', 'closer'])
+            ->with(['opener', 'closer', 'shop'])
+            ->where('shop_id', $shopId)
             ->latest('session_date');
-
-        if ($shopId) {
-            $query->where('shop_id', $shopId);
-        }
 
         $session = $query->first();
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(null);
         }
 
@@ -49,7 +45,7 @@ class SessionController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'session_date' => 'required|date',
+            'session_date' => 'required|date|before_or_equal:today',
             'shop_id' => 'required|exists:shops,id',
             'notes' => 'nullable|string',
         ]);
@@ -63,36 +59,36 @@ class SessionController extends Controller
 
         $user = $request->user();
         $shopId = $request->shop_id;
+        TenantAccess::authorizeShop($user, (int) $shopId);
 
-        // Check if there's already an open session for THIS shop
-        $openSession = Session::open()->where('shop_id', $shopId)->first();
-        if ($openSession) {
-            return response()->json([
-                'error' => 'Une session est déjà ouverte pour cette boutique',
-                'session' => $openSession,
-            ], 409);
-        }
+        $session = DB::transaction(function () use ($request, $user, $shopId) {
+            Shop::whereKey($shopId)->lockForUpdate()->firstOrFail();
 
-        // Check if session date already exists for THIS shop (Business Rule: 1 session per day)
-        $existingDate = Session::where('shop_id', $shopId)
-            ->whereDate('session_date', $request->session_date)
-            ->first();
-        if ($existingDate) {
-            return response()->json([
-                'error' => 'Une session existe déjà pour cette date dans cette boutique. Veuillez plutôt gérer la session existante.',
-            ], 409);
-        }
+            $openSession = Session::open()->where('shop_id', $shopId)->first();
+            abort_if($openSession, 409, 'Une session est déjà ouverte pour cette boutique.');
 
-        $sessionData = [
-            'session_date' => $request->session_date,
-            'opened_by' => $user->id,
-            'opened_at' => now(),
-            'status' => 'open',
-            'notes' => $request->notes,
-            'shop_id' => $shopId,
-        ];
+            $existingDate = Session::where('shop_id', $shopId)
+                ->whereDate('session_date', $request->session_date)
+                ->exists();
+            abort_if($existingDate, 409, 'Une session existe déjà pour cette date.');
 
-        $session = Session::create($sessionData);
+            $session = Session::create([
+                'session_date' => $request->session_date,
+                'opened_by' => $user->id,
+                'opened_at' => now(),
+                'status' => 'open',
+                'notes' => $request->notes,
+                'shop_id' => $shopId,
+            ]);
+
+            CashierActivity::logAction(
+                'session_opened',
+                "Session journalière ouverte pour {$session->shop->name}",
+                sessionId: $session->id,
+            );
+
+            return $session;
+        }, 3);
 
         return response()->json($session, 201);
     }
@@ -102,61 +98,73 @@ class SessionController extends Controller
      */
     public function close(Request $request, $id)
     {
-        $session = Session::findOrFail($id);
+        $session = DB::transaction(function () use ($request, $id) {
+            $session = Session::whereKey($id)->lockForUpdate()->firstOrFail();
+            TenantAccess::authorizeShop($request->user(), $session->shop_id);
+            abort_if($session->status === 'closed', 409, 'Cette session est déjà fermée.');
+            abort_if(
+                CashSession::where('work_session_id', $session->id)
+                    ->where('status', 'open')
+                    ->exists(),
+                409,
+                'Fermez toutes les sessions de caisse avant de clôturer la journée.',
+            );
 
-        if ($session->status === 'closed') {
-            return response()->json([
-                'error' => 'Cette session est déjà fermée',
-            ], 400);
-        }
+            $session->update([
+                'closed_by' => Auth::id(),
+                'closed_at' => now(),
+                'status' => 'closed',
+            ]);
 
-        $session->update([
-            'closed_by' => Auth::id() ?? 1,
-            'closed_at' => now(),
-            'status' => 'closed',
-        ]);
+            CashierActivity::logAction(
+                'session_closed',
+                "Session journalière clôturée pour {$session->shop->name}",
+                sessionId: $session->id,
+            );
+
+            return $session;
+        });
 
         return response()->json($session);
     }
 
     /**
-     * Re-open a closed session (Super-Admin only).
+     * Re-open a closed session for one of the manager's assigned shops.
      */
     public function reopen(Request $request, $id)
     {
-        $user = $request->user();
+        $session = DB::transaction(function () use ($request, $id) {
+            $session = Session::whereKey($id)->lockForUpdate()->firstOrFail();
+            TenantAccess::authorizeShop($request->user(), $session->shop_id);
+            abort_unless($session->status === 'closed', 409, 'Cette session n’est pas clôturée.');
+            abort_unless(
+                $session->session_date->isToday(),
+                409,
+                'Seule une session du jour peut être réouverte.',
+            );
+            abort_if(
+                Session::open()
+                    ->where('shop_id', $session->shop_id)
+                    ->whereKeyNot($session->id)
+                    ->exists(),
+                409,
+                'Une autre session est déjà ouverte pour cette boutique.',
+            );
 
-        // 1. Role Check
-        if ($user->role !== 'super-admin') {
-            return response()->json([
-                'error' => 'Seul le Super-Admin peut réouvrir une session clôturée.',
-            ], 403);
-        }
+            $session->update([
+                'status' => 'open',
+                'closed_at' => null,
+                'closed_by' => null,
+            ]);
 
-        $session = Session::findOrFail($id);
+            CashierActivity::logAction(
+                'session_reopened',
+                "Session journalière réouverte pour {$session->shop->name}",
+                sessionId: $session->id,
+            );
 
-        // 2. Status Check
-        if ($session->status !== 'closed') {
-            return response()->json([
-                'error' => 'Cette session n\'est pas clôturée.',
-            ], 400);
-        }
-
-        // 3. Concurrency Check: Ensure no other session is open for this shop
-        $openSession = Session::open()->where('shop_id', $session->shop_id)->first();
-        if ($openSession) {
-            return response()->json([
-                'error' => 'Une autre session est déjà ouverte pour cette agence. Vous devez la fermer avant de réouvrir celle-ci.',
-                'open_session' => $openSession,
-            ], 409);
-        }
-
-        // 4. Re-open
-        $session->update([
-            'status' => 'open',
-            'closed_at' => null,
-            'closed_by' => null,
-        ]);
+            return $session;
+        });
 
         return response()->json($session);
     }
@@ -164,9 +172,10 @@ class SessionController extends Controller
     /**
      * Get report for a specific session.
      */
-    public function report($id)
+    public function report(Request $request, $id)
     {
         $session = Session::with(['opener', 'closer'])->findOrFail($id);
+        TenantAccess::authorizeShop($request->user(), $session->shop_id);
 
         // Get all clients for this session
         $clients = Client::where('session_id', $id)->get();
@@ -213,21 +222,24 @@ class SessionController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Session::with(['opener', 'closer', 'shop']);
+        $allowedShopIds = TenantAccess::shopIds($request->user());
+        $query = Session::with(['opener', 'closer', 'shop'])
+            ->whereIn('shop_id', $allowedShopIds);
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
         if ($request->has('shop_id')) {
+            TenantAccess::authorizeShop($request->user(), (int) $request->shop_id);
             $query->where('shop_id', $request->shop_id);
         }
-        
+
         if ($request->has('date')) {
             $query->whereDate('session_date', $request->date);
         }
 
-        $perPage = $request->query('per_page', 15);
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 100);
         $sessions = $query->orderBy('session_date', 'desc')->paginate($perPage);
 
         return response()->json($sessions);

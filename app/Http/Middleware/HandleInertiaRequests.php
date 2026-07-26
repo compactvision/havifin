@@ -47,7 +47,9 @@ class HandleInertiaRequests extends Middleware
                     'id' => $request->user()->id,
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
-                    'role' => $request->user()->getRoleNames()->first(),
+                    // The users.role column is the application source of truth.
+                    // Spatie roles remain synchronized for package compatibility.
+                    'role' => $request->user()->role,
                     'is_active' => $request->user()->is_active,
                     'owner_id' => $request->user()->owner_id,
                     'shop' => $request->user()->shops()->first()?->name,

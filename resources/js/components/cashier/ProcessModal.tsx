@@ -16,6 +16,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { usePrinter } from '@/hooks/usePrinter';
+import { usePage } from '@inertiajs/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     ArrowDownCircle,
@@ -26,8 +28,10 @@ import {
     CheckCircle,
     CreditCard,
     Loader2,
+    Split,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const operationConfig = {
     depot: {
@@ -68,14 +72,27 @@ interface ProcessModalProps {
     onClose: () => void;
 }
 
+function requestedAmount(client: Client | null): string {
+    if (!client) return '';
+
+    const amount =
+        client.operation_type === 'change'
+            ? client.amount_from
+            : (client.amount ?? client.amount_from);
+
+    return Number(amount) >= 0.01 ? String(amount) : '';
+}
+
 export default function ProcessModal({
     client,
     open,
     onClose,
 }: ProcessModalProps) {
+    const { auth } = usePage().props as any;
+    const { printTicket } = usePrinter();
     const queryClient = useQueryClient();
     const [formData, setFormData] = useState({
-        amount_from: client?.amount ? String(client.amount) : '', // Montant de l'opération (ex: montant à déposer)
+        amount_from: requestedAmount(client),
         amount_given: '', // Montant reçu du client (pour dépôt/transfert)
         currency_from: client?.currency_from || 'USD',
         currency_to: client?.currency_to || 'CDF',
@@ -84,6 +101,11 @@ export default function ProcessModal({
         notes: '',
     });
     const [calculatedAmount, setCalculatedAmount] = useState(0);
+    const [useSplitSettlement, setUseSplitSettlement] = useState(false);
+    const [primaryCashAmount, setPrimaryCashAmount] = useState(
+        requestedAmount(client),
+    );
+    const [secondaryCurrency, setSecondaryCurrency] = useState('');
 
     const { data: rates = [] } = useQuery<ExchangeRate[]>({
         queryKey: ['rates'],
@@ -95,13 +117,16 @@ export default function ProcessModal({
         if (client) {
             setFormData((prev) => ({
                 ...prev,
-                amount_from: client.amount ? String(client.amount) : '',
+                amount_from: requestedAmount(client),
                 currency_from: client.currency_from || 'USD',
                 currency_to: client.currency_to || 'CDF',
                 amount_given: '',
                 exchange_rate: '',
                 commission: '0',
             }));
+            setUseSplitSettlement(false);
+            setPrimaryCashAmount(requestedAmount(client));
+            setSecondaryCurrency('');
         }
     }, [client]);
 
@@ -118,7 +143,7 @@ export default function ProcessModal({
             if (rate) {
                 setFormData((prev) => ({
                     ...prev,
-                    exchange_rate: String(rate.buy_rate || rate.rate),
+                    exchange_rate: String(rate.rate ?? rate.buy_rate),
                 }));
             }
         }
@@ -161,6 +186,30 @@ export default function ProcessModal({
         client?.operation_type,
     ]);
 
+    const requestedSettlementAmount = Number(requestedAmount(client));
+    const primarySettlementAmount = Number(primaryCashAmount) || 0;
+    const remainingSettlementAmount = Math.max(
+        requestedSettlementAmount - primarySettlementAmount,
+        0,
+    );
+    const settlementRates = rates.filter(
+        (rate) =>
+            rate.currency_from === formData.currency_from &&
+            rate.currency_to !== formData.currency_from,
+    );
+    const selectedSettlementRate = settlementRates.find(
+        (rate) => rate.currency_to === secondaryCurrency,
+    );
+    const secondarySettlementAmount = selectedSettlementRate
+        ? remainingSettlementAmount * Number(selectedSettlementRate.rate)
+        : 0;
+    const splitSettlementIsValid =
+        !useSplitSettlement ||
+        (primarySettlementAmount >= 0 &&
+            primarySettlementAmount < requestedSettlementAmount &&
+            remainingSettlementAmount >= 0.01 &&
+            Boolean(selectedSettlementRate));
+
     const completeMutation = useMutation({
         mutationFn: async () => {
             if (!client) return;
@@ -180,7 +229,7 @@ export default function ProcessModal({
                 throw new Error('Taux de change invalide');
             }
 
-            await base44.entities.Transaction.create({
+            const tx = await base44.entities.Transaction.create({
                 client_id: client.id,
                 ticket_number: client.ticket_number,
                 operation_type: client.operation_type,
@@ -198,6 +247,12 @@ export default function ProcessModal({
                 exchange_rate: finalExchangeRate,
                 commission: parseFloat(formData.commission) || 0,
                 client_phone: client.phone,
+                settlement: useSplitSettlement
+                    ? {
+                          primary_amount: primarySettlementAmount,
+                          secondary_currency: secondaryCurrency,
+                      }
+                    : undefined,
             });
 
             // Update client status
@@ -206,11 +261,57 @@ export default function ProcessModal({
                 completed_at: new Date().toISOString(),
                 notes: formData.notes,
             } as any);
+
+            return tx;
         },
-        onSuccess: () => {
+        onSuccess: (tx) => {
+            // Lancement automatique de l'impression
+            const ticketRef =
+                (tx as any)?.reference ||
+                client?.ticket_number ||
+                'TRX-DEFAULT';
+
+            const settlementItems = tx?.settlement_breakdown?.map((line) => ({
+                name: `Règlement en ${line.currency}`,
+                amount: Number(line.amount).toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                }),
+            }));
+
+            printTicket({
+                shopName: auth?.user?.shop || 'Havifin',
+                address: `Caisse: ${auth?.user?.name || 'Agence Havifin'}`,
+                reference: ticketRef,
+                date: new Date().toLocaleString(),
+                amount: String(formData.amount_from),
+                currency: formData.currency_from,
+                items:
+                    settlementItems && settlementItems.length > 0
+                        ? settlementItems
+                        : [
+                              {
+                                  name: `Op: ${client?.operation_type}`,
+                                  amount: String(formData.amount_from),
+                              },
+                          ],
+            });
+
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
             onClose();
+        },
+        onError: (error: any) => {
+            const validationErrors = error.response?.data?.errors;
+            const firstValidationError = validationErrors
+                ? Object.values(validationErrors).flat()[0]
+                : null;
+            const message =
+                firstValidationError ||
+                error.response?.data?.message ||
+                error.message ||
+                'Impossible de traiter cette opération';
+
+            toast.error(String(message));
         },
     });
 
@@ -280,6 +381,9 @@ export default function ProcessModal({
                             <div className="mt-1 flex items-center gap-2">
                                 <Input
                                     type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    required
                                     value={formData.amount_from}
                                     onChange={(e) =>
                                         setFormData({
@@ -320,42 +424,182 @@ export default function ProcessModal({
                             </div>
                         </div>
 
+                        {['depot', 'retrait'].includes(
+                            client.operation_type,
+                        ) && (
+                            <div className="space-y-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setUseSplitSettlement(
+                                            !useSplitSettlement,
+                                        );
+                                        setPrimaryCashAmount(
+                                            requestedAmount(client),
+                                        );
+                                        setSecondaryCurrency('');
+                                    }}
+                                    className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left font-bold transition-colors ${
+                                        useSplitSettlement
+                                            ? 'border-indigo-500 bg-indigo-600 text-white'
+                                            : 'border-indigo-100 bg-white text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-900'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Split className="h-5 w-5" />
+                                        Règlement en deux devises
+                                    </span>
+                                    <span className="text-xs">
+                                        {useSplitSettlement
+                                            ? 'Activé'
+                                            : 'Configurer'}
+                                    </span>
+                                </button>
+
+                                {useSplitSettlement && (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label>
+                                                Montant{' '}
+                                                {client.operation_type ===
+                                                'retrait'
+                                                    ? 'remis'
+                                                    : 'reçu'}{' '}
+                                                en {formData.currency_from}
+                                            </Label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max={requestedSettlementAmount}
+                                                step="0.01"
+                                                value={primaryCashAmount}
+                                                onChange={(event) =>
+                                                    setPrimaryCashAmount(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className="mt-1 bg-white"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label>
+                                                Deuxième devise pour les{' '}
+                                                {remainingSettlementAmount.toLocaleString()}{' '}
+                                                {formData.currency_from}{' '}
+                                                restants
+                                            </Label>
+                                            <Select
+                                                value={secondaryCurrency}
+                                                onValueChange={
+                                                    setSecondaryCurrency
+                                                }
+                                            >
+                                                <SelectTrigger className="mt-1 bg-white">
+                                                    <SelectValue placeholder="Choisir la deuxième devise" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {settlementRates.map(
+                                                        (rate) => (
+                                                            <SelectItem
+                                                                key={rate.id}
+                                                                value={
+                                                                    rate.currency_to
+                                                                }
+                                                            >
+                                                                {
+                                                                    rate.currency_to
+                                                                }{' '}
+                                                                — 1{' '}
+                                                                {
+                                                                    rate.currency_from
+                                                                }{' '}
+                                                                = {rate.rate}{' '}
+                                                                {
+                                                                    rate.currency_to
+                                                                }
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {selectedSettlementRate ? (
+                                            <div className="rounded-xl bg-white p-4">
+                                                <div className="text-xs font-bold tracking-wider text-slate-500 uppercase">
+                                                    Deuxième montant{' '}
+                                                    {client.operation_type ===
+                                                    'retrait'
+                                                        ? 'à remettre'
+                                                        : 'à recevoir'}
+                                                </div>
+                                                <div className="mt-1 text-2xl font-black text-indigo-700">
+                                                    {secondarySettlementAmount.toLocaleString(
+                                                        undefined,
+                                                        {
+                                                            maximumFractionDigits: 2,
+                                                        },
+                                                    )}{' '}
+                                                    {secondaryCurrency}
+                                                </div>
+                                                <div className="mt-1 text-xs text-slate-500">
+                                                    Calculé avec le taux
+                                                    configuré par le manager.
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm font-semibold text-amber-700">
+                                                Aucun taux direct disponible
+                                                depuis {formData.currency_from}.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Depot / Transfert Specific: Amount Given & Change */}
                         {['depot', 'transfert'].includes(
                             client.operation_type,
-                        ) && (
-                            <>
-                                <div>
-                                    <Label>Montant reçu du client</Label>
-                                    <Input
-                                        type="number"
-                                        value={formData.amount_given}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                amount_given: e.target.value,
-                                            })
-                                        }
-                                        className="mt-1"
-                                        placeholder="Combien le client a donné ?"
-                                    />
-                                </div>
-                                {calculatedAmount > 0 && (
-                                    <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
-                                        <div className="mb-1 flex items-center gap-2 text-yellow-700">
-                                            <Calculator className="h-4 w-4" />
-                                            <span className="font-bold">
-                                                A rendre au client
-                                            </span>
-                                        </div>
-                                        <div className="text-2xl font-black text-yellow-600">
-                                            {calculatedAmount.toLocaleString()}{' '}
-                                            {formData.currency_from}
-                                        </div>
+                        ) &&
+                            !(
+                                useSplitSettlement &&
+                                client.operation_type === 'depot'
+                            ) && (
+                                <>
+                                    <div>
+                                        <Label>Montant reçu du client</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.amount_given}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    amount_given:
+                                                        e.target.value,
+                                                })
+                                            }
+                                            className="mt-1"
+                                            placeholder="Combien le client a donné ?"
+                                        />
                                     </div>
-                                )}
-                            </>
-                        )}
+                                    {calculatedAmount > 0 && (
+                                        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+                                            <div className="mb-1 flex items-center gap-2 text-yellow-700">
+                                                <Calculator className="h-4 w-4" />
+                                                <span className="font-bold">
+                                                    A rendre au client
+                                                </span>
+                                            </div>
+                                            <div className="text-2xl font-black text-yellow-600">
+                                                {calculatedAmount.toLocaleString()}{' '}
+                                                {formData.currency_from}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
                         {/* Change Specific */}
                         {client.operation_type === 'change' && (
@@ -468,7 +712,8 @@ export default function ProcessModal({
                             onClick={() => completeMutation.mutate()}
                             disabled={
                                 completeMutation.isPending ||
-                                !formData.amount_from
+                                !formData.amount_from ||
+                                !splitSettlementIsValid
                             }
                             className={`flex-1 text-white ${client.operation_type === 'depot' || client.operation_type === 'transfert' ? 'bg-green-600 hover:bg-green-700' : client.operation_type === 'retrait' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-500 hover:bg-amber-600'}`}
                         >

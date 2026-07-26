@@ -19,12 +19,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'http://localhost:51772',
-        'http://localhost:8000',
-        'http://localhost:3000',
-        'https://havifin.makiradrc.com',
-    ],
+    'allowed_origins' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', env('CORS_ALLOWED_ORIGINS', env('APP_URL', 'http://localhost')))
+    ))),
 
     'allowed_origins_patterns' => [],
 
@@ -32,7 +30,7 @@ return [
 
     'exposed_headers' => [],
 
-    'max_age' => 0,
+    'max_age' => 600,
 
     'supports_credentials' => true,
 

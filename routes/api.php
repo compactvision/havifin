@@ -1,45 +1,60 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ClientController;
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\ExchangeRateController;
-use App\Http\Controllers\Api\ClientVerificationController;
-use App\Http\Controllers\Api\InstitutionController;
-use App\Http\Controllers\Api\SessionController;
-use App\Http\Controllers\Api\ExchangeRateHistoryController;
-use App\Http\Controllers\Api\CashierActivityController;
-use App\Http\Controllers\Api\HelpRequestController;
 use App\Http\Controllers\Api\AdvertisementController;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\ShopController;
-use App\Http\Controllers\Api\CounterController;
+use App\Http\Controllers\Api\CashierActivityController;
+use App\Http\Controllers\Api\CashMovementController;
 use App\Http\Controllers\Api\CashRegisterController;
 use App\Http\Controllers\Api\CashSessionController;
-use App\Http\Controllers\Api\CashMovementController;
+use App\Http\Controllers\Api\ClientVerificationController;
+use App\Http\Controllers\Api\CounterController;
+use App\Http\Controllers\Api\ExchangeRateHistoryController;
+use App\Http\Controllers\Api\HelpRequestController;
+use App\Http\Controllers\Api\InstitutionController;
 use App\Http\Controllers\Api\NewsController;
+use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\ShopController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ExchangeRateController;
+use App\Http\Controllers\TransactionController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 // Authentication & Session-Based API Routes
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth');
-Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth');
+Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum', 'active']);
+Route::get('/auth/me', [AuthController::class, 'me'])->middleware(['auth:sanctum', 'active']);
 
-// Manager only routes
-Route::middleware(['auth', 'manager'])->group(function () {
-    Route::apiResource('users', UserController::class);
+// User administration is role-aware inside the controller:
+// Super Admins manage managers, Managers manage operational users.
+Route::middleware(['auth:sanctum', 'active', 'role:manager,super-admin'])->group(function () {
+    Route::apiResource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
 });
 
 // General Auth routes
-Route::middleware(['auth'])->group(function () {
-    Route::apiResource('shops', ShopController::class);
-    Route::post('/shops/{shop}/assign-users', [ShopController::class, 'assignUsers']);
-    Route::get('/shops/{shop}/counters', [CounterController::class, 'index']);
-    Route::post('/shops/{shop}/counters', [CounterController::class, 'store']);
-    Route::put('/counters/{counter}', [CounterController::class, 'update']);
-    Route::delete('/counters/{counter}', [CounterController::class, 'destroy']);
-    
+Route::middleware(['auth:sanctum', 'active'])->group(function () {
+    Route::middleware('role:cashier,manager,super-admin')->group(function () {
+        Route::get('/shops', [ShopController::class, 'index']);
+        Route::get('/shops/{shop}', [ShopController::class, 'show']);
+    });
+    Route::get('/shops/{shop}/counters', [CounterController::class, 'index'])
+        ->middleware('role:cashier,manager');
+    Route::put('/shops/{shop}', [ShopController::class, 'update'])
+        ->middleware('role:manager,super-admin');
+    Route::middleware('role:manager')->group(function () {
+        Route::post('/shops/{shop}/assign-users', [ShopController::class, 'assignUsers']);
+        Route::post('/shops/{shop}/counters', [CounterController::class, 'store']);
+        Route::put('/counters/{counter}', [CounterController::class, 'update']);
+        Route::delete('/counters/{counter}', [CounterController::class, 'destroy']);
+    });
+
+    Route::middleware('role:super-admin')->group(function () {
+        Route::post('/shops', [ShopController::class, 'store']);
+        Route::delete('/shops/{shop}', [ShopController::class, 'destroy']);
+        Route::get('/shops/{shop}/statistics', [ShopController::class, 'statistics']);
+        Route::post('/shops/{shop}/assign-managers', [ShopController::class, 'assignManagers']);
+    });
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -59,65 +74,81 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/news/{news}', [NewsController::class, 'destroy']);
     });
 
-    // Full CRUD for Clients & Transactions
-    Route::apiResource('clients', ClientController::class);
-    Route::apiResource('transactions', TransactionController::class);
+    Route::middleware('role:cashier,manager')->group(function () {
+        Route::apiResource('clients', ClientController::class)->only(['index', 'show', 'update']);
+        Route::apiResource('transactions', TransactionController::class)->only(['index']);
+    });
+    Route::post('/transactions', [TransactionController::class, 'store'])
+        ->middleware('role:cashier');
 
-    // Advertisements & News (Authenticated)
-    Route::get('/advertisements/active', [AdvertisementController::class, 'active']);
-    Route::get('/advertisements', [AdvertisementController::class, 'index']);
-    Route::get('/news/active', [NewsController::class, 'active']);
-    Route::get('/news', [NewsController::class, 'index']);
-    Route::get('/institutions/active', [InstitutionController::class, 'active']);
-    Route::get('/institutions', [InstitutionController::class, 'index']);
+    Route::post('/clients', [ClientController::class, 'store'])
+        ->middleware('role:client,cashier,manager');
+    Route::post('/clients/verify-phone', [ClientVerificationController::class, 'verifyPhone'])
+        ->middleware(['role:client,cashier,manager', 'throttle:30,1']);
+    Route::post('/clients/register', [ClientVerificationController::class, 'register'])
+        ->middleware('role:client,cashier,manager');
+    Route::post('/clients/add-phone', [ClientVerificationController::class, 'addPhone'])
+        ->middleware('role:cashier,manager');
+
+    Route::get('/exchange-rates', [ExchangeRateController::class, 'index'])
+        ->middleware('role:client,cashier,manager');
+    Route::middleware('role:manager')->group(function () {
+        Route::post('/exchange-rates', [ExchangeRateController::class, 'store']);
+        Route::match(['put', 'patch'], '/exchange-rates/{exchangeRate}', [ExchangeRateController::class, 'update']);
+        Route::delete('/exchange-rates/{exchangeRate}', [ExchangeRateController::class, 'destroy']);
+    });
+
+    Route::get('/sessions/current', [SessionController::class, 'current'])
+        ->middleware('role:client,cashier,manager');
+    Route::middleware('role:manager')->group(function () {
+        Route::get('/sessions', [SessionController::class, 'index']);
+        Route::post('/sessions', [SessionController::class, 'store']);
+        Route::post('/sessions/{id}/close', [SessionController::class, 'close']);
+        Route::post('/sessions/{id}/reopen', [SessionController::class, 'reopen']);
+        Route::get('/sessions/{id}/report', [SessionController::class, 'report']);
+        Route::get('/exchange-rate-history', [ExchangeRateHistoryController::class, 'index']);
+        Route::post('/exchange-rate-history', [ExchangeRateHistoryController::class, 'store']);
+    });
+
+    Route::get('/exchange-rate-history/active', [ExchangeRateHistoryController::class, 'active'])
+        ->middleware('role:client,cashier,manager');
+    Route::post('/exchange-rate-history/current-rate', [ExchangeRateHistoryController::class, 'currentRate'])
+        ->middleware('role:client,cashier,manager');
+
+    Route::middleware('role:manager')->group(function () {
+        Route::get('/cashier-activities/stats', [CashierActivityController::class, 'stats']);
+        Route::get('/cashier-activities', [CashierActivityController::class, 'index']);
+        Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);
+        Route::get('/help-requests', [HelpRequestController::class, 'index']);
+    });
+    Route::post('/cashier-activities', [CashierActivityController::class, 'store'])
+        ->middleware('role:cashier');
+    Route::post('/help-requests', [HelpRequestController::class, 'store'])
+        ->middleware('role:cashier');
+
+    Route::middleware('role:cashier,manager')->group(function () {
+        Route::get('cash/registers', [CashRegisterController::class, 'index']);
+        Route::get('cash/registers/{cash_register}', [CashRegisterController::class, 'show']);
+        Route::get('/cash/sessions/current', [CashSessionController::class, 'current']);
+        Route::post('/cash/sessions/{session}/close', [CashSessionController::class, 'close']);
+        Route::get('cash/sessions', [CashSessionController::class, 'index']);
+        Route::post('cash/sessions', [CashSessionController::class, 'store']);
+        Route::get('cash/sessions/{session}/report', [CashSessionController::class, 'report']);
+        Route::get('cash/sessions/{session}', [CashSessionController::class, 'show']);
+        Route::get('/cash/movements', [CashMovementController::class, 'index']);
+        Route::get('/cash/sessions/{session}/movements', [CashMovementController::class, 'index']);
+    });
+    Route::middleware('role:manager')->group(function () {
+        Route::post('cash/registers', [CashRegisterController::class, 'store']);
+        Route::post('/cash/movements', [CashMovementController::class, 'store']);
+    });
+
+    Route::middleware('role:client,cashier,manager')->group(function () {
+        Route::get('/advertisements/active', [AdvertisementController::class, 'active']);
+        Route::get('/advertisements', [AdvertisementController::class, 'index']);
+        Route::get('/news/active', [NewsController::class, 'active']);
+        Route::get('/news', [NewsController::class, 'index']);
+        Route::get('/institutions/active', [InstitutionController::class, 'active']);
+        Route::get('/institutions', [InstitutionController::class, 'index']);
+    });
 });
-
-// --- Public API Routes (No Auth Required) ---
-
-// Client Verification & Registration (Public for ClientForm)
-Route::apiResource('exchange-rates', ExchangeRateController::class);
-
-// Client Verification & Registration (Public for ClientForm)
-Route::post('/clients/verify-phone', [ClientVerificationController::class, 'verifyPhone']);
-Route::post('/clients/register', [ClientVerificationController::class, 'register']);
-Route::post('/clients/add-phone', [ClientVerificationController::class, 'addPhone']);
-
-// Sessions (Maybe should be protected, but for now kept as before)
-Route::get('/sessions/current', [SessionController::class, 'current']);
-Route::post('/sessions/{id}/close', [SessionController::class, 'close']);
-Route::post('/sessions/{id}/reopen', [SessionController::class, 'reopen']);
-Route::get('/sessions/{id}/report', [SessionController::class, 'report']);
-Route::get('/sessions', [SessionController::class, 'index']);
-Route::post('/sessions', [SessionController::class, 'store']);
-
-// Exchange Rate History (Public for ticker)
-Route::get('/exchange-rate-history/active', [ExchangeRateHistoryController::class, 'active']);
-Route::post('/exchange-rate-history/current-rate', [ExchangeRateHistoryController::class, 'currentRate']);
-Route::get('/exchange-rate-history', [ExchangeRateHistoryController::class, 'index']);
-Route::post('/exchange-rate-history', [ExchangeRateHistoryController::class, 'store']);
-
-// Cashier Activities
-Route::get('/cashier-activities/stats', [CashierActivityController::class, 'stats']);
-Route::get('/cashier-activities', [CashierActivityController::class, 'index']);
-Route::post('/cashier-activities', [CashierActivityController::class, 'store']);
-
-// Help Requests
-Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);
-Route::get('/help-requests', [HelpRequestController::class, 'index']);
-    // Cash Management Routes
-    Route::get('cash/registers', [CashRegisterController::class, 'index']);
-    Route::post('cash/registers', [CashRegisterController::class, 'store']);
-    Route::get('cash/registers/{cash_register}', [CashRegisterController::class, 'show']);
-    
-    Route::get('/cash/sessions/current', [CashSessionController::class, 'current']);
-    Route::post('/cash/sessions/{session}/close', [CashSessionController::class, 'close']);
-    Route::get('cash/sessions', [CashSessionController::class, 'index']);
-    Route::post('cash/sessions', [CashSessionController::class, 'store']);
-    Route::get('cash/sessions/{session}/report', [CashSessionController::class, 'report']);
-    Route::get('cash/sessions/{session}', [CashSessionController::class, 'show']);
-    
-    Route::get('/cash/movements', [CashMovementController::class, 'index']);
-    Route::get('/cash/sessions/{session}/movements', [CashMovementController::class, 'index']);
-    Route::post('/cash/movements', [CashMovementController::class, 'store']); // Adjustments
-
-    Route::post('/help-requests', [HelpRequestController::class, 'store']);

@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashierActivity;
 use App\Models\Institution;
+use App\Support\TenantAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class InstitutionController extends Controller
 {
@@ -59,13 +63,13 @@ class InstitutionController extends Controller
 
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('institutions', 'public');
-            $data['logo_url'] = '/storage/' . $path;
+            $data['logo_url'] = '/storage/'.$path;
         }
 
         // Assign owner_id
         $creator = $request->user();
-        
-        if (!$creator) {
+
+        if (! $creator) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
@@ -73,7 +77,7 @@ class InstitutionController extends Controller
 
         $institution = Institution::create($data);
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Partenaire créé: {$institution->name} ({$institution->type})");
+        CashierActivity::logAction('configuration_change', "Partenaire créé: {$institution->name} ({$institution->type})");
 
         return response()->json($institution, 201);
     }
@@ -91,6 +95,7 @@ class InstitutionController extends Controller
      */
     public function update(Request $request, Institution $institution)
     {
+        TenantAccess::authorizeOwner($request->user(), $institution);
         // For multipart/form-data requests in Laravel (PUT/PATCH), we often use POST with _method field.
         // We need to parse boolean properly from string if coming from FormData.
         $logoValidation = $request->hasFile('logo') ? 'sometimes|image|max:2048' : 'nullable';
@@ -98,7 +103,7 @@ class InstitutionController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|in:mobile_money,bank,payment,other',
-            'code' => ['sometimes', 'required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('institutions', 'code')->ignore($institution->id)],
+            'code' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('institutions', 'code')->ignore($institution->id)],
             'logo' => $logoValidation,
             'is_active' => 'sometimes', // Can be boolean or "1"/"0" string from FormData
             'settings' => 'sometimes|nullable|array',
@@ -122,16 +127,16 @@ class InstitutionController extends Controller
             // Delete old logo if exists
             if ($institution->logo_url) {
                 $oldPath = str_replace('/storage/', '', $institution->logo_url);
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+                Storage::disk('public')->delete($oldPath);
             }
 
             $path = $request->file('logo')->store('institutions', 'public');
-            $data['logo_url'] = '/storage/' . $path;
+            $data['logo_url'] = '/storage/'.$path;
         }
 
         $institution->update($data);
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Partenaire mis à jour: {$institution->name}");
+        CashierActivity::logAction('configuration_change', "Partenaire mis à jour: {$institution->name}");
 
         return response()->json($institution);
     }
@@ -139,11 +144,12 @@ class InstitutionController extends Controller
     /**
      * Remove the specified institution.
      */
-    public function destroy(Institution $institution)
+    public function destroy(Request $request, Institution $institution)
     {
+        TenantAccess::authorizeOwner($request->user(), $institution);
         $institution->delete();
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Partenaire supprimé: {$institution->name}");
+        CashierActivity::logAction('configuration_change', "Partenaire supprimé: {$institution->name}");
 
         return response()->json([
             'success' => true,
@@ -157,6 +163,7 @@ class InstitutionController extends Controller
     public function active()
     {
         $institutions = Institution::active()->orderBy('name')->get();
+
         return response()->json($institutions);
     }
 }

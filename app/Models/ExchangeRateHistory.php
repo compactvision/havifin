@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\HasOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Traits\HasOwner;
 
 class ExchangeRateHistory extends Model
 {
@@ -51,6 +51,7 @@ class ExchangeRateHistory extends Model
     public function scopeActive($query)
     {
         $now = now();
+
         return $query->where('effective_from', '<=', $now)
             ->where(function ($q) use ($now) {
                 $q->whereNull('effective_to')

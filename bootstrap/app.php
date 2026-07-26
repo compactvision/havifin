@@ -1,11 +1,17 @@
 <?php
 
+use App\Http\Middleware\CheckUserRole;
+use App\Http\Middleware\EnsureTenantScope;
+use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\EnsureUserIsManager;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Session\Middleware\StartSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,7 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        $middleware->append(SecurityHeaders::class);
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES'));
         $middleware->statefulApi();
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
@@ -26,18 +33,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(append: [
-            \Illuminate\Session\Middleware\StartSession::class,
-            \App\Http\Middleware\EnsureTenantScope::class,
-        ]);
-
-        // Exclude auth routes from CSRF verification
-        $middleware->validateCsrfTokens(except: [
-            'api/auth/*',
+            StartSession::class,
+            EnsureTenantScope::class,
         ]);
 
         $middleware->alias([
-            'manager' => \App\Http\Middleware\EnsureUserIsManager::class,
-            'role' => \App\Http\Middleware\CheckUserRole::class,
+            'manager' => EnsureUserIsManager::class,
+            'role' => CheckUserRole::class,
+            'active' => EnsureUserIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

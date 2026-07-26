@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasOwner;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Client extends Model
 {
     use HasFactory, HasOwner;
+
+    protected $appends = ['created_date'];
 
     protected $fillable = [
         'ticket_number',
@@ -42,7 +44,7 @@ class Client extends Model
         'completed_at' => 'datetime',
         'amount' => 'decimal:2',
         'amount_from' => 'decimal:2',
-        'exchange_rate' => 'decimal:4',
+        'exchange_rate' => 'decimal:8',
         'is_registered' => 'boolean',
         'metadata' => 'array',
     ];
@@ -71,6 +73,7 @@ class Client extends Model
         if ($this->first_name && $this->last_name) {
             return trim("{$this->first_name} {$this->last_name}");
         }
+
         return null;
     }
 
@@ -79,8 +82,9 @@ class Client extends Model
      */
     public function hasName(): bool
     {
-        return !empty($this->first_name) && !empty($this->last_name);
+        return ! empty($this->first_name) && ! empty($this->last_name);
     }
+
     /**
      * Get the shop that this client ticket belongs to.
      */
@@ -95,5 +99,18 @@ class Client extends Model
     public function session()
     {
         return $this->belongsTo(Session::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Compatibility field consumed by the existing React application.
+     */
+    public function getCreatedDateAttribute(): ?string
+    {
+        return $this->created_at?->toIso8601String();
     }
 }

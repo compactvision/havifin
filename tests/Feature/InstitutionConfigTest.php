@@ -13,13 +13,17 @@ class InstitutionConfigTest extends TestCase
 
     public function test_can_update_institution_settings()
     {
-        $user = User::factory()->create(['role' => 'super-admin']);
+        $owner = User::factory()->create(['role' => 'super-admin']);
+        $user = User::factory()->create([
+            'role' => 'manager',
+            'owner_id' => $owner->id,
+        ]);
         $institution = Institution::create([
             'name' => 'Test Bank',
             'type' => 'bank',
             'code' => 'test_bank',
             'is_active' => true,
-            'owner_id' => $user->id,
+            'owner_id' => $owner->id,
         ]);
 
         $settings = ['required_fields' => ['account_number', 'beneficiary']];

@@ -54,6 +54,16 @@ export interface Transaction {
     client_phone?: string;
     client_name?: string;
     client?: Client;
+    settlement?: {
+        primary_amount: number;
+        secondary_currency: string;
+    };
+    settlement_breakdown?: {
+        currency: string;
+        amount: number;
+        equivalent_amount: number;
+        exchange_rate: number;
+    }[];
 }
 
 export interface ExchangeRate {
@@ -61,9 +71,10 @@ export interface ExchangeRate {
     currency_from: string;
     currency_to: string;
     rate: number;
-    currency_pair?: string; // Virtual property for convenience
-    buy_rate?: number; // Virtual property
-    sell_rate?: number; // Virtual property
+    currency_pair: string;
+    buy_rate?: number; // Kept for compatibility with existing stored records.
+    sell_rate?: number; // Kept for compatibility with existing stored records.
+    is_active?: boolean;
 }
 
 export interface Institution {
@@ -172,6 +183,37 @@ export interface Shop {
     users?: User[];
 }
 
+export interface ShopStatistics {
+    summary: {
+        tickets_today: number;
+        completed_today: number;
+        waiting_now: number;
+        transactions_today: number;
+        customers_today: number;
+        completion_rate: number;
+        average_service_minutes: number | null;
+        managers_count: number;
+    };
+    daily: {
+        date: string;
+        label: string;
+        tickets: number;
+        transactions: number;
+    }[];
+    services: {
+        service: string;
+        count: number;
+    }[];
+    volumes: {
+        currency: string;
+        amount: number;
+        commission: number;
+        transactions: number;
+    }[];
+    managers: Pick<User, 'id' | 'name' | 'email' | 'is_active'>[];
+    generated_at: string;
+}
+
 export interface Counter {
     id: number;
     shop_id: number;
@@ -225,6 +267,8 @@ export const base44 = {
                 date?: string;
                 search?: string;
                 shop_id?: number | string;
+                cashier_id?: number | string;
+                counter_number?: number | string;
             }) =>
                 axios
                     .get<Client[]>('/api/clients', { params })
@@ -334,7 +378,7 @@ export const base44 = {
             current: () =>
                 axios
                     .get<Session | null>('/api/sessions/current')
-                    .then(handleResponse),
+                    .then(handleResponse<Session | null>),
             list: (params?: {
                 status?: string;
                 shop_id?: string;
@@ -486,11 +530,16 @@ export const base44 = {
             list: () =>
                 axios.get<User[]>('/api/users').then(handleResponse<User[]>),
             create: (data: Partial<User>) =>
-                axios.post<User>('/api/users', data).then(handleResponse<User>),
+                axios
+                    .post<{ user: User; message: string }>('/api/users', data)
+                    .then((response) => response.data.user),
             update: (id: number, data: Partial<User>) =>
                 axios
-                    .put<User>(`/api/users/${id}`, data)
-                    .then(handleResponse<User>),
+                    .put<{
+                        user: User;
+                        message: string;
+                    }>(`/api/users/${id}`, data)
+                    .then((response) => response.data.user),
             delete: (id: number) =>
                 axios.delete(`/api/users/${id}`).then(handleResponse<void>),
         },
@@ -512,6 +561,16 @@ export const base44 = {
                 axios
                     .post<Shop>(`/api/shops/${id}/assign-users`, { user_ids })
                     .then(handleResponse<Shop>),
+            assignManagers: (id: number, manager_ids: number[]) =>
+                axios
+                    .post<Shop>(`/api/shops/${id}/assign-managers`, {
+                        manager_ids,
+                    })
+                    .then(handleResponse<Shop>),
+            statistics: (id: number) =>
+                axios
+                    .get<ShopStatistics>(`/api/shops/${id}/statistics`)
+                    .then(handleResponse<ShopStatistics>),
         },
         Counter: {
             list: (shopId: number) =>

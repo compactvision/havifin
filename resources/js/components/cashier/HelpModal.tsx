@@ -10,7 +10,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { AlertCircle, AlertTriangle, Send } from 'lucide-react';
+import { AlertCircle, AlertTriangle, RefreshCw, Send } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
 

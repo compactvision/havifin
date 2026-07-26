@@ -57,4 +57,9 @@ export interface CashMovement {
     description?: string;
     metadata?: any;
     created_at: string;
+    user?: {
+        id: number;
+        name: string;
+    };
+    session?: CashSession;
 }

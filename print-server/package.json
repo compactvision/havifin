@@ -1,0 +1,17 @@
+{
+    "name": "havifin-print-bridge",
+    "version": "1.0.0",
+    "description": "Local bridge for USB ESC/POS thermal printers for Havifin",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node --watch server.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "escpos-usb": "^3.0.0-alpha.4",
+        "express": "^4.22.2",
+        "iconv-lite": "^0.7.2"
+    }
+}

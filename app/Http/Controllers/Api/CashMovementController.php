@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\CashSession;
 use App\Models\CashierActivity;
+use App\Models\CashMovement;
+use App\Models\CashSession;
 use App\Services\CashService;
+use App\Support\TenantAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CashMovementController extends Controller
 {
@@ -17,25 +20,32 @@ class CashMovementController extends Controller
         $this->cashService = $cashService;
     }
 
-    public function index(Request $request, CashSession $session = null)
+    public function index(Request $request, ?CashSession $session = null)
     {
-        $query = \App\Models\CashMovement::with(['user', 'session.register.shop']);
+        $query = CashMovement::with(['user', 'session.register.shop']);
 
         if ($session) {
+            TenantAccess::authorizeCashSession($request->user(), $session);
             $query->where('cash_session_id', $session->id);
         } else {
-            // Global search for managers/admins
             $user = $request->user();
-            $shopIds = $user->shops()->pluck('shops.id');
+            $shopIds = TenantAccess::shopIds($user);
 
             if ($request->has('date')) {
                 $query->whereDate('created_at', $request->date);
             }
 
-            if ($shopIds->isNotEmpty() && !$request->has('all_shops')) {
-                $query->whereHas('session.register', function ($q) use ($shopIds) {
-                    $q->whereIn('shop_id', $shopIds);
-                });
+            if ($request->filled('shop_id')) {
+                $shopId = TenantAccess::resolveShopId($user, $request->integer('shop_id'));
+                $shopIds = collect([$shopId]);
+            }
+
+            $query->whereHas('session.register', function ($q) use ($shopIds) {
+                $q->whereIn('shop_id', $shopIds);
+            });
+
+            if ($user->isCashier()) {
+                $query->whereHas('session', fn ($q) => $q->where('user_id', $user->id));
             }
         }
 
@@ -46,35 +56,54 @@ class CashMovementController extends Controller
     {
         $validated = $request->validate([
             'cash_session_id' => 'required|exists:cash_sessions,id',
-            'type' => 'required|string', // adjustment_in, adjustment_out, deposit, withdrawal
-            'amount' => 'required|numeric|min:0',
+            'type' => 'required|in:adjustment_in,adjustment_out',
+            'amount' => 'required|numeric|min:0.01',
             'currency' => 'required|string|size:3',
-            'description' => 'required|string',
-            'metadata' => 'nullable|array',
+            'description' => 'required|string|max:1000',
+            'metadata' => 'nullable|array|max:20',
         ]);
 
         $session = CashSession::findOrFail($validated['cash_session_id']);
+        TenantAccess::authorizeShop($request->user(), $session->register->shop_id);
+        abort_unless($session->status === 'open', 409, 'Cette caisse est déjà fermée.');
 
         try {
             $amount = $validated['amount'];
             $type = $validated['type'];
+            $validated['currency'] = strtoupper($validated['currency']);
 
             // Handle signs:
             // adjustment_in, deposit, exchange_in => positive
             // adjustment_out, withdrawal, exchange_out => negative
-            $finalAmount = in_array($type, ['withdrawal', 'exchange_out', 'adjustment_out']) 
-                ? -abs($amount) 
+            $finalAmount = in_array($type, ['withdrawal', 'exchange_out', 'adjustment_out'])
+                ? -abs($amount)
                 : abs($amount);
 
-            $movement = $this->cashService->recordMovement(
-                $session,
-                $type,
-                $finalAmount,
-                $validated['currency'],
-                $validated['description'],
-                null,
-                $validated['metadata'] ?? []
-            );
+            $movement = DB::transaction(function () use ($session, $type, $finalAmount, $validated, $amount) {
+                $movement = $this->cashService->recordMovement(
+                    $session,
+                    $type,
+                    $finalAmount,
+                    $validated['currency'],
+                    $validated['description'],
+                    null,
+                    $validated['metadata'] ?? []
+                );
+
+                CashierActivity::logAction(
+                    'cash_adjustment',
+                    sprintf(
+                        '%s manuelle de %s %s — %s',
+                        $type === 'adjustment_in' ? 'Entrée' : 'Sortie',
+                        number_format((float) $amount, 2, ',', ' '),
+                        $validated['currency'],
+                        $validated['description'],
+                    ),
+                    sessionId: $session->work_session_id,
+                );
+
+                return $movement;
+            });
 
             return response()->json($movement, 201);
         } catch (\InvalidArgumentException $e) {

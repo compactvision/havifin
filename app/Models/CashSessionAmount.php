@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasOwner;
+use Illuminate\Database\Eloquent\Model;
 
 class CashSessionAmount extends Model
 {

@@ -9,7 +9,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff, Loader2, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,7 +30,7 @@ export default function ManagerModal({
         name: '',
         email: '',
         password: '',
-        role: 'manager' as 'manager' | 'cashier',
+        role: 'manager' as const,
     });
 
     const createMutation = useMutation({
@@ -39,6 +39,9 @@ export default function ManagerModal({
             queryClient.invalidateQueries({ queryKey: ['users'] });
             if (shopId) {
                 queryClient.invalidateQueries({ queryKey: ['shop', shopId] });
+                queryClient.invalidateQueries({
+                    queryKey: ['shop-statistics', shopId],
+                });
             }
             toast.success('Compte créé avec succès');
             onOpenChange(false);
@@ -72,12 +75,10 @@ export default function ManagerModal({
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md overflow-hidden rounded-[2.5rem] border-slate-100 p-0">
-                <div className="border-b border-slate-100 bg-slate-50/50 p-8">
+                <div className="border-b border-brand-blue/10 bg-gradient-to-r from-brand-blue/[0.06] to-brand-pink/[0.05] p-8">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black tracking-tight text-slate-900">
-                            {formData.role === 'manager'
-                                ? 'Nouveau Manager'
-                                : 'Nouveau Caissier'}
+                            Nommer un Manager
                         </DialogTitle>
                     </DialogHeader>
                 </div>
@@ -101,7 +102,7 @@ export default function ManagerModal({
                                         name: e.target.value,
                                     })
                                 }
-                                className="h-12 rounded-xl border-slate-200 font-bold focus:border-indigo-500"
+                                className="h-12 font-bold"
                                 required
                             />
                         </div>
@@ -124,7 +125,7 @@ export default function ManagerModal({
                                         email: e.target.value,
                                     })
                                 }
-                                className="h-12 rounded-xl border-slate-200 font-bold focus:border-indigo-500"
+                                className="h-12 font-bold"
                                 required
                             />
                         </div>
@@ -148,7 +149,7 @@ export default function ManagerModal({
                                             password: e.target.value,
                                         })
                                     }
-                                    className="h-12 rounded-xl border-slate-200 pr-12 font-bold focus:border-indigo-500"
+                                    className="h-12 pr-12 font-bold"
                                     required
                                 />
                                 <button
@@ -156,7 +157,7 @@ export default function ManagerModal({
                                     onClick={() =>
                                         setShowPassword(!showPassword)
                                     }
-                                    className="absolute top-1/2 right-4 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
+                                    className="absolute top-1/2 right-4 -translate-y-1/2 text-slate-400 hover:text-brand-blue"
                                 >
                                     {showPassword ? (
                                         <EyeOff className="h-4 w-4" />
@@ -167,49 +168,11 @@ export default function ManagerModal({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-2">
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setFormData({
-                                        ...formData,
-                                        role: 'manager',
-                                    })
-                                }
-                                className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all ${
-                                    formData.role === 'manager'
-                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
-                                        : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200'
-                                }`}
-                            >
-                                <Shield
-                                    className={`h-6 w-6 ${formData.role === 'manager' ? 'text-indigo-600' : 'text-slate-300'}`}
-                                />
-                                <span className="text-[10px] font-black uppercase">
-                                    Manager
-                                </span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setFormData({
-                                        ...formData,
-                                        role: 'cashier',
-                                    })
-                                }
-                                className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all ${
-                                    formData.role === 'cashier'
-                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
-                                        : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200'
-                                }`}
-                            >
-                                <UserPlus
-                                    className={`h-6 w-6 ${formData.role === 'cashier' ? 'text-indigo-600' : 'text-slate-300'}`}
-                                />
-                                <span className="text-[10px] font-black uppercase">
-                                    Caissier
-                                </span>
-                            </button>
+                        <div className="rounded-2xl border border-brand-blue/10 bg-brand-blue/[0.05] p-4">
+                            <p className="text-xs font-bold text-brand-blue">
+                                Ce compte aura uniquement le rôle Manager et
+                                pourra être affecté à la boutique sélectionnée.
+                            </p>
                         </div>
                     </div>
 
@@ -230,31 +193,12 @@ export default function ManagerModal({
                             {createMutation.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                                'Créer le compte'
+                                'Nommer le manager'
                             )}
                         </Button>
                     </div>
                 </form>
             </DialogContent>
         </Dialog>
-    );
-}
-
-function Shield({ className }: { className?: string }) {
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-        >
-            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-        </svg>
     );
 }

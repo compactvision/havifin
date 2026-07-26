@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\HasOwner;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-use App\Traits\HasOwner;
 
 class Counter extends Model
 {
@@ -45,5 +44,10 @@ class Counter extends Model
     public function cashier()
     {
         return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    public function register()
+    {
+        return $this->hasOne(CashRegister::class);
     }
 }

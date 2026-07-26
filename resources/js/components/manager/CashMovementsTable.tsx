@@ -58,8 +58,8 @@ export function CashMovementsTable({ movements }: Props) {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {movements.map((movement, idx) => {
-                        const isPositive = movement.amount > 0;
+                    {movements.map((movement) => {
+                        const isPositive = Number(movement.amount) > 0;
                         return (
                             <TableRow
                                 key={movement.id}

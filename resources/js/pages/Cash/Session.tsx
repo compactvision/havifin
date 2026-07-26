@@ -173,13 +173,17 @@ export default function CashSessionDetail({ id }: Props) {
                     <div className="flex items-center gap-3">
                         {isOpen && (
                             <>
-                                <Button
-                                    onClick={() => setIsAddingMovement(true)}
-                                    className="h-11 rounded-xl bg-white text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-                                >
-                                    <Banknote className="mr-2 h-4 w-4" />
-                                    Ajouter Mouvement
-                                </Button>
+                                {auth.user.role === 'manager' && (
+                                    <Button
+                                        onClick={() =>
+                                            setIsAddingMovement(true)
+                                        }
+                                        className="h-11 rounded-xl bg-white text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+                                    >
+                                        <Banknote className="mr-2 h-4 w-4" />
+                                        Ajouter Mouvement
+                                    </Button>
+                                )}
                                 <Button
                                     onClick={() => setIsClosingSession(true)}
                                     className="h-11 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 font-bold text-white shadow-lg shadow-pink-500/30 hover:shadow-xl"
@@ -446,12 +450,14 @@ export default function CashSessionDetail({ id }: Props) {
             </div>
 
             {/* Modals */}
-            <AddMovementModal
-                isOpen={isAddingMovement}
-                onClose={() => setIsAddingMovement(false)}
-                session={session}
-                onSuccess={handleSuccess}
-            />
+            {auth.user.role === 'manager' && (
+                <AddMovementModal
+                    isOpen={isAddingMovement}
+                    onClose={() => setIsAddingMovement(false)}
+                    session={session}
+                    onSuccess={handleSuccess}
+                />
+            )}
 
             <CloseSessionModal
                 isOpen={isClosingSession}

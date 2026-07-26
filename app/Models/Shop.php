@@ -2,16 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasOwner;
+use Database\Factories\ShopFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-use Illuminate\Database\Eloquent\Builder;
-
-use App\Traits\HasOwner;
-
 class Shop extends Model
 {
-    /** @use HasFactory<\Database\Factories\ShopFactory> */
+    /** @use HasFactory<ShopFactory> */
     use HasFactory, HasOwner;
 
     protected $fillable = [

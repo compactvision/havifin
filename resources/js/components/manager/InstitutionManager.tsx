@@ -311,8 +311,8 @@ export default function InstitutionManager() {
                     className={cn(
                         'h-11 rounded-xl px-6 text-xs font-black tracking-widest uppercase transition-all',
                         showAddForm
-                            ? 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                            : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700',
+                            ? 'bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-900'
+                            : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 hover:text-white',
                     )}
                 >
                     {showAddForm ? (
@@ -372,31 +372,31 @@ export default function InstitutionManager() {
                                             })
                                         }
                                     >
-                                        <SelectTrigger className="h-12 rounded-xl border-white/10 bg-white/5 font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <SelectTrigger className="h-12 rounded-xl border-white/15 bg-white/10 font-bold text-white transition-colors outline-none hover:border-indigo-400 hover:bg-white/15 hover:text-white focus:ring-2 focus:ring-indigo-500">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent className="border-slate-800 bg-slate-900 text-white">
                                             <SelectItem
                                                 value="bank"
-                                                className="focus:bg-slate-800"
+                                                className="text-white hover:bg-indigo-600 hover:text-white focus:bg-indigo-600 focus:text-white"
                                             >
                                                 Banque Classique
                                             </SelectItem>
                                             <SelectItem
                                                 value="mobile_money"
-                                                className="focus:bg-slate-800"
+                                                className="text-white hover:bg-indigo-600 hover:text-white focus:bg-indigo-600 focus:text-white"
                                             >
                                                 Mobile Money
                                             </SelectItem>
                                             <SelectItem
                                                 value="payment"
-                                                className="focus:bg-slate-800"
+                                                className="text-white hover:bg-indigo-600 hover:text-white focus:bg-indigo-600 focus:text-white"
                                             >
                                                 Service de Paiement
                                             </SelectItem>
                                             <SelectItem
                                                 value="other"
-                                                className="focus:bg-slate-800"
+                                                className="text-white hover:bg-indigo-600 hover:text-white focus:bg-indigo-600 focus:text-white"
                                             >
                                                 Autre Service (MoneyGram, etc.)
                                             </SelectItem>
@@ -491,7 +491,7 @@ export default function InstitutionManager() {
                                         !newInstitution.name ||
                                         !newInstitution.code
                                     }
-                                    className="h-12 rounded-xl bg-white px-10 text-xs font-black tracking-widest text-slate-900 uppercase transition-all hover:bg-slate-100"
+                                    className="h-12 rounded-xl border border-white bg-white px-10 text-xs font-black tracking-widest text-slate-900 uppercase transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800"
                                 >
                                     {createMutation.isPending ? (
                                         <RefreshCw className="h-4 w-4 animate-spin" />

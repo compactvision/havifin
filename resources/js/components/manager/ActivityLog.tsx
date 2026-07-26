@@ -77,6 +77,31 @@ export default function ActivityLog({ selectedDate }: ActivityLogProps) {
         }
 
         switch (type) {
+            case 'configuration_change':
+                return (
+                    <Badge className="border-none bg-violet-100 text-violet-600">
+                        CONFIGURATION
+                    </Badge>
+                );
+            case 'session_opened':
+            case 'session_reopened':
+                return (
+                    <Badge className="border-none bg-emerald-100 text-emerald-600">
+                        OUVERTURE
+                    </Badge>
+                );
+            case 'session_closed':
+                return (
+                    <Badge className="border-none bg-red-100 text-red-600">
+                        CLÔTURE
+                    </Badge>
+                );
+            case 'cash_adjustment':
+                return (
+                    <Badge className="border-none bg-orange-100 text-orange-600">
+                        AJUSTEMENT
+                    </Badge>
+                );
             case 'login':
                 return (
                     <Badge className="border-none bg-emerald-100 text-emerald-600">

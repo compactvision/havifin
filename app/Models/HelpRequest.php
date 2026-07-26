@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\HasOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HelpRequest extends Model
 {
+    use HasOwner;
+
     protected $fillable = [
+        'owner_id',
+        'shop_id',
+        'session_id',
         'cashier_id',
         'client_phone',
         'description',
@@ -25,6 +31,16 @@ class HelpRequest extends Model
     public function cashier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
+    }
+
+    public function session(): BelongsTo
+    {
+        return $this->belongsTo(Session::class);
     }
 
     /**

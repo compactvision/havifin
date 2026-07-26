@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Advertisement;
+use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -14,6 +16,11 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        $seedPassword = env('HAVIFIN_SEED_PASSWORD');
+        if (! $seedPassword || strlen($seedPassword) < 16) {
+            throw new \RuntimeException('HAVIFIN_SEED_PASSWORD must contain at least 16 characters.');
+        }
+
         // Create roles if they don't exist
         $managerRole = Role::firstOrCreate(['name' => 'manager']);
         $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
@@ -27,7 +34,7 @@ class UserSeeder extends Seeder
             ['email' => 'superadmin1@havifin.com'],
             [
                 'name' => 'Super Admin 1',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($seedPassword),
                 'is_active' => true,
                 'role' => 'super-admin',
             ]
@@ -35,7 +42,7 @@ class UserSeeder extends Seeder
         $sa1->syncRoles([$superAdminRole]);
 
         // SA1 Shop
-        $shop1 = \App\Models\Shop::firstOrCreate(
+        $shop1 = Shop::firstOrCreate(
             ['slug' => 'havifin-gombe'],
             [
                 'name' => 'Havifin Gombe',
@@ -47,11 +54,11 @@ class UserSeeder extends Seeder
         );
 
         // SA1 Manager
-        $manager1 = User::firstOrCreate(
+        $manager1 = User::updateOrCreate(
             ['email' => 'manager1@havifin.com'],
             [
                 'name' => 'Manager SA1',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($seedPassword),
                 'role' => 'manager',
                 'is_active' => true,
                 'owner_id' => $sa1->id,
@@ -61,11 +68,11 @@ class UserSeeder extends Seeder
         $manager1->shops()->sync([$shop1->id]);
 
         // SA1 Cashier
-        $cashier1 = User::firstOrCreate(
+        $cashier1 = User::updateOrCreate(
             ['email' => 'cashier1@havifin.com'],
             [
                 'name' => 'Cashier SA1',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($seedPassword),
                 'role' => 'cashier',
                 'is_active' => true,
                 'owner_id' => $sa1->id,
@@ -75,7 +82,7 @@ class UserSeeder extends Seeder
         $cashier1->shops()->sync([$shop1->id]);
 
         // SA1 Advertisement
-        \App\Models\Advertisement::firstOrCreate(
+        Advertisement::firstOrCreate(
             ['title' => 'Promo SA1'],
             [
                 'image_url' => 'https://placehold.co/1920x1080/0000FF/808080?text=Promo+SA1',
@@ -91,7 +98,7 @@ class UserSeeder extends Seeder
             ['email' => 'superadmin2@havifin.com'],
             [
                 'name' => 'Super Admin 2',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($seedPassword),
                 'is_active' => true,
                 'role' => 'super-admin',
             ]
@@ -99,7 +106,7 @@ class UserSeeder extends Seeder
         $sa2->syncRoles([$superAdminRole]);
 
         // SA2 Shop
-        $shop2 = \App\Models\Shop::firstOrCreate(
+        $shop2 = Shop::firstOrCreate(
             ['slug' => 'havifin-limete'],
             [
                 'name' => 'Havifin Limete',
@@ -111,11 +118,11 @@ class UserSeeder extends Seeder
         );
 
         // SA2 Manager
-        $manager2 = User::firstOrCreate(
+        $manager2 = User::updateOrCreate(
             ['email' => 'manager2@havifin.com'],
             [
                 'name' => 'Manager SA2',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($seedPassword),
                 'role' => 'manager',
                 'is_active' => true,
                 'owner_id' => $sa2->id,
@@ -125,7 +132,7 @@ class UserSeeder extends Seeder
         $manager2->shops()->sync([$shop2->id]);
 
         // SA2 Advertisement
-        \App\Models\Advertisement::firstOrCreate(
+        Advertisement::firstOrCreate(
             ['title' => 'Promo SA2'],
             [
                 'image_url' => 'https://placehold.co/1920x1080/FF0000/FFFFFF?text=Promo+SA2',

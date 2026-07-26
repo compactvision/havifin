@@ -19,7 +19,6 @@ import {
     RefreshCw,
     Save,
     Trash2,
-    TrendingDown,
     TrendingUp,
     X,
 } from 'lucide-react';
@@ -28,17 +27,18 @@ import { toast } from 'sonner';
 
 const currencyPairs = [
     { id: 'USD_CDF', label: 'USD → CDF', from: 'USD', to: 'CDF' },
-    { id: 'EUR_CDF', label: 'EUR → CDF', from: 'EUR', to: 'CDF' },
-    { id: 'EUR_USD', label: 'EUR → USD', from: 'EUR', to: 'USD' },
     { id: 'CDF_USD', label: 'CDF → USD', from: 'CDF', to: 'USD' },
+    { id: 'EUR_CDF', label: 'EUR → CDF', from: 'EUR', to: 'CDF' },
+    { id: 'CDF_EUR', label: 'CDF → EUR', from: 'CDF', to: 'EUR' },
+    { id: 'EUR_USD', label: 'EUR → USD', from: 'EUR', to: 'USD' },
+    { id: 'USD_EUR', label: 'USD → EUR', from: 'USD', to: 'EUR' },
 ];
 
 export default function RatesManager() {
     const queryClient = useQueryClient();
     const [newRate, setNewRate] = useState({
         currency_pair: '',
-        buy_rate: '',
-        sell_rate: '',
+        rate: '',
     });
     const [showAddForm, setShowAddForm] = useState(false);
 
@@ -67,14 +67,13 @@ export default function RatesManager() {
         mutationFn: async (data: any) => {
             await base44.entities.ExchangeRate.create({
                 ...data,
-                buy_rate: parseFloat(data.buy_rate),
-                sell_rate: parseFloat(data.sell_rate),
+                rate: parseFloat(data.rate),
                 is_active: true,
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rates'] });
-            setNewRate({ currency_pair: '', buy_rate: '', sell_rate: '' });
+            setNewRate({ currency_pair: '', rate: '' });
             setShowAddForm(false);
             toast.success('Nouveau taux de change configuré');
         },
@@ -91,15 +90,11 @@ export default function RatesManager() {
         },
     });
 
-    const handleUpdateRate = (
-        rate: ExchangeRate,
-        field: string,
-        value: string,
-    ) => {
+    const handleUpdateRate = (rate: ExchangeRate, value: string) => {
         if (!value) return;
         updateMutation.mutate({
             id: rate.id,
-            data: { [field]: parseFloat(value) },
+            data: { rate: parseFloat(value) },
         });
     };
 
@@ -155,7 +150,7 @@ export default function RatesManager() {
                                 Nouvelle Configuration
                             </h5>
 
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
                                         Paire de devises
@@ -187,63 +182,35 @@ export default function RatesManager() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                        Taux d'Achat (Le client donne{' '}
-                                        {newRate.currency_pair === 'CDF_USD'
-                                            ? 'CDF'
-                                            : 'USD'}
-                                        , 1{' '}
-                                        {newRate.currency_pair === 'CDF_USD'
-                                            ? 'USD'
-                                            : newRate.currency_pair.split(
-                                                  '_',
-                                              )[0] || 'Unité'}{' '}
-                                        =)
+                                        Taux direct (1{' '}
+                                        {newRate.currency_pair.split('_')[0] ||
+                                            'devise source'}{' '}
+                                        = combien de{' '}
+                                        {newRate.currency_pair.split('_')[1] ||
+                                            'devise cible'}
+                                        ?)
                                     </Label>
                                     <div className="relative">
-                                        <TrendingDown className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-emerald-400" />
+                                        <TrendingUp className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-emerald-400" />
                                         <Input
                                             type="number"
-                                            placeholder="0.00"
-                                            value={newRate.buy_rate}
+                                            min="0.00000001"
+                                            step="any"
+                                            placeholder="Ex. 2250 ou 0.00044"
+                                            value={newRate.rate}
                                             onChange={(e) =>
                                                 setNewRate({
                                                     ...newRate,
-                                                    buy_rate: e.target.value,
+                                                    rate: e.target.value,
                                                 })
                                             }
                                             className="h-12 rounded-xl border-white/10 bg-white/5 pl-11 font-mono font-black text-white"
                                         />
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                        Taux de Vente (Le bureau donne{' '}
-                                        {newRate.currency_pair === 'CDF_USD'
-                                            ? 'CDF'
-                                            : 'USD'}
-                                        , 1{' '}
-                                        {newRate.currency_pair === 'CDF_USD'
-                                            ? 'USD'
-                                            : newRate.currency_pair.split(
-                                                  '_',
-                                              )[0] || 'Unité'}{' '}
-                                        =)
-                                    </Label>
-                                    <div className="relative">
-                                        <TrendingUp className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-blue-400" />
-                                        <Input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={newRate.sell_rate}
-                                            onChange={(e) =>
-                                                setNewRate({
-                                                    ...newRate,
-                                                    sell_rate: e.target.value,
-                                                })
-                                            }
-                                            className="h-12 rounded-xl border-white/10 bg-white/5 pl-11 font-mono font-black text-white"
-                                        />
-                                    </div>
+                                    <p className="ml-1 text-[10px] font-semibold text-slate-400">
+                                        Le sens inverse doit être configuré
+                                        séparément.
+                                    </p>
                                 </div>
                             </div>
 
@@ -261,7 +228,8 @@ export default function RatesManager() {
                                     }
                                     disabled={
                                         createMutation.isPending ||
-                                        !newRate.currency_pair
+                                        !newRate.currency_pair ||
+                                        Number(newRate.rate) <= 0
                                     }
                                     className="h-12 rounded-xl bg-white px-10 text-xs font-black tracking-widest text-slate-900 uppercase transition-all hover:bg-slate-100"
                                 >
@@ -282,9 +250,10 @@ export default function RatesManager() {
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 {rates.map((rate: ExchangeRate) => {
-                    const pair = currencyPairs.find(
-                        (p) => p.id === rate.currency_pair,
-                    );
+                    const pairId =
+                        rate.currency_pair ??
+                        `${rate.currency_from}_${rate.currency_to}`;
+                    const pair = currencyPairs.find((p) => p.id === pairId);
                     return (
                         <motion.div
                             key={rate.id}
@@ -296,19 +265,13 @@ export default function RatesManager() {
                                 <div className="flex items-center gap-4">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 shadow-lg shadow-slate-900/10 transition-transform group-hover:rotate-6">
                                         <span className="text-sm font-black text-white">
-                                            {pair?.from ||
-                                                rate.currency_pair.split(
-                                                    '_',
-                                                )[0]}
+                                            {pair?.from || pairId.split('_')[0]}
                                         </span>
                                     </div>
                                     <TrendingUp className="h-4 w-4 text-slate-300" />
                                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50">
                                         <span className="text-sm font-black text-indigo-600">
-                                            {pair?.to ||
-                                                rate.currency_pair.split(
-                                                    '_',
-                                                )[1]}
+                                            {pair?.to || pairId.split('_')[1]}
                                         </span>
                                     </div>
                                 </div>
@@ -324,48 +287,26 @@ export default function RatesManager() {
                                 </Button>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between px-1">
                                         <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                                            Achat (1{' '}
-                                            {rate.currency_pair.split('_')[0]}{' '}
-                                            =)
+                                            1 {pairId.split('_')[0]} = combien
+                                            de {pairId.split('_')[1]} ?
                                         </span>
-                                        <TrendingDown className="h-3 w-3 text-emerald-500" />
+                                        <TrendingUp className="h-3 w-3 text-emerald-500" />
                                     </div>
                                     <div className="relative">
                                         <Input
                                             type="number"
-                                            value={rate.buy_rate}
-                                            onChange={(e) =>
-                                                handleUpdateRate(
-                                                    rate,
-                                                    'buy_rate',
-                                                    e.target.value,
-                                                )
+                                            min="0.00000001"
+                                            step="any"
+                                            defaultValue={
+                                                rate.rate ?? rate.buy_rate
                                             }
-                                            className="h-14 rounded-2xl border-transparent bg-slate-50 font-mono text-xl font-black text-slate-900 focus:border-indigo-500 focus:bg-white"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between px-1">
-                                        <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                                            Vente (1{' '}
-                                            {rate.currency_pair.split('_')[0]}{' '}
-                                            =)
-                                        </span>
-                                        <TrendingUp className="h-3 w-3 text-blue-500" />
-                                    </div>
-                                    <div className="relative">
-                                        <Input
-                                            type="number"
-                                            value={rate.sell_rate}
-                                            onChange={(e) =>
+                                            onBlur={(e) =>
                                                 handleUpdateRate(
                                                     rate,
-                                                    'sell_rate',
                                                     e.target.value,
                                                 )
                                             }

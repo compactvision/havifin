@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasOwner;
+use Database\Factories\CashSessionFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class CashSession extends Model
 {
-    /** @use HasFactory<\Database\Factories\CashSessionFactory> */
+    /** @use HasFactory<CashSessionFactory> */
     use HasFactory, HasOwner;
 
     protected $fillable = [
         'cash_register_id',
         'user_id',
+        'closed_by',
         'work_session_id',
         'status',
         'opened_at',
@@ -36,6 +38,11 @@ class CashSession extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function closer()
+    {
+        return $this->belongsTo(User::class, 'closed_by');
     }
 
     public function workSession()

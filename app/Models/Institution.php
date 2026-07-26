@@ -2,11 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-use Illuminate\Database\Eloquent\Builder;
-
 use App\Traits\HasOwner;
+use Illuminate\Database\Eloquent\Model;
 
 class Institution extends Model
 {

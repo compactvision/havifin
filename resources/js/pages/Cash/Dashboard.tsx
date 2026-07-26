@@ -2,13 +2,12 @@ import CashRegisterCard from '@/components/cash/CashRegisterCard';
 import OpenSessionModal from '@/components/cash/OpenSessionModal';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
+import axios from '@/lib/axios';
 import { CashRegister } from '@/types/cash';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { ArrowLeft, Plus, Store } from 'lucide-react';
+import { ArrowLeft, Store } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 export default function CashDashboard() {
     const queryClient = useQueryClient();
@@ -34,20 +33,8 @@ export default function CashDashboard() {
         queryClient.invalidateQueries({ queryKey: ['cash-registers'] });
     };
 
-    const handleCreateDefaultRegister = async () => {
-        try {
-            toast.info('Initialisation de la caisse par défaut...');
-            await axios.post('/api/cash/registers', {
-                shop_id: auth.user.shop_id || 1, // Fallback to 1 if not set, or handle better
-                name: 'Caisse Principale',
-            });
-            toast.success('Caisse configurée avec succès !');
-            queryClient.invalidateQueries({ queryKey: ['cash-registers'] });
-        } catch (err) {
-            console.error(err);
-            toast.error('Erreur lors de la configuration.');
-        }
-    };
+    const backHref =
+        auth.user.role === 'manager' ? '/manager/shops' : '/cashier/today';
 
     return (
         <AppMain currentPageName="CashMoney">
@@ -57,7 +44,7 @@ export default function CashDashboard() {
                 {/* Premium Header */}
                 <header className="sticky top-0 z-50 mb-10 flex h-24 w-full flex-col gap-6 border-b border-white/20 bg-white/70 px-6 py-4 shadow-sm backdrop-blur-xl md:flex-row md:items-center md:justify-between md:px-10">
                     <div className="flex items-center gap-4">
-                        <Link href="/manager/shops">
+                        <Link href={backHref}>
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -110,6 +97,7 @@ export default function CashDashboard() {
                                 key={register.id}
                                 register={register}
                                 onOpenSession={handleOpenSession}
+                                canViewHistory={auth.user.role === 'manager'}
                             />
                         ))}
 
@@ -123,16 +111,21 @@ export default function CashDashboard() {
                                         Aucune caisse trouvée
                                     </h3>
                                     <p className="mt-2 font-medium text-slate-500">
-                                        Une caisse doit être configurée pour commencer à gérer les fonds.
+                                        {auth.user.role === 'manager'
+                                            ? 'Configurez une caisse depuis la boutique concernée.'
+                                            : 'Aucune caisse n’est associée à votre guichet. Contactez votre manager.'}
                                     </p>
                                 </div>
-                                <Button 
-                                    onClick={handleCreateDefaultRegister}
-                                    className="h-14 rounded-2xl bg-indigo-600 px-10 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:scale-105"
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Configurer la Caisse Principale
-                                </Button>
+                                {auth.user.role === 'manager' && (
+                                    <Button
+                                        asChild
+                                        className="h-14 rounded-2xl bg-indigo-600 px-10 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-indigo-200 transition-all hover:scale-105 hover:bg-indigo-700"
+                                    >
+                                        <Link href="/manager/shops">
+                                            Configurer depuis une boutique
+                                        </Link>
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </div>

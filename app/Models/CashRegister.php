@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasOwner;
+use Database\Factories\CashRegisterFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class CashRegister extends Model
 {
-    /** @use HasFactory<\Database\Factories\CashRegisterFactory> */
+    /** @use HasFactory<CashRegisterFactory> */
     use HasFactory, HasOwner;
 
     protected $fillable = [

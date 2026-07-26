@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\User;
 use App\Http\Controllers\Controller;
+use App\Models\CashierActivity;
+use App\Models\User;
+use App\Support\TenantAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -17,13 +21,15 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        
+
         $query = User::with(['roles', 'shops'])->orderBy('created_at', 'desc');
 
-        // If not super-admin, filter by shops the manager is assigned to
-        if (!$user->isSuperAdmin()) {
+        if ($user->isSuperAdmin()) {
+            $query->where('role', 'manager');
+        } else {
+            // Managers only see personnel assigned to their own shops.
             $shopIds = $user->shops->pluck('id');
-            $query->whereHas('shops', function($q) use ($shopIds) {
+            $query->whereHas('shops', function ($q) use ($shopIds) {
                 $q->whereIn('shops.id', $shopIds);
             });
         }
@@ -36,16 +42,22 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $allowedRoles = $request->user()->isSuperAdmin()
+            ? ['manager']
+            : ['cashier', 'client'];
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'role' => ['required', Rule::in(['cashier', 'manager', 'client'])],
+            'password' => ['required', 'string', Password::defaults()],
+            'role' => ['required', Rule::in($allowedRoles)],
+            'shop_ids' => 'sometimes|array',
+            'shop_ids.*' => 'integer|exists:shops,id',
         ]);
 
         // Determine owner_id
         $creator = $request->user();
-        $ownerId = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+        $ownerId = TenantAccess::ownerId($creator);
 
         $user = User::create([
             'name' => $validated['name'],
@@ -57,24 +69,32 @@ class UserController extends Controller
         ]);
 
         // Assign role using Spatie
-        $user->assignRole($validated['role']);
+        $user->assignRole(Role::findOrCreate($validated['role'], 'web'));
 
         // Handle shop association
         if ($creator->isSuperAdmin()) {
             // Super admin can specify shop_ids or leave it to be assigned later
-            if ($request->has('shop_ids')) {
-                $user->shops()->sync($request->shop_ids);
+            if (! empty($validated['shop_ids'])) {
+                foreach ($validated['shop_ids'] as $shopId) {
+                    TenantAccess::authorizeShop($creator, $shopId);
+                }
+                $user->shops()->sync($validated['shop_ids']);
             }
         } else {
-            // Manager: auto-assign to the manager's shop(s)
-            $shopIds = $creator->shops->pluck('id');
+            $shopIds = collect(
+                $validated['shop_ids'] ?? $creator->shops->pluck('id')->all()
+            )->unique()->values();
+            abort_if($shopIds->isEmpty(), 422, 'Sélectionnez au moins une boutique.');
+            foreach ($shopIds as $shopId) {
+                TenantAccess::authorizeShop($creator, (int) $shopId);
+            }
             $user->shops()->sync($shopIds);
         }
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Utilisateur créé: {$user->name} ({$user->role})");
+        CashierActivity::logAction('configuration_change', "Utilisateur créé: {$user->name} ({$user->role})");
 
         return response()->json([
-            'user' => $user->load('roles'),
+            'user' => $user->load(['roles', 'shops']),
             'message' => 'Utilisateur créé avec succès',
         ], 201);
     }
@@ -84,12 +104,19 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $this->authorizeManagedUser($request->user(), $user);
+        $allowedRoles = $request->user()->isSuperAdmin()
+            ? ['manager']
+            : ['cashier', 'client'];
+
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
-            'password' => 'sometimes|string|min:8',
-            'role' => ['sometimes', Rule::in(['cashier', 'manager', 'client'])],
+            'password' => ['sometimes', 'string', Password::defaults()],
+            'role' => ['sometimes', Rule::in($allowedRoles)],
             'is_active' => 'sometimes|boolean',
+            'shop_ids' => 'sometimes|array|min:1',
+            'shop_ids.*' => 'integer|exists:shops,id',
         ]);
 
         if (isset($validated['password'])) {
@@ -99,15 +126,21 @@ class UserController extends Controller
         // Update role if provided
         if (isset($validated['role'])) {
             $user->syncRoles([$validated['role']]);
-            unset($validated['role']);
         }
 
-        $user->update($validated);
+        $user->update(collect($validated)->except('shop_ids')->all());
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Utilisateur mis à jour: {$user->name}");
+        if (isset($validated['shop_ids'])) {
+            foreach ($validated['shop_ids'] as $shopId) {
+                TenantAccess::authorizeShop($request->user(), (int) $shopId);
+            }
+            $user->shops()->sync(array_values(array_unique($validated['shop_ids'])));
+        }
+
+        CashierActivity::logAction('configuration_change', "Utilisateur mis à jour: {$user->name}");
 
         return response()->json([
-            'user' => $user->load('roles'),
+            'user' => $user->load(['roles', 'shops']),
             'message' => 'Utilisateur mis à jour avec succès',
         ]);
     }
@@ -115,14 +148,45 @@ class UserController extends Controller
     /**
      * Remove the specified user (soft delete by deactivating).
      */
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        $this->authorizeManagedUser($request->user(), $user);
         $user->update(['is_active' => false]);
+        $user->tokens()->delete();
+        DB::table('sessions')->where('user_id', $user->id)->delete();
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Utilisateur désactivé: {$user->name}");
+        CashierActivity::logAction('configuration_change', "Utilisateur désactivé: {$user->name}");
 
         return response()->json([
             'message' => 'Utilisateur désactivé avec succès',
         ]);
+    }
+
+    private function authorizeManagedUser(User $actor, User $target): void
+    {
+        abort_if($actor->is($target), 422, 'Vous ne pouvez pas gérer votre propre compte ici.');
+        abort_if($target->isSuperAdmin(), 403, 'Un super-administrateur ne peut pas être modifié.');
+        abort_unless((int) $target->owner_id === TenantAccess::ownerId($actor), 403);
+
+        if ($actor->isSuperAdmin()) {
+            abort_unless($target->isManager(), 403, 'Le Super Admin gère uniquement les managers.');
+        } else {
+            $actorShopIds = $actor->shops()->pluck('shops.id');
+            abort_unless(
+                $target->hasApplicationRole('cashier', 'client'),
+                403,
+                'Un manager gère uniquement les caissiers et les comptes client.',
+            );
+            abort_unless(
+                $target->shops()->whereIn('shops.id', $actorShopIds)->exists(),
+                403,
+                'Utilisateur hors de vos boutiques.',
+            );
+            abort_if(
+                $target->shops()->whereNotIn('shops.id', $actorShopIds)->exists(),
+                403,
+                'Cet utilisateur travaille aussi dans une boutique que vous ne gérez pas.',
+            );
+        }
     }
 }

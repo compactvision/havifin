@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\HasOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-use App\Traits\HasOwner;
 
 class CashierActivity extends Model
 {
@@ -72,6 +71,7 @@ class CashierActivity extends Model
     public static function logAction(string $type, string $description, ?int $clientId = null, ?int $sessionId = null): self
     {
         $user = auth()->user();
+
         return self::create([
             'cashier_id' => $user?->id,
             'session_id' => $sessionId,

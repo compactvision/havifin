@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasOwner;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
     use HasFactory, HasOwner;
+
+    protected $appends = ['created_date'];
 
     protected $fillable = [
         'client_id',
@@ -26,13 +28,15 @@ class Transaction extends Model
         'owner_id',
         'shop_id',
         'session_id',
+        'settlement_breakdown',
     ];
 
     protected $casts = [
         'amount_from' => 'decimal:2',
         'amount_to' => 'decimal:2',
-        'exchange_rate' => 'decimal:4',
+        'exchange_rate' => 'decimal:8',
         'commission' => 'decimal:2',
+        'settlement_breakdown' => 'array',
     ];
 
     /**
@@ -65,5 +69,13 @@ class Transaction extends Model
     public function session()
     {
         return $this->belongsTo(Session::class);
+    }
+
+    /**
+     * Compatibility field consumed by the existing React application.
+     */
+    public function getCreatedDateAttribute(): ?string
+    {
+        return $this->created_at?->toIso8601String();
     }
 }

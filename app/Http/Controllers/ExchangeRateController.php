@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CashierActivity;
 use App\Models\ExchangeRate;
+use App\Support\TenantAccess;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ExchangeRateController extends Controller
 {
@@ -14,24 +17,67 @@ class ExchangeRateController extends Controller
 
     public function store(Request $request)
     {
-        // For admin to set rates
+        $ownerId = TenantAccess::ownerId($request->user());
         $validated = $request->validate([
-            'currency_pair' => 'required|string|unique:exchange_rates,currency_pair',
-            'buy_rate' => 'required|numeric',
-            'sell_rate' => 'required|numeric',
+            'currency_pair' => [
+                'required',
+                'string',
+                'regex:/^[A-Za-z]{3}_[A-Za-z]{3}$/',
+                Rule::unique('exchange_rates', 'currency_pair')
+                    ->where('owner_id', $ownerId),
+            ],
+            'rate' => 'required|numeric|min:0.00000001',
         ]);
 
-        $user = $request->user();
-        if ($user) {
-            $validated['owner_id'] = $user->role === 'super-admin' ? $user->id : $user->owner_id;
-        }
+        $validated['currency_pair'] = strtoupper($validated['currency_pair']);
+        $validated['owner_id'] = $ownerId;
+        $validated['is_active'] = true;
+        $validated['buy_rate'] = $validated['rate'];
+        $validated['sell_rate'] = $validated['rate'];
+        unset($validated['rate']);
 
-        return ExchangeRate::create($validated);
+        $exchangeRate = ExchangeRate::create($validated);
+        CashierActivity::logAction(
+            'configuration_change',
+            "Taux créé: {$exchangeRate->currency_pair}",
+        );
+
+        return response()->json($exchangeRate, 201);
     }
-    
+
     public function update(Request $request, ExchangeRate $exchangeRate)
     {
-         $exchangeRate->update($request->all());
-         return $exchangeRate;
+        TenantAccess::authorizeOwner($request->user(), $exchangeRate);
+        $validated = $request->validate([
+            'rate' => 'sometimes|required|numeric|min:0.00000001',
+            'is_active' => 'sometimes|boolean',
+        ]);
+
+        if (array_key_exists('rate', $validated)) {
+            $validated['buy_rate'] = $validated['rate'];
+            $validated['sell_rate'] = $validated['rate'];
+            unset($validated['rate']);
+        }
+
+        $exchangeRate->update($validated);
+        CashierActivity::logAction(
+            'configuration_change',
+            "Taux mis à jour: {$exchangeRate->currency_pair}",
+        );
+
+        return $exchangeRate;
+    }
+
+    public function destroy(Request $request, ExchangeRate $exchangeRate)
+    {
+        TenantAccess::authorizeOwner($request->user(), $exchangeRate);
+        $currencyPair = $exchangeRate->currency_pair;
+        $exchangeRate->delete();
+        CashierActivity::logAction(
+            'configuration_change',
+            "Taux supprimé: {$currencyPair}",
+        );
+
+        return response()->noContent();
     }
 }

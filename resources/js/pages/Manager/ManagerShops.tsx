@@ -9,21 +9,18 @@ import { ArrowRight, Building2, MapPin, Store, Users } from 'lucide-react';
 
 export default function ManagerShops() {
     const { auth } = usePage().props as any;
-    const userId = auth.user?.id;
 
     const { data: allShops, isLoading } = useQuery({
         queryKey: ['shops'],
         queryFn: base44.entities.Shop.list,
     });
 
-    // Filter shops where the current user is assigned
-    const myShops = allShops?.filter((shop) =>
-        shop.users?.some((user) => user.id === userId),
-    );
+    // The API already restricts this list to the manager's assigned shops.
+    const myShops = allShops;
 
     if (isLoading) {
         return (
-            <AppMain currentPageName="Manager">
+            <AppMain currentPageName="ManagerShops">
                 <div className="flex h-screen items-center justify-center">
                     <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
                 </div>
@@ -32,7 +29,7 @@ export default function ManagerShops() {
     }
 
     return (
-        <AppMain currentPageName="Manager">
+        <AppMain currentPageName="ManagerShops">
             <Head title="Mes Boutiques" />
 
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 px-6 py-12 md:px-10">

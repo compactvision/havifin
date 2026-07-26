@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
+use Database\Factories\UserFactory;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,12 +13,15 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-use Illuminate\Database\Eloquent\Builder;
-
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, HasApiTokens;
+    /** @use HasFactory<UserFactory> */
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable;
+
+    protected $attributes = [
+        'role' => 'cashier',
+        'is_active' => true,
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -63,7 +69,7 @@ class User extends Authenticatable
      */
     public function isManager(): bool
     {
-        return $this->role === 'manager' || $this->hasRole('manager');
+        return $this->role === UserRole::Manager->value;
     }
 
     /**
@@ -71,7 +77,7 @@ class User extends Authenticatable
      */
     public function isSuperAdmin(): bool
     {
-        return $this->role === 'super-admin' || $this->hasRole('super-admin');
+        return $this->role === UserRole::SuperAdmin->value;
     }
 
     /**
@@ -79,7 +85,7 @@ class User extends Authenticatable
      */
     public function isCashier(): bool
     {
-        return $this->role === 'cashier' || $this->hasRole('cashier');
+        return $this->role === UserRole::Cashier->value;
     }
 
     /**
@@ -87,7 +93,23 @@ class User extends Authenticatable
      */
     public function isClient(): bool
     {
-        return $this->role === 'client' || $this->hasRole('client');
+        return $this->role === UserRole::Client->value;
+    }
+
+    /**
+     * Determine whether the user has one of the supplied application roles.
+     */
+    public function hasApplicationRole(string ...$roles): bool
+    {
+        return in_array($this->role, $roles, true);
+    }
+
+    /**
+     * Return the only valid landing page for this user's application role.
+     */
+    public function homePath(): string
+    {
+        return UserRole::from($this->role)->homePath();
     }
 
     /**
@@ -95,7 +117,7 @@ class User extends Authenticatable
      */
     public function isActive(): bool
     {
-        return $this->is_active;
+        return (bool) $this->is_active;
     }
 
     /**
@@ -137,32 +159,33 @@ class User extends Authenticatable
     {
         static::addGlobalScope('owner', function (Builder $query) {
             // Prevent infinite recursion: only apply scope if user is already authenticated/loaded
-            if (!auth()->hasUser()) {
+            if (! auth()->hasUser()) {
                 return;
             }
 
             $user = auth()->user();
             if ($user) {
                 $table = $query->getModel()->getTable();
-                
-                // Determine the effective owner ID (the Tenant Root)
-                $ownerId = ($user->role === 'super-admin' || ($user->role === 'manager' && !$user->owner_id)) 
-                    ? $user->id 
-                    : $user->owner_id;
 
-                if ($user->role === 'super-admin') {
+                if ($user->isSuperAdmin()) {
                     // Super-admin sees their own data (based on owner_id matching their ID)
                     // OR records where they ARE the owner (for users table self-reference)
                     // AND themselves
                     $query->where(function ($q) use ($user, $table) {
-                        $q->where($table . '.owner_id', $user->id)
-                          ->orWhere($table . '.id', $user->id);
+                        $q->where($table.'.owner_id', $user->id)
+                            ->orWhere($table.'.id', $user->id);
                     });
-                } elseif (in_array($user->role, ['manager', 'cashier', 'client'])) {
+                } elseif ($user->hasApplicationRole('manager', 'cashier', 'client')) {
+                    if (! $user->owner_id) {
+                        $query->where($table.'.id', $user->id);
+
+                        return;
+                    }
+
                     // Manager/Cashier/Client sees data belonging to their owner
-                    $query->where(function ($q) use ($ownerId, $table) {
-                        $q->where($table . '.owner_id', $ownerId)
-                          ->orWhere($table . '.id', auth()->id());
+                    $query->where(function ($q) use ($user, $table) {
+                        $q->where($table.'.owner_id', $user->owner_id)
+                            ->orWhere($table.'.id', auth()->id());
                     });
                 }
             }

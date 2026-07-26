@@ -45,7 +45,7 @@ export default function KanbanColumn({
             </div>
 
             {/* Scrollable Area */}
-            <div className="scrollbar-none custom-kanban-scroll flex-1 overflow-y-auto pr-2">
+            <div className="custom-kanban-scroll flex-1 scrollbar-none overflow-y-auto pr-2">
                 <div className="space-y-4 pb-12">{children}</div>
             </div>
         </div>

@@ -8,9 +8,14 @@ import moment from 'moment';
 interface Props {
     register: CashRegister;
     onOpenSession: (register: CashRegister) => void;
+    canViewHistory?: boolean;
 }
 
-export default function CashRegisterCard({ register, onOpenSession }: Props) {
+export default function CashRegisterCard({
+    register,
+    onOpenSession,
+    canViewHistory = false,
+}: Props) {
     const activeSession = register.active_session;
     const balances = register.balances || [];
 
@@ -28,15 +33,17 @@ export default function CashRegisterCard({ register, onOpenSession }: Props) {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Link href={`/cash/registers/${register.id}/history`}>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-400 hover:text-slate-600"
-                        >
-                            <History className="h-4 w-4" />
-                        </Button>
-                    </Link>
+                    {canViewHistory && (
+                        <Link href={`/cash/registers/${register.id}/history`}>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                            >
+                                <History className="h-4 w-4" />
+                            </Button>
+                        </Link>
+                    )}
                     <Badge
                         className={`rounded-full px-2 py-1 text-xs font-black uppercase ${
                             activeSession

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Link, usePage } from '@inertiajs/react';
+import { logout } from '@/routes';
+import { Link, router, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     LayoutDashboard,
@@ -24,6 +25,7 @@ const navigation = [
         icon: User,
         color: 'text-brand-cyan',
         bg: 'bg-brand-cyan/10',
+        route: '/clientform',
     },
     {
         name: 'Display',
@@ -31,6 +33,7 @@ const navigation = [
         icon: Monitor,
         color: 'text-brand-purple',
         bg: 'bg-brand-purple/10',
+        route: '/display',
     },
     {
         name: 'Cashier',
@@ -54,21 +57,23 @@ const navigation = [
         icon: LayoutDashboard,
         color: 'text-brand-blue',
         bg: 'bg-brand-blue/10',
+        route: '/manager',
     },
     {
         name: 'ManagerShops',
-        label: 'Mes Boutiques',
+        label: 'Boutique',
         icon: Store,
         color: 'text-brand-cyan',
         bg: 'bg-brand-cyan/10',
-        roles: ['manager', 'super-admin'],
+        route: '/manager/shops',
     },
     {
         name: 'Admin',
-        label: 'Super Admin',
+        label: 'Mes Boutiques',
         icon: ShieldCheck,
         color: 'text-brand-deep',
         bg: 'bg-brand-deep/10',
+        route: '/admin/shops',
     },
 ];
 
@@ -80,11 +85,13 @@ export default function AppMain({ children, currentPageName }: any) {
     // Filter navigation based on user role
     const filteredNavigation = useMemo(() => {
         if (userRole === 'super-admin') {
-            return navigation;
+            return navigation.filter((item) => item.name === 'Admin');
         }
 
         if (userRole === 'manager') {
-            return navigation.filter((item) => item.name !== 'Admin');
+            return navigation.filter((item) =>
+                ['Display', 'Manager', 'ManagerShops'].includes(item.name),
+            );
         }
 
         if (userRole === 'cashier') {
@@ -93,33 +100,13 @@ export default function AppMain({ children, currentPageName }: any) {
             );
         }
 
-        // Default / Client role
-        return navigation.filter((item) =>
-            ['Client', 'Display'].includes(item.name),
-        );
+        return navigation.filter((item) => item.name === 'Client');
     }, [userRole]);
 
-    const hideNav = currentPageName === 'Display';
-
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-            });
-            window.location.href = '/login';
-        } catch (error) {
-            console.error('Logout error:', error);
-            window.location.href = '/login';
-        }
-    };
+    const hideNav = currentPageName === 'Display' && userRole !== 'manager';
 
     return (
-        <div className="min-h-screen bg-brand-white font-sans text-brand-dark selection:bg-brand-blue selection:text-white">
+        <div className="brand-canvas min-h-screen font-sans text-brand-dark selection:bg-brand-blue selection:text-white">
             {/* Main Content Area - No Margin/Padding for Sidebar */}
             <main className="min-h-screen w-full">
                 <motion.div
@@ -135,16 +122,15 @@ export default function AppMain({ children, currentPageName }: any) {
 
             {/* Floating Action Button (FAB) */}
             {!hideNav && (
-                <div className="fixed right-6 bottom-6 z-50">
+                <div className="fixed right-5 bottom-5 z-50 sm:right-7 sm:bottom-7">
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setIsMenuOpen(true)}
-                        className="group relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-brand-blue to-brand-cyan text-white shadow-lg shadow-brand-blue/40 transition-all duration-300 hover:shadow-brand-blue/60"
+                        className="group relative flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-white/30 bg-gradient-to-br from-brand-deep via-brand-blue to-brand-purple text-white shadow-[0_18px_42px_rgba(32,0,255,0.35)] transition-all duration-300 hover:shadow-[0_22px_52px_rgba(32,0,255,0.48)]"
+                        aria-label="Ouvrir la navigation"
                     >
-                        {/* Pulse Effect */}
-                        <div className="absolute inset-0 -z-10 rounded-full bg-brand-blue opacity-20 blur-lg transition-all duration-500 group-hover:opacity-40" />
-
+                        <div className="absolute -inset-2 -z-10 rounded-[1.8rem] bg-brand-cyan/20 blur-xl transition-all duration-500 group-hover:bg-brand-pink/25" />
                         <Menu className="h-8 w-8" />
                     </motion.button>
                 </div>
@@ -157,7 +143,7 @@ export default function AppMain({ children, currentPageName }: any) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xl"
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b0754]/70 p-4 backdrop-blur-xl"
                     >
                         {/* Close Button Area - Click outside to close */}
                         <div
@@ -175,33 +161,39 @@ export default function AppMain({ children, currentPageName }: any) {
                                 damping: 25,
                                 stiffness: 300,
                             }}
-                            className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white/90 p-8 shadow-2xl ring-1 ring-white/50 backdrop-blur-xl"
+                            className="brand-hero relative w-full max-w-2xl overflow-hidden rounded-[2.25rem] p-7 text-white shadow-[0_40px_120px_rgba(13,0,109,0.45)] ring-1 ring-white/20 sm:p-9"
                         >
                             {/* Close Button */}
                             <button
                                 onClick={() => setIsMenuOpen(false)}
-                                className="absolute top-4 right-4 rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-slate-200"
+                                className="absolute top-5 right-5 z-20 rounded-xl border border-white/15 bg-white/10 p-2 text-white/70 backdrop-blur-xl transition-colors hover:bg-white/20 hover:text-white"
+                                aria-label="Fermer la navigation"
                             >
                                 <X className="h-6 w-6" />
                             </button>
 
                             <div className="mb-8 flex flex-col items-center">
-                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-100">
+                                <div className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/20">
                                     <img
-                                        src="/logo.png"
+                                        src="/logo-color.png"
                                         alt="Havifin"
-                                        className="h-full w-full object-contain"
+                                        className="brand-logo-crop h-full w-full object-contain"
                                     />
                                 </div>
-                                <h2 className="text-2xl font-black text-slate-900">
+                                <p className="mb-2 text-[10px] font-black tracking-[0.26em] text-brand-cyan uppercase">
+                                    Finance en mouvement
+                                </p>
+                                <h2 className="brand-title text-3xl text-white">
                                     Navigation
                                 </h2>
-                                <p className="text-sm font-medium text-slate-500">
-                                    Menu Principal
+                                <p className="mt-1 text-sm font-medium text-white/55">
+                                    {userRole === 'super-admin'
+                                        ? 'Administration des boutiques'
+                                        : 'Menu Principal'}
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="relative z-10 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {filteredNavigation.map((item, index) => {
                                     const isActive =
                                         currentPageName === item.name;
@@ -211,37 +203,29 @@ export default function AppMain({ children, currentPageName }: any) {
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.1 }}
+                                            className={cn(
+                                                filteredNavigation.length ===
+                                                    1 && 'sm:col-span-2',
+                                            )}
                                         >
                                             <Link
-                                                href={
-                                                    item.route
-                                                        ? item.route
-                                                        : item.name === 'Client'
-                                                          ? '/'
-                                                          : item.name ===
-                                                              'Admin'
-                                                            ? '/admin/shops'
-                                                            : item.name ===
-                                                                'ManagerShops'
-                                                              ? '/manager/shops'
-                                                              : `/${item.name.toLowerCase()}`
-                                                }
+                                                href={item.route}
                                                 onClick={() =>
                                                     setIsMenuOpen(false)
                                                 }
                                                 className={cn(
-                                                    'group flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all duration-300 hover:scale-[1.02]',
+                                                    'group flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 text-white backdrop-blur-xl transition-all duration-300 hover:scale-[1.02]',
                                                     isActive
-                                                        ? 'border-brand-blue bg-brand-blue/10 shadow-inner'
-                                                        : 'border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-lg',
+                                                        ? 'border-white/30 bg-white/20 shadow-inner'
+                                                        : 'border-white/12 bg-white/8 hover:border-white/25 hover:bg-white/15',
                                                 )}
                                             >
                                                 <div
                                                     className={cn(
                                                         'rounded-xl p-3 transition-colors',
                                                         isActive
-                                                            ? 'bg-brand-blue text-white'
-                                                            : `${item.bg} ${item.color} group-hover:bg-brand-blue group-hover:text-white`,
+                                                            ? 'bg-white text-brand-blue'
+                                                            : 'bg-white/12 text-brand-cyan group-hover:bg-white group-hover:text-brand-blue',
                                                     )}
                                                 >
                                                     <item.icon className="h-6 w-6" />
@@ -250,8 +234,8 @@ export default function AppMain({ children, currentPageName }: any) {
                                                     className={cn(
                                                         'font-bold',
                                                         isActive
-                                                            ? 'text-brand-blue'
-                                                            : 'text-slate-600',
+                                                            ? 'text-white'
+                                                            : 'text-white/75 group-hover:text-white',
                                                     )}
                                                 >
                                                     {item.label}
@@ -266,22 +250,37 @@ export default function AppMain({ children, currentPageName }: any) {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.3 }}
-                                className="mt-8 border-t border-slate-100 pt-6"
+                                className="relative z-10 mt-7 border-t border-white/12 pt-5"
                             >
                                 <Button
+                                    asChild
                                     variant="ghost"
-                                    onClick={handleLogout}
-                                    className="w-full justify-center gap-2 rounded-xl py-6 font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
+                                    className="w-full justify-center gap-2 rounded-xl py-6 font-bold text-white/65 hover:bg-white/10 hover:text-brand-pink"
                                 >
-                                    <LogOut className="h-5 w-5" />
-                                    Déconnexion
+                                    <Link
+                                        href={logout()}
+                                        as="button"
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            router.flushAll();
+                                        }}
+                                        data-test="main-menu-logout-button"
+                                    >
+                                        <LogOut className="h-5 w-5" />
+                                        Déconnexion
+                                    </Link>
                                 </Button>
                             </motion.div>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
-            <Toaster position="top-right" expand={true} richColors={true} />
+            <Toaster
+                theme="light"
+                position="top-right"
+                expand={true}
+                richColors={true}
+            />
         </div>
     );
 }

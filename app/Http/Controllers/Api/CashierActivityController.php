@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashierActivity;
+use App\Models\CashMovement;
+use App\Models\Client;
+use App\Models\Session;
+use App\Support\TenantAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -16,6 +20,8 @@ class CashierActivityController extends Controller
     public function index(Request $request)
     {
         $query = CashierActivity::with(['cashier', 'session', 'client']);
+        $shopIds = TenantAccess::shopIds($request->user());
+        $query->whereHas('cashier.shops', fn ($q) => $q->whereIn('shops.id', $shopIds));
 
         // Filter by cashier
         if ($request->has('cashier_id')) {
@@ -28,18 +34,18 @@ class CashierActivityController extends Controller
         }
 
         // Filter by date range or default to current active session
-        if (!$request->has('session_id') && !$request->has('start_date') && !$request->has('end_date')) {
+        if (! $request->has('session_id') && ! $request->has('start_date') && ! $request->has('end_date')) {
             $user = $request->user();
-            $shopIds = $user->shops()->pluck('shops.id');
-            
+            $shopIds = TenantAccess::shopIds($user);
+
             // Allow seeing today's activities even if not in session (login/logout often happens outside session)
-            $query->where(function($q) use ($shopIds) {
+            $query->where(function ($q) use ($shopIds) {
                 // Activities for today
                 $q->whereDate('created_at', today());
-                
+
                 // OR activities in open sessions
                 if ($shopIds->isNotEmpty()) {
-                    $activeSession = \App\Models\Session::open()->whereIn('shop_id', $shopIds)->first();
+                    $activeSession = Session::open()->whereIn('shop_id', $shopIds)->first();
                     if ($activeSession) {
                         $q->orWhere('session_id', $activeSession->id);
                     }
@@ -69,11 +75,10 @@ class CashierActivityController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'cashier_id' => 'nullable|exists:users,id',
             'session_id' => 'nullable|exists:work_sessions,id',
             'activity_type' => 'required|in:login,logout,call_client,complete_transaction,help_request,recall_client',
             'client_id' => 'nullable|exists:clients,id',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:2000',
         ]);
 
         if ($validator->fails()) {
@@ -83,8 +88,18 @@ class CashierActivityController extends Controller
             ], 422);
         }
 
+        if ($request->session_id) {
+            $session = Session::findOrFail($request->session_id);
+            TenantAccess::authorizeShop($request->user(), $session->shop_id);
+        }
+
+        if ($request->client_id) {
+            $client = Client::findOrFail($request->client_id);
+            TenantAccess::authorizeShop($request->user(), $client->shop_id);
+        }
+
         $activity = CashierActivity::create([
-            'cashier_id' => $request->cashier_id ?? Auth::id(),
+            'cashier_id' => Auth::id(),
             'session_id' => $request->session_id,
             'activity_type' => $request->activity_type,
             'client_id' => $request->client_id,
@@ -101,6 +116,8 @@ class CashierActivityController extends Controller
     public function stats(Request $request)
     {
         $query = CashierActivity::with('cashier');
+        $allowedShopIds = TenantAccess::shopIds($request->user());
+        $query->whereHas('cashier.shops', fn ($q) => $q->whereIn('shops.id', $allowedShopIds));
 
         // Filter by session if provided
         if ($request->has('session_id')) {
@@ -108,21 +125,21 @@ class CashierActivityController extends Controller
         }
 
         // Default to current active session if no filters
-        if (!$request->has('session_id') && !$request->has('start_date') && !$request->has('end_date')) {
+        if (! $request->has('session_id') && ! $request->has('start_date') && ! $request->has('end_date')) {
             $user = $request->user();
-            $shopIds = $user->shops()->pluck('shops.id');
+            $shopIds = TenantAccess::shopIds($user);
 
-            $query->where(function($q) use ($shopIds) {
-                 // Activities for today
-                 $q->whereDate('created_at', today());
-                 
-                 // OR activities in open sessions
-                 if ($shopIds->isNotEmpty()) {
-                     $activeSession = \App\Models\Session::open()->whereIn('shop_id', $shopIds)->first();
-                     if ($activeSession) {
-                         $q->orWhere('session_id', $activeSession->id);
-                     }
-                 }
+            $query->where(function ($q) use ($shopIds) {
+                // Activities for today
+                $q->whereDate('created_at', today());
+
+                // OR activities in open sessions
+                if ($shopIds->isNotEmpty()) {
+                    $activeSession = Session::open()->whereIn('shop_id', $shopIds)->first();
+                    if ($activeSession) {
+                        $q->orWhere('session_id', $activeSession->id);
+                    }
+                }
             });
         }
 
@@ -140,12 +157,15 @@ class CashierActivityController extends Controller
         $activities = $query->get();
 
         // Group by cashier and calculate stats
-        $stats = $activities->groupBy('cashier_id')->map(function ($group) {
+        $stats = $activities->groupBy('cashier_id')->map(function ($group) use ($allowedShopIds) {
             $cashier = $group->first()->cashier;
-            
-            // Get all movement related activities for this user today
-            $movements = \App\Models\CashMovement::where('user_id', $cashier->id)
+
+            $movements = CashMovement::where('user_id', $cashier->id)
                 ->whereDate('created_at', today())
+                ->whereHas(
+                    'session.register',
+                    fn ($query) => $query->whereIn('shop_id', $allowedShopIds),
+                )
                 ->get();
 
             $firstLogin = $group->where('activity_type', 'login')->first();
@@ -161,7 +181,7 @@ class CashierActivityController extends Controller
                 'clients_called' => $group->where('activity_type', 'call_client')->count(),
                 'transactions_completed' => $group->where('activity_type', 'complete_transaction')->count(),
                 'help_requests' => $group->where('activity_type', 'help_request')->count(),
-                
+
                 // Detailed Movement breakdown (today)
                 'detailed_stats' => [
                     'deposits' => $movements->where('type', 'deposit')->count(),
@@ -172,14 +192,14 @@ class CashierActivityController extends Controller
                     'total_amount_usd' => $movements->where('currency', 'USD')->sum('amount'),
                     'total_amount_cdf' => $movements->where('currency', 'CDF')->sum('amount'),
                 ],
-                'recent_activities' => $group->take(20)->map(function($act) {
+                'recent_activities' => $group->take(20)->map(function ($act) {
                     return [
                         'id' => $act->id,
                         'type' => $act->activity_type,
                         'description' => $act->description,
                         'time' => $act->created_at->format('H:i'),
                     ];
-                })
+                }),
             ];
         })->values();
 

@@ -56,11 +56,10 @@ export function UserManagement() {
         shop_ids: [],
     });
 
-    // Fetch shops for assignment (Super Admin only)
+    // Fetch only the shops the current administrator is allowed to manage.
     const { data: allShops } = useQuery({
         queryKey: ['shops'],
         queryFn: base44.entities.Shop.list,
-        enabled: isSuperAdmin,
     });
 
     // Fetch users
@@ -81,6 +80,7 @@ export function UserManagement() {
                 password: '',
                 role: 'cashier',
                 is_active: true,
+                shop_ids: [],
             });
             toast.success('Utilisateur créé avec succès');
         },
@@ -100,6 +100,7 @@ export function UserManagement() {
         }) => base44.entities.User.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
+            setIsCreateModalOpen(false);
             setEditingUser(null);
             setFormData({
                 name: '',
@@ -107,6 +108,7 @@ export function UserManagement() {
                 password: '',
                 role: 'cashier',
                 is_active: true,
+                shop_ids: [],
             });
             toast.success('Utilisateur mis à jour avec succès');
         },
@@ -143,6 +145,7 @@ export function UserManagement() {
             email: user.email,
             role: user.role as any,
             is_active: user.is_active,
+            shop_ids: (user as any).shops?.map((shop: any) => shop.id) || [],
         });
         setIsCreateModalOpen(true);
     };
@@ -198,13 +201,16 @@ export function UserManagement() {
                             password: '',
                             role: isSuperAdmin ? 'manager' : 'cashier',
                             is_active: true,
+                            shop_ids:
+                                (allShops as any[])?.map((shop) => shop.id) ||
+                                [],
                         });
                         setIsCreateModalOpen(true);
                     }}
                     className="bg-[#1f61e4] hover:bg-[#1f61e4]/90"
                 >
                     <Plus className="mr-2 h-4 w-4" />
-                    {isSuperAdmin ? 'Nouvel utilisateur' : 'Nouveau Caissier'}
+                    Nouvel utilisateur
                 </Button>
             </div>
 
@@ -313,7 +319,12 @@ export function UserManagement() {
 
             <Dialog
                 open={isCreateModalOpen}
-                onOpenChange={setIsCreateModalOpen}
+                onOpenChange={(open) => {
+                    setIsCreateModalOpen(open);
+                    if (!open) {
+                        setEditingUser(null);
+                    }
+                }}
             >
                 <DialogContent>
                     <DialogHeader>
@@ -398,50 +409,53 @@ export function UserManagement() {
                             </Select>
                         </div>
 
-                        {isSuperAdmin && (
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                    Assigner aux Boutiques
-                                </Label>
-                                <div className="grid max-h-32 grid-cols-2 gap-2 overflow-y-auto rounded-lg border p-1">
-                                    {(allShops as any[])?.map((shop) => (
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                Assigner aux boutiques
+                            </Label>
+                            <div className="grid max-h-32 grid-cols-2 gap-2 overflow-y-auto rounded-lg border p-1">
+                                {(allShops as any[])?.map((shop) => (
+                                    <button
+                                        type="button"
+                                        key={shop.id}
+                                        onClick={() => {
+                                            const current =
+                                                formData.shop_ids || [];
+                                            const next = current.includes(
+                                                shop.id,
+                                            )
+                                                ? current.filter(
+                                                      (id: number) =>
+                                                          id !== shop.id,
+                                                  )
+                                                : [...current, shop.id];
+                                            setFormData({
+                                                ...formData,
+                                                shop_ids: next,
+                                            });
+                                        }}
+                                        className={`flex items-center gap-2 rounded-md border p-2 text-left transition-colors ${
+                                            formData.shop_ids?.includes(shop.id)
+                                                ? 'border-indigo-200 bg-indigo-50'
+                                                : 'bg-white hover:bg-slate-50'
+                                        }`}
+                                    >
                                         <div
-                                            key={shop.id}
-                                            onClick={() => {
-                                                const current =
-                                                    formData.shop_ids || [];
-                                                const next = current.includes(
-                                                    shop.id,
-                                                )
-                                                    ? current.filter(
-                                                          (id: number) =>
-                                                              id !== shop.id,
-                                                      )
-                                                    : [...current, shop.id];
-                                                setFormData({
-                                                    ...formData,
-                                                    shop_ids: next,
-                                                });
-                                            }}
-                                            className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-colors ${
-                                                formData.shop_ids?.includes(
-                                                    shop.id,
-                                                )
-                                                    ? 'border-indigo-200 bg-indigo-50'
-                                                    : 'bg-white hover:bg-slate-50'
-                                            }`}
-                                        >
-                                            <div
-                                                className={`h-3 w-3 rounded-sm border ${formData.shop_ids?.includes(shop.id) ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'}`}
-                                            />
-                                            <span className="text-xs font-bold">
-                                                {shop.name}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
+                                            className={`h-3 w-3 rounded-sm border ${formData.shop_ids?.includes(shop.id) ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'}`}
+                                        />
+                                        <span className="text-xs font-bold">
+                                            {shop.name}
+                                        </span>
+                                    </button>
+                                ))}
                             </div>
-                        )}
+                            {!isSuperAdmin &&
+                                (formData.shop_ids?.length || 0) === 0 && (
+                                    <p className="text-xs font-medium text-amber-600">
+                                        Sélectionnez au moins une boutique.
+                                    </p>
+                                )}
+                        </div>
                         {editingUser && (
                             <div className="flex items-center gap-2">
                                 <input
@@ -472,7 +486,9 @@ export function UserManagement() {
                                 className="bg-[#1f61e4] hover:bg-[#1f61e4]/90"
                                 disabled={
                                     createMutation.isPending ||
-                                    updateMutation.isPending
+                                    updateMutation.isPending ||
+                                    (!isSuperAdmin &&
+                                        (formData.shop_ids?.length || 0) === 0)
                                 }
                             >
                                 {createMutation.isPending ||

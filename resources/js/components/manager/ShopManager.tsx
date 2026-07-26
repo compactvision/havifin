@@ -20,14 +20,12 @@ import {
 } from '@/components/ui/table';
 import { Link } from '@inertiajs/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Edit, Plus, Store, Trash2, UserPlus, Users } from 'lucide-react';
+import { BarChart3, Edit, Plus, Store, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import ManagerModal from '../admin/ManagerModal';
 
 export default function ShopManager() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
     const [editingShop, setEditingShop] = useState<Shop | null>(null);
     const queryClient = useQueryClient();
 
@@ -121,7 +119,10 @@ export default function ShopManager() {
             address: shop.address || '',
             counter_count: shop.counter_count,
             is_active: shop.is_active,
-            user_ids: shop.users?.map((u) => u.id) || [],
+            user_ids:
+                shop.users
+                    ?.filter((user) => user.role === 'manager')
+                    .map((user) => user.id) || [],
         });
         setIsModalOpen(true);
     };
@@ -146,32 +147,26 @@ export default function ShopManager() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="space-y-7">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-2xl font-black tracking-tight text-slate-900">
-                        Gestion des Boutiques
+                    <p className="brand-kicker">Portefeuille Havifin</p>
+                    <h2 className="brand-title mt-2 text-3xl text-slate-950">
+                        Gestion des boutiques
                     </h2>
                     <p className="text-sm font-medium text-slate-500">
-                        Configurez vos points de vente et assignez le personnel
+                        Ajoutez vos points de vente, nommez leurs managers et
+                        consultez leurs statistiques
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button
-                        onClick={() => setIsManagerModalOpen(true)}
-                        variant="outline"
-                        className="h-11 rounded-xl border-slate-200 bg-white px-6 text-xs font-black tracking-widest text-slate-600 uppercase shadow-sm transition-all hover:bg-slate-50 active:scale-95"
-                    >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Nouveau Manager
-                    </Button>
                     <Button
                         onClick={() => {
                             setEditingShop(null);
                             resetForm();
                             setIsModalOpen(true);
                         }}
-                        className="h-11 rounded-xl bg-indigo-600 px-6 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-95"
+                        className="h-12 rounded-xl px-6 text-xs tracking-widest uppercase"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Nouvelle Boutique
@@ -179,15 +174,10 @@ export default function ShopManager() {
                 </div>
             </div>
 
-            <ManagerModal
-                isOpen={isManagerModalOpen}
-                onOpenChange={setIsManagerModalOpen}
-            />
-
-            <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white/50 shadow-sm backdrop-blur-xl transition-all">
+            <div className="overflow-hidden rounded-2xl border border-brand-blue/10 bg-white shadow-[0_16px_45px_rgba(32,0,255,0.06)]">
                 <Table>
-                    <TableHeader className="bg-slate-50/50">
-                        <TableRow className="border-slate-100 hover:bg-transparent">
+                    <TableHeader className="bg-brand-blue/[0.035]">
+                        <TableRow className="border-brand-blue/10 hover:bg-transparent">
                             <TableHead className="py-5 pl-8 text-[11px] font-black tracking-widest text-slate-400 uppercase">
                                 Boutique
                             </TableHead>
@@ -195,7 +185,7 @@ export default function ShopManager() {
                                 Guichets
                             </TableHead>
                             <TableHead className="text-[11px] font-black tracking-widest text-slate-400 uppercase">
-                                Personnel
+                                Managers
                             </TableHead>
                             <TableHead className="text-[11px] font-black tracking-widest text-slate-400 uppercase">
                                 Statut
@@ -229,11 +219,11 @@ export default function ShopManager() {
                             shops?.map((shop) => (
                                 <TableRow
                                     key={shop.id}
-                                    className="group border-slate-50 transition-colors hover:bg-slate-50/50"
+                                    className="group border-brand-blue/[0.07] transition-colors hover:bg-brand-blue/[0.025]"
                                 >
                                     <TableCell className="py-6 pl-8">
                                         <div>
-                                            <div className="text-sm font-black text-slate-900">
+                                            <div className="text-sm font-black text-slate-950">
                                                 {shop.name}
                                             </div>
                                             <div className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
@@ -252,9 +242,16 @@ export default function ShopManager() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <div className="flex -space-x-2">
-                                                {shop.users &&
-                                                shop.users.length > 0 ? (
+                                                {shop.users?.some(
+                                                    (user) =>
+                                                        user.role === 'manager',
+                                                ) ? (
                                                     shop.users
+                                                        .filter(
+                                                            (user) =>
+                                                                user.role ===
+                                                                'manager',
+                                                        )
                                                         .slice(0, 3)
                                                         .map((user) => (
                                                             <div
@@ -262,7 +259,7 @@ export default function ShopManager() {
                                                                 title={
                                                                     user.name
                                                                 }
-                                                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-indigo-100 text-[10px] font-black text-indigo-600 shadow-sm"
+                                                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-brand-blue/10 to-brand-cyan/20 text-[10px] font-black text-brand-blue shadow-sm"
                                                             >
                                                                 {user.name
                                                                     .charAt(0)
@@ -275,12 +272,19 @@ export default function ShopManager() {
                                                     </span>
                                                 )}
                                             </div>
-                                            {shop.users &&
-                                                shop.users.length > 3 && (
-                                                    <span className="text-[10px] font-black text-slate-400">
-                                                        +{shop.users.length - 3}
-                                                    </span>
-                                                )}
+                                            {(shop.users?.filter(
+                                                (user) =>
+                                                    user.role === 'manager',
+                                            ).length ?? 0) > 3 && (
+                                                <span className="text-[10px] font-black text-slate-400">
+                                                    +
+                                                    {(shop.users?.filter(
+                                                        (user) =>
+                                                            user.role ===
+                                                            'manager',
+                                                    ).length ?? 0) - 3}
+                                                </span>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -297,18 +301,20 @@ export default function ShopManager() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="pr-8 text-right">
-                                        <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                        <div className="flex justify-end gap-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                                             <Link
                                                 href={`/admin/shops/${shop.id}`}
-                                                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-400 transition-all hover:border-blue-500 hover:text-blue-600 hover:shadow-lg"
+                                                aria-label={`Ouvrir le dashboard de ${shop.name}`}
+                                                title="Dashboard de la boutique"
+                                                className="flex h-9 w-9 items-center justify-center rounded-xl border border-brand-blue/10 bg-white text-brand-blue transition-all hover:-translate-y-0.5 hover:border-brand-cyan hover:shadow-lg"
                                             >
-                                                <Users className="h-4 w-4" />
+                                                <BarChart3 className="h-4 w-4" />
                                             </Link>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => handleEdit(shop)}
-                                                className="sm-indigo-500/10 h-9 w-9 rounded-xl border border-slate-100 bg-white text-slate-400 transition-all hover:border-indigo-500 hover:text-indigo-600 hover:shadow-lg"
+                                                className="h-9 w-9 rounded-xl border border-brand-blue/10 bg-white text-slate-400 transition-all hover:border-brand-blue hover:text-brand-blue hover:shadow-lg"
                                             >
                                                 <Edit className="h-4 w-4" />
                                             </Button>
@@ -333,7 +339,7 @@ export default function ShopManager() {
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-2xl overflow-hidden rounded-[2.5rem] border-slate-100 p-0">
-                    <div className="border-b border-slate-100 bg-slate-50/50 p-8">
+                    <div className="border-b border-brand-blue/10 bg-gradient-to-r from-brand-blue/[0.06] to-brand-pink/[0.05] p-8">
                         <DialogHeader>
                             <DialogTitle className="text-2xl font-black tracking-tight text-slate-900">
                                 {editingShop
@@ -355,7 +361,7 @@ export default function ShopManager() {
                                 <Input
                                     id="name"
                                     placeholder="ex: Shop Central"
-                                    className="h-12 rounded-xl border-slate-200 font-bold focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="h-12 font-bold"
                                     value={formData.name}
                                     onChange={(e) =>
                                         setFormData({
@@ -377,7 +383,7 @@ export default function ShopManager() {
                                     id="counter_count"
                                     type="number"
                                     min="1"
-                                    className="h-12 rounded-xl border-slate-200 font-bold focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="h-12 font-bold"
                                     value={formData.counter_count}
                                     onChange={(e) =>
                                         setFormData({
@@ -402,7 +408,7 @@ export default function ShopManager() {
                             <Input
                                 id="address"
                                 placeholder="ex: Av. du Commerce, Kinshasa"
-                                className="h-12 rounded-xl border-slate-200 font-bold focus:border-indigo-500 focus:ring-indigo-500"
+                                className="h-12 font-bold"
                                 value={formData.address}
                                 onChange={(e) =>
                                     setFormData({
@@ -427,7 +433,7 @@ export default function ShopManager() {
                                                 formData.user_ids.includes(
                                                     user.id,
                                                 )
-                                                    ? 'border-indigo-200 bg-indigo-50/50'
+                                                    ? 'border-brand-blue/20 bg-brand-blue/[0.05]'
                                                     : 'border-slate-100 bg-white hover:border-slate-200'
                                             }`}
                                         >

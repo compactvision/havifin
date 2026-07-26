@@ -48,6 +48,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     const [isCreatingCounter, setIsCreatingCounter] = useState(false);
     const [editingCounter, setEditingCounter] = useState<Counter | null>(null);
     const [isAssigningCashier, setIsAssigningCashier] = useState(false);
+    const [isEditingShop, setIsEditingShop] = useState(false);
     const [selectedCounter, setSelectedCounter] = useState<Counter | null>(
         null,
     );
@@ -55,6 +56,11 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     const [counterForm, setCounterForm] = useState({
         counter_number: 1,
         name: '',
+    });
+    const [shopForm, setShopForm] = useState({
+        name: '',
+        address: '',
+        counter_count: 1,
     });
 
     // Fetch shop details
@@ -64,6 +70,21 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     });
 
     const shop = allShops?.find((s) => s.id === shopId);
+
+    const updateShopMutation = useMutation({
+        mutationFn: () => base44.entities.Shop.update(shopId, shopForm),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['shops'] });
+            setIsEditingShop(false);
+            toast.success('Boutique mise à jour');
+        },
+        onError: (error: any) => {
+            toast.error(
+                error.response?.data?.message ||
+                    'Impossible de mettre à jour la boutique',
+            );
+        },
+    });
 
     // Fetch counters for this shop
     const { data: counters, isLoading: isLoadingCounters } = useQuery({
@@ -405,7 +426,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
 
     if (isLoadingShop && !shop) {
         return (
-            <AppMain currentPageName="Manager">
+            <AppMain currentPageName="ManagerShops">
                 <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 px-6 py-8 md:px-10">
                     <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
                         {[1, 2, 3].map((i) => (
@@ -424,7 +445,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
 
     if (!shop) {
         return (
-            <AppMain currentPageName="Manager">
+            <AppMain currentPageName="ManagerShops">
                 <div className="flex h-screen flex-col items-center justify-center">
                     <h2 className="mb-4 text-2xl font-black text-slate-900">
                         Boutique introuvable
@@ -441,7 +462,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     const assignedCounters = counters?.filter((c) => c.cashier_id) || [];
 
     return (
-        <AppMain currentPageName="Manager">
+        <AppMain currentPageName="ManagerShops">
             <Head title={`Gestion - ${shop.name}`} />
 
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 px-6 py-8 md:px-10">
@@ -473,6 +494,21 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
 
                     <div className="flex flex-wrap items-center gap-6">
                         <div className="flex gap-3">
+                            <Button
+                                onClick={() => {
+                                    setShopForm({
+                                        name: shop.name,
+                                        address: shop.address || '',
+                                        counter_count: shop.counter_count,
+                                    });
+                                    setIsEditingShop(true);
+                                }}
+                                variant="outline"
+                                className="h-12 rounded-2xl border border-slate-200 bg-white px-6 font-bold text-slate-700 hover:border-indigo-200 hover:text-indigo-600"
+                            >
+                                <Store className="mr-2 h-4 w-4" />
+                                Paramètres
+                            </Button>
                             <Button
                                 onClick={() =>
                                     window.open(
@@ -976,6 +1012,86 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                         )}
                     </div>
                 </div>
+
+                <Dialog open={isEditingShop} onOpenChange={setIsEditingShop}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Paramètres de la boutique</DialogTitle>
+                        </DialogHeader>
+                        <form
+                            className="space-y-5"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                updateShopMutation.mutate();
+                            }}
+                        >
+                            <div className="space-y-2">
+                                <Label htmlFor="shop-name">Nom</Label>
+                                <Input
+                                    id="shop-name"
+                                    value={shopForm.name}
+                                    onChange={(event) =>
+                                        setShopForm({
+                                            ...shopForm,
+                                            name: event.target.value,
+                                        })
+                                    }
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="shop-address">Adresse</Label>
+                                <Input
+                                    id="shop-address"
+                                    value={shopForm.address}
+                                    onChange={(event) =>
+                                        setShopForm({
+                                            ...shopForm,
+                                            address: event.target.value,
+                                        })
+                                    }
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="shop-counter-count">
+                                    Nombre maximal de guichets
+                                </Label>
+                                <Input
+                                    id="shop-counter-count"
+                                    type="number"
+                                    min={Math.max(counters?.length || 1, 1)}
+                                    value={shopForm.counter_count}
+                                    onChange={(event) =>
+                                        setShopForm({
+                                            ...shopForm,
+                                            counter_count: Number(
+                                                event.target.value,
+                                            ),
+                                        })
+                                    }
+                                    required
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsEditingShop(false)}
+                                >
+                                    Annuler
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={updateShopMutation.isPending}
+                                >
+                                    {updateShopMutation.isPending
+                                        ? 'Enregistrement…'
+                                        : 'Enregistrer'}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
 
                 {/* Create Advertisement Modal */}
                 <Dialog open={isCreatingAd} onOpenChange={setIsCreatingAd}>

@@ -3,11 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
-use App\Models\Shop;
 use App\Models\Session;
+use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class ClientTicketTest extends TestCase
@@ -52,15 +51,24 @@ class ClientTicketTest extends TestCase
             'operation_type' => 'retrait',
             'service' => 'mobile',
             'amount' => 50,
+            'amount_from' => 0,
+            'exchange_rate' => 0,
+            'currency_from' => 'USD',
         ]);
 
         $response2->assertStatus(201)
-            ->assertJson(['ticket_number' => '002']);
+            ->assertJson([
+                'ticket_number' => '002',
+                'amount' => '50.00',
+                'amount_from' => '50.00',
+                'currency_from' => 'USD',
+                'currency_to' => 'USD',
+            ]);
     }
 
     public function test_ticket_number_resets_on_new_session()
     {
-         // Setup Owner and Manager
+        // Setup Owner and Manager
         $owner = User::factory()->create(['role' => 'super-admin']);
         $user = User::factory()->create(['role' => 'manager', 'owner_id' => $owner->id]);
         $shop = Shop::create(['name' => 'Demo Shop', 'owner_id' => $owner->id, 'slug' => 'demo-shop-2']);
@@ -78,20 +86,21 @@ class ClientTicketTest extends TestCase
             'session_date' => now()->subDay()->toDateString(),
             'opened_at' => now()->subDay(),
         ]);
-        
+
         // Simulate clients in old session
         Client::create([
             'ticket_number' => '001',
             'phone' => '1111111111',
             'operation_type' => 'depot',
             'service' => 'bank',
+            'amount' => 10,
             'status' => 'completed',
             'session_id' => $session1->id,
             'owner_id' => $user->id,
-            'shop_id' => $shop->id
+            'shop_id' => $shop->id,
         ]);
 
-         // Session 2 (Day 2 - Active)
+        // Session 2 (Day 2 - Active)
         $session2 = Session::create([
             'shop_id' => $shop->id,
             'owner_id' => $owner->id,
@@ -140,6 +149,7 @@ class ClientTicketTest extends TestCase
             'phone' => '1111111111',
             'operation_type' => 'depot',
             'service' => 'bank',
+            'amount' => 10,
         ]);
         $response1->assertJson(['waiting_ahead' => 0]);
 
@@ -148,6 +158,7 @@ class ClientTicketTest extends TestCase
             'phone' => '2222222222',
             'operation_type' => 'depot',
             'service' => 'bank',
+            'amount' => 10,
         ]);
         $response2->assertJson(['waiting_ahead' => 1]);
 
@@ -156,6 +167,8 @@ class ClientTicketTest extends TestCase
             'phone' => '3333333333',
             'operation_type' => 'depot',
             'service' => 'bank',
+            'amount' => 10,
+            'amount' => 10,
         ]);
         $response3->assertJson(['waiting_ahead' => 2]);
     }

@@ -17,7 +17,6 @@ import {
     ChevronLeft,
     Clock as ClockIcon,
     Copy,
-    CreditCard,
     Info,
     Loader2,
     Lock as LockIcon,
@@ -209,10 +208,9 @@ export default function ClientForm() {
         if (searchQuery.length < 2) return;
         setIsSearching(true);
         try {
-            const results = await base44.entities.Client.filter({
-                first_name: searchQuery,
+            const results = await base44.entities.Client.list({
+                search: searchQuery,
             });
-            // Also try searching by last name if needed or combine
             setSearchResults(results);
         } catch (e) {
             console.error(e);
@@ -223,13 +221,6 @@ export default function ClientForm() {
 
     const handleLinkAccount = async (client: Client) => {
         try {
-            await addPhoneMutation.mutateAsync(formData.phone);
-            // After linking, we need to update the client with the new phone list in the UI
-            // But addPhoneMutation success handler only updates if existingClient is set.
-            // Here existingClient is null.
-            // So we manually set existingClient with the new phone included (optimistically or fetch)
-            // Actually addPhoneMutation requires existingClient.id.
-            // So we must hack this:
             const response = (await base44.entities.Client.addPhone(
                 client.id,
                 formData.phone,
@@ -273,14 +264,18 @@ export default function ClientForm() {
                 const inst = institutions.find(
                     (i) => i.id === formData.institution_id,
                 );
+                const operationAmount = formData.amount
+                    ? Number(formData.amount)
+                    : undefined;
                 createClientMutation.mutate({
                     ...formData,
                     operation_type: formData.operation_type,
                     service: inst?.name || '',
                     currency_from: formData.currency,
-                    amount: formData.amount
-                        ? Number(formData.amount)
-                        : undefined,
+                    currency_to: formData.currency,
+                    amount: operationAmount,
+                    amount_from: operationAmount,
+                    exchange_rate: undefined,
                     notes: `Motif: ${formData.reason}${formData.beneficiary ? ` | Bénéficiaire: ${formData.beneficiary}` : ''}${formData.beneficiary_number ? ` | Numéro Bénéficiaire: ${formData.beneficiary_number}` : ''}${formData.account_number ? ` | Compte: ${formData.account_number}` : ''}`,
                 });
             }
@@ -341,8 +336,6 @@ export default function ClientForm() {
                     formData.exchange_rate
                 );
 
-            if (formData.operation_type === 'paiement') return true;
-
             const hasBasicFields = !!(
                 formData.operation_type && formData.institution_id
             );
@@ -350,12 +343,13 @@ export default function ClientForm() {
 
             if (
                 formData.operation_type === 'depot' ||
-                formData.operation_type === 'retrait'
+                formData.operation_type === 'retrait' ||
+                formData.operation_type === 'paiement'
             ) {
                 const inst = institutions.find(
                     (i) => i.id === formData.institution_id,
                 );
-                const hasAmount = !!formData.amount;
+                const hasAmount = Number(formData.amount) >= 0.01;
 
                 // For withdrawals, only amount is required
                 if (formData.operation_type === 'retrait') {
@@ -647,13 +641,17 @@ export default function ClientForm() {
                                         <ChevronLeft className="mr-2 h-5 w-5" />{' '}
                                         Retour
                                     </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowLinkAccount(true)}
-                                        className="h-14 w-full rounded-2xl border-2 border-dashed border-brand-cyan/40 bg-brand-cyan/10 font-bold text-brand-cyan hover:bg-brand-cyan/20"
-                                    >
-                                        Déjà client ? Lier ce numéro
-                                    </Button>
+                                    {auth.user?.role !== 'client' && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={() =>
+                                                setShowLinkAccount(true)
+                                            }
+                                            className="h-14 w-full rounded-2xl border-2 border-dashed border-brand-cyan/40 bg-brand-cyan/10 font-bold text-brand-cyan hover:bg-brand-cyan/20"
+                                        >
+                                            Déjà client ? Lier ce numéro
+                                        </Button>
+                                    )}
                                 </motion.div>
                             )}
                         </div>
@@ -710,24 +708,26 @@ export default function ClientForm() {
                                             </p>
                                         </div>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() =>
-                                            setShowPhoneSelector(
-                                                !showPhoneSelector,
-                                            )
-                                        }
-                                        className="font-bold text-slate-600 hover:text-slate-800"
-                                    >
-                                        <ChevronLeft
-                                            className={
-                                                showPhoneSelector
-                                                    ? 'mr-2 h-4 w-4 -rotate-90 transition-transform'
-                                                    : 'mr-2 h-4 w-4 transition-transform'
+                                    {auth.user?.role !== 'client' && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() =>
+                                                setShowPhoneSelector(
+                                                    !showPhoneSelector,
+                                                )
                                             }
-                                        />
-                                        Changer
-                                    </Button>
+                                            className="font-bold text-slate-600 hover:text-slate-800"
+                                        >
+                                            <ChevronLeft
+                                                className={
+                                                    showPhoneSelector
+                                                        ? 'mr-2 h-4 w-4 -rotate-90 transition-transform'
+                                                        : 'mr-2 h-4 w-4 transition-transform'
+                                                }
+                                            />
+                                            Changer
+                                        </Button>
+                                    )}
                                 </div>
                                 <AnimatePresence>
                                     {showPhoneSelector && (
@@ -822,8 +822,7 @@ export default function ClientForm() {
                                             }}
                                         />
                                     </motion.div>
-                                ) : formData.operation_type &&
-                                  formData.operation_type !== 'paiement' ? (
+                                ) : formData.operation_type ? (
                                     <motion.div
                                         key="standard-operation"
                                         initial={{ opacity: 0, y: 10 }}
@@ -834,7 +833,10 @@ export default function ClientForm() {
                                         {/* Service Selector */}
                                         <div className="space-y-4">
                                             <Label className="ml-4 block text-sm font-black tracking-widest text-slate-400 uppercase">
-                                                Partenaire Bancaire / Mobile
+                                                {formData.operation_type ===
+                                                'paiement'
+                                                    ? 'Instance de paiement'
+                                                    : 'Partenaire bancaire / mobile'}
                                             </Label>
                                             <ServiceSelector
                                                 institutions={institutions}
@@ -1004,6 +1006,8 @@ export default function ClientForm() {
                                                                         <div className="relative">
                                                                             <Input
                                                                                 type="number"
+                                                                                min="0.01"
+                                                                                step="0.01"
                                                                                 value={
                                                                                     formData.amount
                                                                                 }
@@ -1241,7 +1245,7 @@ export default function ClientForm() {
                                                                                 f.operation_type ===
                                                                                     'both' ||
                                                                                 f.operation_type ===
-                                                                                    'depot',
+                                                                                    formData.operation_type,
                                                                         );
                                                                     return customFields.map(
                                                                         (
@@ -1297,25 +1301,6 @@ export default function ClientForm() {
                                                 </motion.div>
                                             )}
                                         </AnimatePresence>
-                                    </motion.div>
-                                ) : formData.operation_type === 'paiement' ? (
-                                    <motion.div
-                                        key="paiement-placeholder"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="py-20 text-center"
-                                    >
-                                        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-purple-50 text-purple-600">
-                                            <CreditCard className="h-10 w-10" />
-                                        </div>
-                                        <h3 className="text-2xl font-black text-slate-800">
-                                            Service de Paiement
-                                        </h3>
-                                        <p className="mx-auto mt-2 max-w-sm font-medium text-slate-500">
-                                            Ce service sera bientôt disponible.
-                                            Veuillez contacter un agent pour
-                                            plus d'informations.
-                                        </p>
                                     </motion.div>
                                 ) : null}
                             </AnimatePresence>

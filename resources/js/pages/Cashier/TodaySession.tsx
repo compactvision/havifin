@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { base44, type Session as WorkSession } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
@@ -11,6 +11,7 @@ import {
     Clock,
     DollarSign,
     LogOut,
+    Settings,
     Store,
     Unlock,
 } from 'lucide-react';
@@ -19,12 +20,23 @@ import moment from 'moment';
 export default function CashierTodaySession() {
     const { auth } = usePage().props as any;
 
-    // Fetch current active session for this user
-    const { data: session, isLoading } = useQuery<CashSession | null>({
-        queryKey: ['cash-session-current'],
-        queryFn: () => base44.entities.CashSession.current(),
-        retry: false,
-    });
+    const { data: workSession, isLoading: isLoadingWorkSession } =
+        useQuery<WorkSession | null>({
+            queryKey: ['work-session-current'],
+            queryFn: () => base44.entities.Session.current(),
+            refetchInterval: 15000,
+        });
+
+    // Fetch the cashier's till session for the active shop day.
+    const { data: session, isLoading: isLoadingCashSession } =
+        useQuery<CashSession | null>({
+            queryKey: ['cash-session-current'],
+            queryFn: () => base44.entities.CashSession.current(),
+            retry: false,
+            enabled: !!workSession,
+            refetchInterval: 15000,
+        });
+    const isLoading = isLoadingWorkSession || isLoadingCashSession;
 
     if (isLoading) {
         return (
@@ -41,8 +53,7 @@ export default function CashierTodaySession() {
         );
     }
 
-    // If no session found
-    if (!session) {
+    if (!workSession) {
         return (
             <AppMain currentPageName="Cashier">
                 <Head title="Aucune Session" />
@@ -54,11 +65,80 @@ export default function CashierTodaySession() {
                         Aucune session active
                     </h1>
                     <p className="mb-8 max-w-md text-slate-500">
-                        Vous n'avez pas de session de caisse ouverte pour le
-                        moment. Veuillez demander à un manager de vous ouvrir
-                        une caisse.
+                        La journée de travail n’est pas encore ouverte pour
+                        votre boutique. Le manager doit ouvrir la session
+                        journalière.
                     </p>
                     <Button variant="outline" className="gap-2" asChild>
+                        <Link href="/logout" method="post">
+                            <LogOut className="h-4 w-4" />
+                            Se déconnecter
+                        </Link>
+                    </Button>
+                </div>
+            </AppMain>
+        );
+    }
+
+    if (!session) {
+        const hasAssignedCounter = Boolean(auth.user.counter);
+
+        return (
+            <AppMain currentPageName="Cashier">
+                <Head title="Ouverture de caisse" />
+                <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4 text-center">
+                    <div className="mb-6 rounded-full bg-emerald-100 p-6 text-emerald-600">
+                        <Unlock className="h-12 w-12" />
+                    </div>
+                    <Badge className="mb-4 bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                        JOURNÉE OUVERTE
+                    </Badge>
+                    <h1 className="mb-2 text-2xl font-black text-slate-900">
+                        La session de la boutique est active
+                    </h1>
+                    <p className="mb-2 max-w-md text-slate-500">
+                        Session du{' '}
+                        <strong>
+                            {moment(workSession.session_date).format(
+                                'DD/MM/YYYY',
+                            )}
+                        </strong>
+                        . Vous devez maintenant ouvrir votre caisse personnelle
+                        avant de traiter les opérations.
+                    </p>
+
+                    {hasAssignedCounter ? (
+                        <div className="mt-8 flex flex-col items-center gap-4">
+                            <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-3 text-sm font-bold text-indigo-700">
+                                Guichet assigné : {auth.user.counter}
+                            </div>
+                            <Button asChild className="h-14 px-8 text-base">
+                                <Link href="/cash/dashboard">
+                                    <Banknote className="mr-2 h-5 w-5" />
+                                    Ouvrir ma caisse
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Link>
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="mt-8 max-w-lg rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left">
+                            <div className="flex items-start gap-3">
+                                <Settings className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                                <div>
+                                    <p className="font-black text-amber-900">
+                                        Aucun guichet assigné
+                                    </p>
+                                    <p className="mt-1 text-sm leading-relaxed text-amber-800">
+                                        Le manager doit ouvrir l’espace «
+                                        Boutique », créer un guichet puis vous
+                                        affecter à ce guichet.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <Button variant="ghost" className="mt-6 gap-2" asChild>
                         <Link href="/logout" method="post">
                             <LogOut className="h-4 w-4" />
                             Se déconnecter

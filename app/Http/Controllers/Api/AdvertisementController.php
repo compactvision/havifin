@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Advertisement;
+use App\Models\CashierActivity;
+use App\Support\TenantAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,6 +17,7 @@ class AdvertisementController extends Controller
     public function index()
     {
         $advertisements = Advertisement::ordered()->get();
+
         return response()->json($advertisements);
     }
 
@@ -24,6 +27,7 @@ class AdvertisementController extends Controller
     public function active()
     {
         $advertisements = Advertisement::active()->ordered()->get();
+
         return response()->json($advertisements);
     }
 
@@ -35,7 +39,7 @@ class AdvertisementController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'type' => 'required|in:image,video',
-            'image_url' => 'required|string', // Removed max to support Data URLs
+            'image_url' => 'required|string|max:7000000',
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
@@ -47,15 +51,15 @@ class AdvertisementController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
-        
+        $data = $validator->validated();
+
         // Assign owner_id
         $creator = $request->user();
         $data['owner_id'] = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
 
         $advertisement = Advertisement::create($data);
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Publicité créée: {$advertisement->title}");
+        CashierActivity::logAction('configuration_change', "Publicité créée: {$advertisement->title}");
 
         return response()->json($advertisement, 201);
     }
@@ -73,10 +77,11 @@ class AdvertisementController extends Controller
      */
     public function update(Request $request, Advertisement $advertisement)
     {
+        TenantAccess::authorizeOwner($request->user(), $advertisement);
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|in:image,video',
-            'image_url' => 'sometimes|required|string', // Removed max to support Data URLs
+            'image_url' => 'sometimes|required|string|max:7000000',
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
@@ -88,9 +93,9 @@ class AdvertisementController extends Controller
             ], 422);
         }
 
-        $advertisement->update($request->all());
+        $advertisement->update($validator->validated());
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Publicité mise à jour: {$advertisement->title}");
+        CashierActivity::logAction('configuration_change', "Publicité mise à jour: {$advertisement->title}");
 
         return response()->json($advertisement);
     }
@@ -98,11 +103,12 @@ class AdvertisementController extends Controller
     /**
      * Remove the specified advertisement.
      */
-    public function destroy(Advertisement $advertisement)
+    public function destroy(Request $request, Advertisement $advertisement)
     {
+        TenantAccess::authorizeOwner($request->user(), $advertisement);
         $advertisement->delete();
 
-        \App\Models\CashierActivity::logAction('complete_transaction', "Publicité supprimée: {$advertisement->title}");
+        CashierActivity::logAction('configuration_change', "Publicité supprimée: {$advertisement->title}");
 
         return response()->json([
             'success' => true,

@@ -11,7 +11,7 @@ class EnsureTenantScope
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -22,7 +22,7 @@ class EnsureTenantScope
             // If super-admin, they are the tenant (id)
             // If manager/cashier, their owner is the tenant (owner_id)
             $tenantId = $user->role === 'super-admin' ? $user->id : $user->owner_id;
-            
+
             // Store tenant_id in session/request ensuring downstream logic has access
             if ($tenantId) {
                 $request->merge(['tenant_id' => $tenantId]);

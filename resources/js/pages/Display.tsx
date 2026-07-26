@@ -9,33 +9,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronRight, Monitor, Users } from 'lucide-react';
 import moment from 'moment';
 import 'moment/locale/fr';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 moment.locale('fr');
 
 export default function Display() {
     const [currentTime, setCurrentTime] = useState(moment());
-    const lastCalledId = useRef<number | null>(null);
+    const lastCalledId = useRef<string | null>(null);
     const [shopId, setShopId] = useState<number | null>(null);
-    const [isDarkMode, setIsDarkMode] = useState(true);
-
-    // Initialize dark mode from localStorage
-    useEffect(() => {
-        const storedTheme = localStorage.getItem('havifin_display_theme');
-        if (storedTheme) {
-            setIsDarkMode(storedTheme === 'dark');
-        }
-    }, []);
-
-    // Toggle dark mode
-    const toggleDarkMode = () => {
-        const newMode = !isDarkMode;
-        setIsDarkMode(newMode);
-        localStorage.setItem(
-            'havifin_display_theme',
-            newMode ? 'dark' : 'light',
-        );
-    };
+    const isDarkMode = false;
 
     // Initialize shop ID from URL param or localStorage
     useEffect(() => {
@@ -128,21 +110,26 @@ export default function Display() {
         enabled: !!shopId,
     });
 
-    const mostRecentCalled = calledClients.sort(
-        (a, b) =>
-            new Date(b.called_at!).getTime() - new Date(a.called_at!).getTime(),
-    )[0];
+    const mostRecentCalled = useMemo(
+        () =>
+            [...calledClients].sort(
+                (a, b) =>
+                    new Date(b.called_at!).getTime() -
+                    new Date(a.called_at!).getTime(),
+            )[0],
+        [calledClients],
+    );
 
     // Voice Announcement Effect
     useEffect(() => {
         if (!mostRecentCalled) return;
 
-        const lastCalledTime = mostRecentCalled.called_at;
+        const lastCalledTime = mostRecentCalled.called_at ?? '';
+        const callKey = `${mostRecentCalled.id}:${lastCalledTime}`;
 
-        if (lastCalledId.current === mostRecentCalled.id + lastCalledTime)
-            return;
+        if (lastCalledId.current === callKey) return;
 
-        lastCalledId.current = mostRecentCalled.id + lastCalledTime;
+        lastCalledId.current = callKey;
 
         const speak = () => {
             window.speechSynthesis.cancel();
@@ -162,13 +149,11 @@ export default function Display() {
         return () => {
             window.speechSynthesis.cancel();
         };
-    }, [mostRecentCalled?.id, mostRecentCalled?.called_at]);
+    }, [mostRecentCalled]);
 
     const { auth } = usePage().props as any;
-    const canConfigure =
-        auth.user?.role === 'manager' || auth.user?.role === 'super-admin';
-    const configLink =
-        auth.user?.role === 'super-admin' ? '/admin/shops' : '/manager/shops';
+    const canConfigure = auth.user?.role === 'manager';
+    const configLink = '/manager/shops';
 
     if (!shopId) {
         return (
@@ -232,7 +217,7 @@ export default function Display() {
                     : 'bg-gradient-to-br from-brand-white via-white to-brand-blue/10 text-brand-dark',
             )}
         >
-            <Head title="Affichage" />  
+            <Head title="Affichage" />
             {/* Background Ambient Glows */}
             {isDarkMode ? (
                 <>
@@ -246,16 +231,6 @@ export default function Display() {
                     <div className="pointer-events-none absolute -right-[10%] -bottom-[10%] h-[40%] w-[40%] animate-pulse rounded-full bg-indigo-400/20 blur-[120px] delay-700" />
                 </>
             )}
-
-            {/* Theme Toggle - Hidden but accessible top right */}
-            <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                onClick={toggleDarkMode}
-                className="fixed top-2 right-2 z-50 p-2 opacity-0 hover:opacity-100"
-            >
-                {/* Hidden toggle for manual override */}
-            </motion.button>
 
             {/* Top Header - Compact */}
             <header
@@ -449,7 +424,7 @@ export default function Display() {
                             </span>
                         </div>
 
-                        <div className="scrollbar-none flex-1 space-y-3 overflow-y-auto p-4">
+                        <div className="flex-1 scrollbar-none space-y-3 overflow-y-auto p-4">
                             <AnimatePresence>
                                 {waitingClients
                                     .slice(0, 5)

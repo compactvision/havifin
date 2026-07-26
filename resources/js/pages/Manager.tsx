@@ -3,9 +3,9 @@ import ActivityLog from '@/components/manager/ActivityLog';
 import { CashMovementsTable } from '@/components/manager/CashMovementsTable';
 import { ClientsTable } from '@/components/manager/ClientsTable';
 import InstitutionManager from '@/components/manager/InstitutionManager';
+import { ManualCashMovementDialog } from '@/components/manager/ManualCashMovementDialog';
 import RatesManager from '@/components/manager/RatesManager';
 import SessionManager from '@/components/manager/SessionManager';
-import ShopManager from '@/components/manager/ShopManager';
 import { StatsCard } from '@/components/manager/StatsCard';
 import { TransactionsTable } from '@/components/manager/TransactionsTable';
 import { UserManagement } from '@/components/manager/UserManagement';
@@ -33,22 +33,20 @@ import {
     Users,
 } from 'lucide-react';
 import moment from 'moment';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function Manager() {
     const { auth } = usePage().props as any;
-    const userRole = auth.user?.role;
-    const isSuperAdmin = userRole === 'super-admin';
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState(
-        isSuperAdmin ? 'shops' : 'overview',
-    ); // overview, rates, users, shops
+    const [activeTab, setActiveTab] = useState('overview');
     const [selectedDate, setSelectedDate] = useState(
         moment().format('YYYY-MM-DD'),
     );
     const [clientSearch, setClientSearch] = useState('');
+    const [transactionSearch, setTransactionSearch] = useState('');
     const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
+    const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
 
     // Fetch shops for super-admin/manager
     const { data: shops = [] } = useQuery({
@@ -56,8 +54,7 @@ export default function Manager() {
         queryFn: () => base44.entities.Shop.list(),
     });
 
-    // Set default shop for managers or if none selected
-    useMemo(() => {
+    useEffect(() => {
         if (shops.length > 0 && !selectedShopId) {
             setSelectedShopId(shops[0].id);
         }
@@ -75,7 +72,7 @@ export default function Manager() {
                 shop_id: selectedShopId || undefined,
             }),
         refetchInterval: 30000,
-        enabled: !!selectedShopId || isSuperAdmin,
+        enabled: !!selectedShopId,
     });
 
     const { data: transactions = [], isLoading: loadingTx } = useQuery({
@@ -88,7 +85,7 @@ export default function Manager() {
                 shop_id: selectedShopId || undefined,
             }),
         refetchInterval: 30000,
-        enabled: !!selectedShopId || isSuperAdmin,
+        enabled: !!selectedShopId,
     });
 
     const { data: cashMovements = [], isLoading: loadingMovements } = useQuery({
@@ -99,7 +96,7 @@ export default function Manager() {
                 shop_id: selectedShopId || undefined,
             }),
         refetchInterval: 30000,
-        enabled: !!selectedShopId || isSuperAdmin,
+        enabled: !!selectedShopId,
     });
 
     // Stats Logic
@@ -154,11 +151,89 @@ export default function Manager() {
         return Array.from(map.values());
     }, [clients]);
 
+    const filteredTransactions = useMemo(() => {
+        const search = transactionSearch.trim().toLowerCase();
+        if (!search) return transactions;
+
+        return transactions.filter((transaction) =>
+            [
+                transaction.ticket_number,
+                transaction.client_phone,
+                transaction.service,
+                transaction.operation_type,
+            ].some((value) => value?.toLowerCase().includes(search)),
+        );
+    }, [transactions, transactionSearch]);
+
+    const overviewBreakdowns = useMemo(() => {
+        const aggregate = (field: 'operation_type' | 'service') => {
+            const counts = new Map<string, number>();
+            transactions.forEach((transaction) => {
+                const label = transaction[field] || 'Non défini';
+                counts.set(label, (counts.get(label) || 0) + 1);
+            });
+
+            return Array.from(counts.entries())
+                .map(([label, count]) => ({ label, count }))
+                .sort((left, right) => right.count - left.count)
+                .slice(0, 5);
+        };
+
+        return {
+            operations: aggregate('operation_type'),
+            services: aggregate('service'),
+        };
+    }, [transactions]);
+
     const handleRefresh = () => {
         queryClient.invalidateQueries({ queryKey: ['all-clients'] });
         queryClient.invalidateQueries({ queryKey: ['all-transactions'] });
         queryClient.invalidateQueries({ queryKey: ['all-cash-movements'] });
         toast.success('Tableau de bord actualisé');
+    };
+
+    const handleExport = () => {
+        const protectCsvValue = (value: unknown) => {
+            const text = String(value ?? '');
+            const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
+
+            return `"${safeText.replaceAll('"', '""')}"`;
+        };
+        const rows = [
+            [
+                'Ticket',
+                'Date',
+                'Opération',
+                'Service',
+                'Devise source',
+                'Montant source',
+                'Devise cible',
+                'Montant cible',
+                'Commission',
+            ],
+            ...transactions.map((transaction) => [
+                transaction.ticket_number,
+                transaction.created_date,
+                transaction.operation_type,
+                transaction.service,
+                transaction.currency_from,
+                transaction.amount_from,
+                transaction.currency_to,
+                transaction.amount_to,
+                transaction.commission,
+            ]),
+        ];
+        const csv = rows
+            .map((row) => row.map(protectCsvValue).join(','))
+            .join('\n');
+        const url = URL.createObjectURL(
+            new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }),
+        );
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `rapport-havifin-${selectedDate}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
     };
 
     return (
@@ -193,9 +268,7 @@ export default function Manager() {
                             </div>
                             <p className="mt-1 flex items-center gap-2 text-[10px] font-black tracking-[0.15em] text-slate-400 uppercase">
                                 {auth.user.role} •{' '}
-                                {isSuperAdmin
-                                    ? 'Supervision Globale'
-                                    : auth.user.shop || 'Boutique'}
+                                {auth.user.shop || 'Boutique'}
                             </p>
                         </div>
                     </div>
@@ -264,7 +337,11 @@ export default function Manager() {
                             />
                         </div>
 
-                        <Button className="h-12 rounded-2xl bg-slate-900 px-6 text-xs font-black tracking-widest text-white uppercase shadow-xl shadow-slate-900/10 transition-all hover:bg-black active:scale-95">
+                        <Button
+                            onClick={handleExport}
+                            disabled={transactions.length === 0}
+                            className="h-12 rounded-2xl bg-slate-900 px-6 text-xs font-black tracking-widest text-white uppercase shadow-xl shadow-slate-900/10 transition-all hover:bg-black active:scale-95"
+                        >
                             <Download className="mr-2 h-4 w-4 text-emerald-400" />
                             Exporter Rapport
                         </Button>
@@ -358,15 +435,6 @@ export default function Manager() {
                                                 label: 'Gestion Sessions',
                                                 icon: Play,
                                             },
-                                            ...(isSuperAdmin
-                                                ? [
-                                                      {
-                                                          id: 'shops',
-                                                          label: 'Gestion Boutiques',
-                                                          icon: Store,
-                                                      },
-                                                  ]
-                                                : []),
                                         ].map((item) => {
                                             const Icon = item.icon;
                                             return (
@@ -449,20 +517,29 @@ export default function Manager() {
                                                 </div>
 
                                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                                    {/* Featured Table or Chart Placeholder */}
-                                                    <div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-slate-100 bg-slate-50 p-8 opacity-50">
-                                                        <PieChart className="mb-4 h-16 w-16 text-slate-300" />
-                                                        <p className="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">
-                                                            Graphique des Flux
-                                                            (Soon)
-                                                        </p>
+                                                    <div className="rounded-3xl border border-slate-100 bg-slate-50 p-7">
+                                                        <h4 className="mb-6 text-sm font-black tracking-wider text-slate-700 uppercase">
+                                                            Répartition des
+                                                            opérations
+                                                        </h4>
+                                                        <BreakdownList
+                                                            items={
+                                                                overviewBreakdowns.operations
+                                                            }
+                                                            color="bg-indigo-500"
+                                                        />
                                                     </div>
-                                                    <div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-slate-100 bg-slate-50 p-8 opacity-50">
-                                                        <LayoutDashboard className="mb-4 h-16 w-16 text-slate-300" />
-                                                        <p className="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">
-                                                            Volume par Guichet
-                                                            (Soon)
-                                                        </p>
+                                                    <div className="rounded-3xl border border-slate-100 bg-slate-50 p-7">
+                                                        <h4 className="mb-6 text-sm font-black tracking-wider text-slate-700 uppercase">
+                                                            Activité par
+                                                            partenaire
+                                                        </h4>
+                                                        <BreakdownList
+                                                            items={
+                                                                overviewBreakdowns.services
+                                                            }
+                                                            color="bg-emerald-500"
+                                                        />
                                                     </div>
                                                 </div>
 
@@ -530,11 +607,22 @@ export default function Manager() {
                                                         <input
                                                             placeholder="Filtrer..."
                                                             className="h-10 w-full rounded-xl border-slate-200 pr-4 pl-10 text-sm focus:ring-indigo-500"
+                                                            value={
+                                                                transactionSearch
+                                                            }
+                                                            onChange={(event) =>
+                                                                setTransactionSearch(
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
                                                 <TransactionsTable
-                                                    transactions={transactions}
+                                                    transactions={
+                                                        filteredTransactions
+                                                    }
                                                 />
                                             </div>
                                         )}
@@ -546,6 +634,20 @@ export default function Manager() {
                                                         Mouvements Manuels
                                                         (Ajustements)
                                                     </h3>
+                                                    <Button
+                                                        onClick={() =>
+                                                            setIsMovementDialogOpen(
+                                                                true,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            !selectedShopId
+                                                        }
+                                                    >
+                                                        <Banknote className="mr-2 h-4 w-4" />
+                                                        Nouvelle entrée ou
+                                                        sortie
+                                                    </Button>
                                                 </div>
                                                 <CashMovementsTable
                                                     movements={cashMovements}
@@ -568,12 +670,6 @@ export default function Manager() {
                                         {activeTab === 'users' && (
                                             <div className="animate-in duration-300 fade-in">
                                                 <UserManagement />
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'shops' && (
-                                            <div className="animate-in duration-300 fade-in">
-                                                <ShopManager />
                                             </div>
                                         )}
 
@@ -600,7 +696,11 @@ export default function Manager() {
                                                 </div>
                                                 <ClientsTable
                                                     clients={uniqueClients}
-                                                    isLoading={loadingClients || (shops.length > 0 && !selectedShopId)}
+                                                    isLoading={
+                                                        loadingClients ||
+                                                        (shops.length > 0 &&
+                                                            !selectedShopId)
+                                                    }
                                                 />
                                             </div>
                                         )}
@@ -622,7 +722,54 @@ export default function Manager() {
                         </div>
                     </div>
                 </main>
+                <ManualCashMovementDialog
+                    open={isMovementDialogOpen}
+                    onOpenChange={setIsMovementDialogOpen}
+                    shopId={selectedShopId}
+                    selectedDate={selectedDate}
+                />
             </div>
         </AppMain>
+    );
+}
+
+function BreakdownList({
+    items,
+    color,
+}: {
+    items: Array<{ label: string; count: number }>;
+    color: string;
+}) {
+    if (items.length === 0) {
+        return (
+            <div className="flex h-36 items-center justify-center text-xs font-bold text-slate-400">
+                Aucune transaction pour cette date
+            </div>
+        );
+    }
+
+    const maximum = Math.max(...items.map((item) => item.count), 1);
+
+    return (
+        <div className="space-y-4">
+            {items.map((item) => (
+                <div key={item.label}>
+                    <div className="mb-1.5 flex items-center justify-between text-xs font-bold">
+                        <span className="text-slate-600 capitalize">
+                            {item.label}
+                        </span>
+                        <span className="text-slate-900">{item.count}</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                        <div
+                            className={cn('h-full rounded-full', color)}
+                            style={{
+                                width: `${Math.max((item.count / maximum) * 100, 6)}%`,
+                            }}
+                        />
+                    </div>
+                </div>
+            ))}
+        </div>
     );
 }

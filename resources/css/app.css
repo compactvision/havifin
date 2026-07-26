@@ -5,13 +5,15 @@
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
-@custom-variant dark (&:is(.dark *));
+/* Dark utilities remain inert so the operating-system preference can never
+   activate them. Havifin intentionally supports light mode only. */
+@custom-variant dark (&:is(.dark-mode-disabled *));
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Avenir Next', 'Century Gothic', 'Trebuchet MS', ui-sans-serif,
+        system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -72,6 +74,7 @@
 }
 
 :root {
+    color-scheme: only light;
     --background: #ffffff;
     --foreground: #050505;
     --card: #ffffff;
@@ -91,7 +94,7 @@
     --border: #e2e8f0;
     --input: #e2e8f0;
     --ring: #1f61e4;
-    --radius: 0.625rem;
+    --radius: 1rem;
     --chart-1: #1f61e4;
     --chart-2: #ff55ba;
     --chart-3: #bf15cf;
@@ -101,48 +104,122 @@
     --sidebar-foreground: #050505;
     --sidebar-primary: #1f61e4;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #f1f5f9;
+    --sidebar-accent: #eef3ff;
     --sidebar-accent-foreground: #1f61e4;
     --sidebar-border: #e2e8f0;
     --sidebar-ring: #1f61e4;
 }
 
-.dark {
-    --background: #050505;
-    --foreground: #ffffff;
-    --card: #050505;
-    --card-foreground: #ffffff;
-    --popover: #050505;
-    --popover-foreground: #ffffff;
-    --primary: #1f61e4;
-    --primary-foreground: #ffffff;
-    --secondary: #1e293b;
-    --secondary-foreground: #ffffff;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --accent: #1e293b;
-    --accent-foreground: #ffffff;
-    --destructive: #dd281c;
-    --destructive-foreground: #ffffff;
-    --border: #1e293b;
-    --input: #1e293b;
-    --ring: #1f61e4;
-    --chart-1: #1f61e4;
-    --chart-2: #ff55ba;
-    --chart-3: #bf15cf;
-    --chart-4: #00e2f6;
-    --chart-5: #2000ff;
-    --sidebar: #050505;
-    --sidebar-foreground: #ffffff;
-    --sidebar-primary: #1f61e4;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #1e293b;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #1e293b;
-    --sidebar-ring: #1f61e4;
-}
-
 @layer utilities {
+    .brand-canvas {
+        position: relative;
+        isolation: isolate;
+        background:
+            radial-gradient(
+                circle at 4% 4%,
+                rgb(0 226 246 / 12%),
+                transparent 26rem
+            ),
+            radial-gradient(
+                circle at 96% 8%,
+                rgb(255 85 186 / 10%),
+                transparent 28rem
+            ),
+            linear-gradient(145deg, #f7f9ff 0%, #ffffff 47%, #f8f5ff 100%);
+    }
+
+    .brand-canvas::before {
+        position: fixed;
+        z-index: -1;
+        inset: 0;
+        content: '';
+        pointer-events: none;
+        background-image: url('/brand-pattern.svg');
+        background-position: center top;
+        background-size: cover;
+        opacity: 0.085;
+        filter: invert(28%) sepia(94%) saturate(3772%) hue-rotate(233deg)
+            brightness(89%) contrast(108%);
+    }
+
+    .brand-hero {
+        position: relative;
+        overflow: hidden;
+        background:
+            radial-gradient(
+                circle at 12% 18%,
+                rgb(0 226 246 / 45%),
+                transparent 22rem
+            ),
+            radial-gradient(
+                circle at 88% 82%,
+                rgb(255 85 186 / 42%),
+                transparent 28rem
+            ),
+            linear-gradient(135deg, #1100ad 0%, #2000ff 45%, #8714e8 100%);
+    }
+
+    .brand-hero::after {
+        position: absolute;
+        inset: 0;
+        content: '';
+        pointer-events: none;
+        background-image: url('/brand-pattern.svg');
+        background-position: center;
+        background-size: cover;
+        opacity: 0.56;
+    }
+
+    .brand-panel {
+        border: 1px solid rgb(31 97 228 / 10%);
+        background: rgb(255 255 255 / 88%);
+        box-shadow:
+            0 1px 1px rgb(31 97 228 / 4%),
+            0 22px 55px rgb(32 0 255 / 9%);
+        backdrop-filter: blur(20px);
+    }
+
+    .brand-title {
+        font-family:
+            'Avenir Next', 'Century Gothic', 'Trebuchet MS', sans-serif;
+        font-weight: 800;
+        letter-spacing: -0.045em;
+    }
+
+    .brand-kicker {
+        color: #1f61e4;
+        font-size: 0.6875rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+
+    .brand-gradient-text {
+        color: transparent;
+        background: linear-gradient(100deg, #1f61e4, #2000ff 48%, #ff55ba);
+        background-clip: text;
+    }
+
+    .brand-logo-crop {
+        transform: scale(1.42);
+    }
+
+    .brand-orbit {
+        border: 1px solid rgb(255 255 255 / 28%);
+        border-radius: 9999px;
+        box-shadow:
+            inset 0 0 48px rgb(255 255 255 / 8%),
+            0 0 80px rgb(0 226 246 / 18%);
+    }
+
+    .brand-arrow-line {
+        height: 0.75rem;
+        border-radius: 9999px;
+        background: linear-gradient(90deg, #00e2f6, #ff55ba);
+        transform: rotate(-7deg);
+        transform-origin: right center;
+    }
+
     .bg-radial-vignette {
         background: radial-gradient(
             circle at center,
@@ -168,6 +245,21 @@
 
     body {
         @apply bg-background text-foreground;
+        color-scheme: only light;
+        min-width: 320px;
+        background: #f7f9ff;
+        font-feature-settings:
+            'ss01' 1,
+            'cv02' 1,
+            'cv03' 1;
+        text-rendering: optimizeLegibility;
+    }
+
+    input,
+    textarea,
+    select,
+    button {
+        color-scheme: only light;
     }
 }
 
