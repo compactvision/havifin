@@ -2,6 +2,7 @@ import { base44, Institution } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ImageCropperDialog } from '@/components/ui/ImageCropperDialog';
 import {
     Select,
     SelectContent,
@@ -51,6 +52,10 @@ export default function InstitutionManager() {
         code: '',
         logo: null,
     });
+    const [cropperImage, setCropperImage] = useState<{
+        src: string;
+        fileName: string;
+    } | null>(null);
     const [customFieldName, setCustomFieldName] = useState('');
     const [customFieldOp, setCustomFieldOp] = useState<
         'depot' | 'retrait' | 'both'
@@ -440,22 +445,35 @@ export default function InstitutionManager() {
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <Input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                if (
-                                                    e.target.files &&
-                                                    e.target.files[0]
-                                                ) {
-                                                    setNewInstitution({
-                                                        ...newInstitution,
-                                                        logo: e.target.files[0],
-                                                    });
-                                                }
-                                            }}
-                                            className="h-12 w-full cursor-pointer rounded-xl border-white/10 bg-white/5 pt-2 text-sm font-bold text-white file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:px-4 file:py-1 file:text-xs file:font-bold file:text-white hover:file:bg-indigo-700"
-                                        />
+                                        <label className="flex h-12 w-full cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-2 text-sm font-bold text-white">
+                                            <span className="rounded-lg bg-indigo-600 px-4 py-1 text-xs font-bold text-white hover:bg-indigo-700">
+                                                Choisir un fichier
+                                            </span>
+                                            <span className="truncate text-white/70">
+                                                {newInstitution.logo
+                                                    ? newInstitution.logo.name
+                                                    : 'Aucun fichier choisi'}
+                                            </span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="sr-only"
+                                                onChange={(e) => {
+                                                    const file =
+                                                        e.target.files?.[0];
+                                                    if (file) {
+                                                        setCropperImage({
+                                                            src: URL.createObjectURL(
+                                                                file,
+                                                            ),
+                                                            fileName: file.name,
+                                                        });
+                                                    }
+                                                    // Allow re-selecting the same file later.
+                                                    e.target.value = '';
+                                                }}
+                                            />
+                                        </label>
                                         <p className="mt-2 text-xs text-slate-400">
                                             Format recommandé: PNG ou JPG, fond
                                             transparent. Max 2MB.
@@ -1015,6 +1033,21 @@ export default function InstitutionManager() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ImageCropperDialog
+                open={cropperImage !== null}
+                imageSrc={cropperImage?.src ?? null}
+                fileName={cropperImage?.fileName}
+                onCancel={() => {
+                    if (cropperImage) URL.revokeObjectURL(cropperImage.src);
+                    setCropperImage(null);
+                }}
+                onCropped={(file) => {
+                    setNewInstitution((prev) => ({ ...prev, logo: file }));
+                    if (cropperImage) URL.revokeObjectURL(cropperImage.src);
+                    setCropperImage(null);
+                }}
+            />
         </div>
     );
 }

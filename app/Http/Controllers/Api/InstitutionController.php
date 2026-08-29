@@ -43,10 +43,18 @@ class InstitutionController extends Controller
      */
     public function store(Request $request)
     {
+        $creator = $request->user();
+
+        if (! $creator) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $ownerId = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'type' => 'required|in:mobile_money,bank,payment,other',
-            'code' => 'required|string|max:255|unique:institutions,code',
+            'code' => ['required', 'string', 'max:255', Rule::unique('institutions', 'code')->where('owner_id', $ownerId)],
             'logo' => 'nullable|image|max:2048', // Allow image upload
             'is_active' => 'boolean',
             'settings' => 'nullable|array',
@@ -66,14 +74,7 @@ class InstitutionController extends Controller
             $data['logo_url'] = '/storage/'.$path;
         }
 
-        // Assign owner_id
-        $creator = $request->user();
-
-        if (! $creator) {
-            return response()->json(['error' => 'Unauthenticated'], 401);
-        }
-
-        $data['owner_id'] = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+        $data['owner_id'] = $ownerId;
 
         $institution = Institution::create($data);
 
@@ -103,7 +104,7 @@ class InstitutionController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|in:mobile_money,bank,payment,other',
-            'code' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('institutions', 'code')->ignore($institution->id)],
+            'code' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('institutions', 'code')->where('owner_id', $institution->owner_id)->ignore($institution->id)],
             'logo' => $logoValidation,
             'is_active' => 'sometimes', // Can be boolean or "1"/"0" string from FormData
             'settings' => 'sometimes|nullable|array',

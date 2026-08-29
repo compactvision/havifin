@@ -169,7 +169,18 @@ app.post('/print', (req, res) => {
 
         // Auto-detect the first USB printer. A VID/PID can be passed to the
         // adapter later if a workstation has multiple printers.
-        const device = new UsbPrinter();
+        let device;
+        try {
+            device = new UsbPrinter();
+        } catch (usbError) {
+            console.error('Error detecting printer:', usbError);
+            return res
+                .status(500)
+                .json({
+                    success: false,
+                    message: 'Printer not found or disconnected',
+                });
+        }
 
         device.open((error) => {
             if (error) {
