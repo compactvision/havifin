@@ -1,1 +1,0 @@
-import{t as e}from"./createLucideIcon-DWA6u-7-.js";var t=e(`ArrowRightLeft`,[[`path`,{d:`m16 3 4 4-4 4`,key:`1x1c3m`}],[`path`,{d:`M20 7H4`,key:`zbl0bi`}],[`path`,{d:`m8 21-4-4 4-4`,key:`h9nckh`}],[`path`,{d:`M4 17h16`,key:`g4d7ey`}]]),n=e(`ChevronRight`,[[`path`,{d:`m9 18 6-6-6-6`,key:`mthhwq`}]]);export{t as n,n as t};
