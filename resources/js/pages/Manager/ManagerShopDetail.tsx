@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import AppMain from '@/layouts/app-main';
+import axios from '@/lib/axios';
 import { cn } from '@/lib/utils';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -202,6 +203,24 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
             });
         },
         onError: (error: any) => {
+            const fieldErrors = error.response?.data?.errors as
+                | Record<string, string[]>
+                | undefined;
+
+            if (fieldErrors?.password) {
+                toast.error(
+                    'Mot de passe invalide : 12 caractères minimum, avec majuscule, minuscule, chiffre et symbole.',
+                );
+                return;
+            }
+
+            if (fieldErrors?.email) {
+                toast.error(
+                    'Cet email est déjà utilisé ou invalide.',
+                );
+                return;
+            }
+
             toast.error(
                 error.response?.data?.message ||
                     'Erreur lors de la création du caissier',
@@ -363,12 +382,28 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     // Create advertisement mutation
     const createAdMutation = useMutation({
         mutationFn: async (data: any) => {
-            const mediaUrl =
-                data.type === 'video' ? videoPreview : imagePreview;
+            // Videos can't be persisted as a blob: URL (it only exists in
+            // this browser tab) — upload the actual file instead.
+            if (data.type === 'video' && videoFile) {
+                const formData = new FormData();
+                formData.append('title', data.title);
+                formData.append('type', data.type);
+                formData.append(
+                    'display_order',
+                    String(data.display_order),
+                );
+                formData.append('is_active', '1');
+                formData.append('media', videoFile);
+
+                return axios.post('/api/advertisements', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+            }
+
             return base44.entities.Advertisement.create({
                 title: data.title,
                 type: data.type,
-                image_url: data.image_url || mediaUrl,
+                image_url: data.image_url || imagePreview,
                 display_order: data.display_order,
                 is_active: true,
             });
@@ -447,7 +482,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
         return (
             <AppMain currentPageName="ManagerShops">
                 <div className="flex h-screen flex-col items-center justify-center">
-                    <h2 className="mb-4 text-2xl font-black text-slate-900">
+                    <h2 className="mb-4 text-2xl font-bold text-slate-900">
                         Boutique introuvable
                     </h2>
                     <Link href="/manager/shops">
@@ -626,7 +661,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
 
                 {/* Counters Grid */}
                 <div>
-                    <h2 className="mb-6 text-2xl font-black text-slate-900">
+                    <h2 className="mb-6 text-2xl font-bold text-slate-900">
                         Configuration des Guichets
                     </h2>
 
@@ -656,7 +691,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-lg font-black text-white">
                                                     {counter.counter_number}
                                                 </div>
-                                                <h3 className="text-xl font-black text-slate-900">
+                                                <h3 className="text-xl font-bold text-slate-900">
                                                     {counter.name}
                                                 </h3>
                                             </div>
@@ -736,7 +771,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                     ) : (
                         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 p-16 text-center">
                             <Store className="mb-4 h-16 w-16 text-slate-300" />
-                            <h3 className="mb-2 text-xl font-black text-slate-900">
+                            <h3 className="mb-2 text-xl font-bold text-slate-900">
                                 Aucun guichet configuré
                             </h3>
                             <p className="mb-6 text-slate-600">
@@ -757,7 +792,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                 <div className="mt-16">
                     <div className="mb-6 flex items-center justify-between">
                         <div>
-                            <h2 className="text-2xl font-black text-slate-900">
+                            <h2 className="text-2xl font-bold text-slate-900">
                                 Publicités
                             </h2>
                             <p className="text-sm text-slate-500">
@@ -845,7 +880,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
 
                                     {/* Content */}
                                     <div className="p-6">
-                                        <h3 className="mb-4 text-xl font-black text-slate-900">
+                                        <h3 className="mb-4 text-xl font-bold text-slate-900">
                                             {ad.title}
                                         </h3>
 
@@ -881,7 +916,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                     ) : (
                         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 p-16 text-center">
                             <ImageIcon className="mb-4 h-16 w-16 text-slate-300" />
-                            <h3 className="mb-2 text-xl font-black text-slate-900">
+                            <h3 className="mb-2 text-xl font-bold text-slate-900">
                                 Aucune publicité
                             </h3>
                             <p className="mb-6 text-slate-600">
@@ -901,7 +936,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                         <div className="mb-8 flex items-center justify-between">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-2xl font-black text-slate-900">
+                                    <h2 className="text-2xl font-bold text-slate-900">
                                         Défilé d'Informations (Ticker)
                                     </h2>
                                     <Badge className="bg-indigo-100 text-[10px] font-black tracking-widest text-indigo-600 uppercase">
@@ -994,7 +1029,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                         ) : (
                             <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 p-12 text-center">
                                 <Newspaper className="mb-4 h-12 w-12 text-slate-300" />
-                                <h3 className="text-lg font-black text-slate-900">
+                                <h3 className="text-lg font-bold text-slate-900">
                                     Aucun message défilant
                                 </h3>
                                 <p className="mb-6 text-sm text-slate-500">
@@ -1345,8 +1380,14 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                         })
                                     }
                                     className="rounded-xl"
+                                    minLength={12}
                                     required
                                 />
+                                <p className="text-xs text-slate-400">
+                                    12 caractères minimum, avec majuscule,
+                                    minuscule, chiffre et symbole (ex:
+                                    Havifin#2026!).
+                                </p>
                             </div>
                             <div className="space-y-2">
                                 <Label>Assigner à un guichet (optionnel)</Label>

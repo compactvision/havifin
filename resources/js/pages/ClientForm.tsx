@@ -420,7 +420,7 @@ export default function ClientForm() {
                             <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/20 bg-gradient-to-br from-brand-cyan/20 to-brand-purple/20 shadow-xl shadow-brand-purple/20 backdrop-blur-xl transition-transform group-hover:scale-110">
                                 <Phone className="h-12 w-12 text-brand-dark transition-transform group-hover:rotate-12" />
                             </div>
-                            <h2 className="text-4xl font-black tracking-tight text-slate-800 drop-shadow-sm">
+                            <h2 className="text-4xl font-bold tracking-tight text-slate-800 drop-shadow-sm">
                                 {showRegistration
                                     ? 'Nouvelle Inscription'
                                     : 'Bienvenue chez Havifin'}
@@ -473,7 +473,7 @@ export default function ClientForm() {
                                 >
                                     <div className="space-y-6 rounded-[32px] border border-white/20 bg-white/60 p-8 shadow-xl backdrop-blur-xl">
                                         <div className="text-center">
-                                            <h3 className="text-xl font-black text-slate-800">
+                                            <h3 className="text-xl font-bold text-slate-800">
                                                 Lier à un compte existant
                                             </h3>
                                             <p className="text-sm text-slate-500">
@@ -675,7 +675,7 @@ export default function ClientForm() {
                             >
                                 Étape 2 • Opération
                             </motion.span>
-                            <h2 className="text-4xl font-black tracking-tight text-slate-900">
+                            <h2 className="text-4xl font-bold tracking-tight text-slate-900">
                                 Bonjour{' '}
                                 <span className="text-brand-blue">
                                     {existingClient?.first_name ||
@@ -770,7 +770,7 @@ export default function ClientForm() {
                         <div className="grid gap-10">
                             <div className="space-y-6">
                                 <div className="text-center md:text-left">
-                                    <h3 className="text-2xl font-black text-slate-800">
+                                    <h3 className="text-2xl font-bold text-slate-800">
                                         Opérations disponibles
                                     </h3>
                                 </div>
@@ -796,7 +796,7 @@ export default function ClientForm() {
                                         className="space-y-6"
                                     >
                                         <div className="text-center md:text-left">
-                                            <h3 className="text-2xl font-black text-slate-800">
+                                            <h3 className="text-2xl font-bold text-slate-800">
                                                 Bureau de Change
                                             </h3>
                                         </div>
@@ -1097,7 +1097,7 @@ export default function ClientForm() {
                                                                                     <Building2 className="h-7 w-7 text-white" />
                                                                                 </div>
                                                                                 <div className="text-left">
-                                                                                    <h4 className="text-base font-black tracking-tight text-slate-900 uppercase">
+                                                                                    <h4 className="text-base font-bold tracking-tight text-slate-900 uppercase">
                                                                                         Infos
                                                                                         de
                                                                                         l'Agent
@@ -1347,7 +1347,7 @@ export default function ClientForm() {
                                     <LockIcon className="h-12 w-12 text-slate-300" />
                                 </div>
 
-                                <h1 className="mb-4 text-4xl font-black tracking-tighter text-slate-900 uppercase">
+                                <h1 className="mb-4 text-4xl font-bold tracking-tighter text-slate-900 uppercase">
                                     Agence{' '}
                                     <span className="text-indigo-600">
                                         Fermée
@@ -1415,7 +1415,7 @@ export default function ClientForm() {
                                 className="h-10 w-10 object-contain"
                             />
                             <div>
-                                <h1 className="text-xl font-black tracking-tight text-white uppercase">
+                                <h1 className="text-xl font-bold tracking-tight text-white uppercase">
                                     Havifin
                                 </h1>
                                 <p className="text-[10px] font-bold tracking-widest text-white/60 uppercase">

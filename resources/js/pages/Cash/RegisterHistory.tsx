@@ -68,7 +68,7 @@ export default function RegisterHistory({ id }: Props) {
                         </Link>
                         <div className="h-10 w-[1px] bg-pink-100" />
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-black tracking-tight text-slate-900">
+                            <h1 className="text-xl font-bold tracking-tight text-slate-900">
                                 {register.name}
                             </h1>
                             <p className="text-xs font-bold text-pink-500 uppercase">

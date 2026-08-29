@@ -61,7 +61,7 @@ export default function CashierTodaySession() {
                     <div className="mb-6 rounded-full bg-indigo-100 p-6 text-indigo-600">
                         <Store className="h-12 w-12" />
                     </div>
-                    <h1 className="mb-2 text-2xl font-black text-slate-900">
+                    <h1 className="mb-2 text-2xl font-bold text-slate-900">
                         Aucune session active
                     </h1>
                     <p className="mb-8 max-w-md text-slate-500">
@@ -93,7 +93,7 @@ export default function CashierTodaySession() {
                     <Badge className="mb-4 bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                         JOURNÉE OUVERTE
                     </Badge>
-                    <h1 className="mb-2 text-2xl font-black text-slate-900">
+                    <h1 className="mb-2 text-2xl font-bold text-slate-900">
                         La session de la boutique est active
                     </h1>
                     <p className="mb-2 max-w-md text-slate-500">
@@ -156,7 +156,7 @@ export default function CashierTodaySession() {
             <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50/30 px-6 py-8 md:px-10">
                 <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-3xl font-black text-slate-900">
+                        <h1 className="text-3xl font-bold text-slate-900">
                             Bonjour, {auth.user.name} 👋
                         </h1>
                         <p className="mt-1 text-slate-500">
@@ -202,7 +202,7 @@ export default function CashierTodaySession() {
                                         <Banknote className="h-8 w-8" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-black text-slate-900">
+                                        <h2 className="text-2xl font-bold text-slate-900">
                                             Session #{session.id}
                                         </h2>
                                         <p className="font-medium text-slate-500">

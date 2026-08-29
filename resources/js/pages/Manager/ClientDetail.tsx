@@ -105,7 +105,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
             <AppMain currentPageName="Détails Client">
                 <div className="flex h-[60vh] flex-col items-center justify-center">
                     <User className="mb-4 h-16 w-16 text-slate-200" />
-                    <h2 className="text-xl font-black text-slate-900">
+                    <h2 className="text-xl font-bold text-slate-900">
                         Client introuvable
                     </h2>
                     <p className="mb-6 text-sm text-slate-500">
@@ -147,7 +147,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                             </div>
 
                             <div>
-                                <h1 className="text-3xl font-black tracking-tight text-slate-900">
+                                <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                                     {client.full_name ||
                                         `${client.first_name || ''} ${client.last_name || ''}`.trim() ||
                                         'Client Non Enregistré'}
@@ -224,7 +224,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                     <div className="border-b border-slate-100 p-8">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-xl font-black tracking-tight text-slate-800">
+                                <h3 className="text-xl font-bold tracking-tight text-slate-800">
                                     Historique Complet
                                 </h3>
                                 <p className="text-sm font-medium text-slate-400">
@@ -259,7 +259,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                 {/* Additional Info Cards */}
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                     <div className="col-span-1 rounded-[2.5rem] border border-white bg-white/60 p-8 shadow-lg backdrop-blur-md">
-                        <h4 className="mb-6 text-[11px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                        <h4 className="mb-6 text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                             Information de Profil
                         </h4>
                         <div className="space-y-6">
@@ -294,7 +294,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
 
                     <div className="col-span-2 rounded-[2.5rem] border border-white bg-slate-900 p-8 text-white shadow-2xl">
                         <div className="mb-8 flex items-center justify-between">
-                            <h4 className="text-[11px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                            <h4 className="text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                                 Analyse Rapide
                             </h4>
                             <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-black text-emerald-400 uppercase">

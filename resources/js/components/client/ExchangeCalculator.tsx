@@ -102,7 +102,7 @@ export default function ExchangeCalculator({
                         <div className="shadow-glow-blue/20 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-blue/10 text-brand-blue">
                             <TrendingUp className="h-6 w-6" />
                         </div>
-                        <h3 className="text-2xl font-black tracking-tight text-slate-800 uppercase">
+                        <h3 className="text-2xl font-bold tracking-tight text-slate-800 uppercase">
                             Quel change souhaitez-vous effectuer ?
                         </h3>
                     </div>
@@ -170,7 +170,7 @@ export default function ExchangeCalculator({
                                 <Calculator className="h-6 w-6" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-black tracking-tight text-slate-800 uppercase">
+                                <h3 className="text-lg font-bold tracking-tight text-slate-800 uppercase">
                                     Calculateur de Convertissage
                                 </h3>
                                 <p className="text-xs font-bold text-slate-400">

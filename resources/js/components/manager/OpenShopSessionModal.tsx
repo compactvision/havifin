@@ -82,7 +82,7 @@ export default function OpenShopSessionModal({
 
                     {/* Global Funds Configuration */}
                     <div className="space-y-4">
-                        <h4 className="flex items-center gap-2 text-lg font-black text-slate-900">
+                        <h4 className="flex items-center gap-2 text-lg font-bold text-slate-900">
                             <DollarSign className="h-5 w-5 text-emerald-600" />
                             Fond de Caisse (Global)
                         </h4>

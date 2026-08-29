@@ -75,7 +75,7 @@ export default function TicketSuccess({
                 </motion.div>
             </div>
 
-            <h2 className="mb-2 text-4xl font-black tracking-tight text-slate-900">
+            <h2 className="mb-2 text-4xl font-bold tracking-tight text-slate-900">
                 C'est fait !
             </h2>
             <p className="mb-10 text-xl font-medium text-slate-500">

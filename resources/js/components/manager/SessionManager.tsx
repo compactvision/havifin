@@ -168,7 +168,7 @@ export default function SessionManager() {
             {/* Header Area */}
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
                 <div>
-                    <h3 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+                    <h3 className="text-3xl font-bold tracking-tighter text-slate-900 uppercase">
                         Console{' '}
                         <span className="text-indigo-600">Sessions</span>
                     </h3>
@@ -187,9 +187,10 @@ export default function SessionManager() {
                             <select
                                 className="cursor-pointer border-none bg-transparent pr-10 text-sm font-black text-slate-700 uppercase focus:ring-0"
                                 value={selectedShopId || ''}
-                                onChange={(e) =>
-                                    setSelectedShopId(Number(e.target.value))
-                                }
+                                onChange={(e) => {
+                                    setSelectedShopId(Number(e.target.value));
+                                    setPage(1);
+                                }}
                             >
                                 {shops.map((shop) => (
                                     <option key={shop.id} value={shop.id}>
@@ -333,7 +334,7 @@ export default function SessionManager() {
                                         <AlertCircle className="h-10 w-10 text-slate-300" />
                                     </div>
                                     <div>
-                                        <h4 className="mb-2 text-3xl font-black tracking-tight text-slate-900">
+                                        <h4 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">
                                             Prêt pour l'ouverture ?
                                         </h4>
                                         <p className="max-w-lg leading-relaxed font-medium text-slate-500">
@@ -411,7 +412,7 @@ export default function SessionManager() {
                     <div className="flex items-center gap-4">
                         <div className="h-12 w-1.5 rounded-full bg-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.5)]" />
                         <div>
-                            <h4 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                            <h4 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
                                 Registre Historique
                             </h4>
                             <p className="mt-0.5 text-[10px] font-black tracking-widest text-slate-400 uppercase">
@@ -903,7 +904,7 @@ function SessionModal({
                         </div>
                         <div>
                             <div className="mb-1 flex items-center gap-3">
-                                <h3 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+                                <h3 className="text-3xl font-bold tracking-tighter text-slate-900 uppercase">
                                     Rapport de Session
                                 </h3>
                                 <span
@@ -983,7 +984,7 @@ function SessionModal({
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-4">
                                         <div className="h-10 w-1 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-                                        <h5 className="text-xl font-black tracking-tight text-slate-900 uppercase">
+                                        <h5 className="text-xl font-bold tracking-tight text-slate-900 uppercase">
                                             Flux Financier
                                         </h5>
                                     </div>
@@ -1075,7 +1076,7 @@ function SessionModal({
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-4">
                                         <div className="h-10 w-1 rounded-full bg-indigo-500" />
-                                        <h5 className="text-xl font-black tracking-tight text-slate-900 uppercase">
+                                        <h5 className="text-xl font-bold tracking-tight text-slate-900 uppercase">
                                             Performance Opérateurs
                                         </h5>
                                     </div>

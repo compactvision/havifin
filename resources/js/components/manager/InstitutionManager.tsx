@@ -302,7 +302,7 @@ export default function InstitutionManager() {
                         <Building2 className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                        <h4 className="text-sm font-black tracking-tight text-slate-800 uppercase">
+                        <h4 className="text-sm font-bold tracking-tight text-slate-800 uppercase">
                             Partenaires & Institutions
                         </h4>
                         <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
@@ -340,7 +340,7 @@ export default function InstitutionManager() {
                         <div className="relative rounded-[2rem] bg-slate-900 p-8 text-white shadow-2xl">
                             <div className="pointer-events-none absolute top-0 right-0 h-64 w-64 bg-indigo-500/10 blur-[100px]" />
 
-                            <h5 className="mb-8 flex items-center gap-3 text-xl font-black tracking-tight">
+                            <h5 className="mb-8 flex items-center gap-3 text-xl font-bold tracking-tight">
                                 <Landmark className="h-6 w-6 text-indigo-400" />
                                 {editingId
                                     ? "Modifier l'institution"
@@ -639,7 +639,7 @@ export default function InstitutionManager() {
 
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-black tracking-tight text-slate-900">
+                                <h3 className="text-lg font-bold tracking-tight text-slate-900">
                                     {inst.name}
                                 </h3>
                                 {!inst.is_active && (
@@ -720,7 +720,7 @@ export default function InstitutionManager() {
                         >
                             <div className="relative bg-slate-900 p-8 text-white">
                                 <div className="absolute top-0 right-0 h-32 w-32 bg-indigo-500/10 blur-3xl" />
-                                <h3 className="flex items-center gap-3 text-xl font-black tracking-tight">
+                                <h3 className="flex items-center gap-3 text-xl font-bold tracking-tight">
                                     <Settings className="h-6 w-6 text-indigo-400" />
                                     Champs Requis
                                 </h3>
@@ -795,7 +795,7 @@ export default function InstitutionManager() {
                                 </div>
 
                                 <div className="mt-8 space-y-4">
-                                    <h4 className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                                    <h4 className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                                         <Plus className="h-3 w-3" />
                                         Ajouter un champ personnalisé
                                     </h4>
@@ -922,7 +922,7 @@ export default function InstitutionManager() {
                                 </div>
 
                                 <div className="mt-8 space-y-4 border-t border-slate-100 pt-6">
-                                    <h4 className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                                    <h4 className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                                         <ShieldCheck className="h-3 w-3" />
                                         Infos Agent (Retrait)
                                     </h4>

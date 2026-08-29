@@ -10,6 +10,7 @@ use App\Models\Session;
 use App\Models\Shop;
 use App\Models\Transaction;
 use App\Support\TenantAccess;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -61,34 +62,42 @@ class SessionController extends Controller
         $shopId = $request->shop_id;
         TenantAccess::authorizeShop($user, (int) $shopId);
 
-        $session = DB::transaction(function () use ($request, $user, $shopId) {
-            Shop::whereKey($shopId)->lockForUpdate()->firstOrFail();
+        try {
+            $session = DB::transaction(function () use ($request, $user, $shopId) {
+                Shop::whereKey($shopId)->lockForUpdate()->firstOrFail();
 
-            $openSession = Session::open()->where('shop_id', $shopId)->first();
-            abort_if($openSession, 409, 'Une session est déjà ouverte pour cette boutique.');
+                $openSession = Session::open()->where('shop_id', $shopId)->first();
+                abort_if($openSession, 409, 'Une session est déjà ouverte pour cette boutique.');
 
-            $existingDate = Session::where('shop_id', $shopId)
-                ->whereDate('session_date', $request->session_date)
-                ->exists();
-            abort_if($existingDate, 409, 'Une session existe déjà pour cette date.');
+                $existingDate = Session::where('shop_id', $shopId)
+                    ->whereDate('session_date', $request->session_date)
+                    ->exists();
+                abort_if($existingDate, 409, 'Une session existe déjà pour cette date.');
 
-            $session = Session::create([
-                'session_date' => $request->session_date,
-                'opened_by' => $user->id,
-                'opened_at' => now(),
-                'status' => 'open',
-                'notes' => $request->notes,
-                'shop_id' => $shopId,
-            ]);
+                $session = Session::create([
+                    'session_date' => $request->session_date,
+                    'opened_by' => $user->id,
+                    'opened_at' => now(),
+                    'status' => 'open',
+                    'notes' => $request->notes,
+                    'shop_id' => $shopId,
+                ]);
 
-            CashierActivity::logAction(
-                'session_opened',
-                "Session journalière ouverte pour {$session->shop->name}",
-                sessionId: $session->id,
-            );
+                CashierActivity::logAction(
+                    'session_opened',
+                    "Session journalière ouverte pour {$session->shop->name}",
+                    sessionId: $session->id,
+                );
 
-            return $session;
-        }, 3);
+                return $session;
+            }, 3);
+        } catch (QueryException $e) {
+            if ((int) $e->getCode() === 23000) {
+                abort(409, 'Une session existe déjà pour cette boutique et cette date.');
+            }
+
+            throw $e;
+        }
 
         return response()->json($session, 201);
     }

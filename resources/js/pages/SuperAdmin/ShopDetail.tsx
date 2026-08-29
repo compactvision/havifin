@@ -120,7 +120,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
             <AppMain currentPageName="Admin">
                 <div className="brand-canvas flex min-h-screen flex-col items-center justify-center gap-4">
                     <Store className="h-12 w-12 text-slate-300" />
-                    <h1 className="text-2xl font-black text-slate-900">
+                    <h1 className="text-2xl font-bold text-slate-900">
                         Boutique introuvable
                     </h1>
                     <Link href="/admin/shops">
@@ -291,7 +291,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                                 <p className="brand-kicker">
                                                     Activité
                                                 </p>
-                                                <h2 className="mt-1 text-xl font-black text-slate-900">
+                                                <h2 className="mt-1 text-xl font-bold text-slate-900">
                                                     Les 7 derniers jours
                                                 </h2>
                                             </div>
@@ -345,7 +345,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                                 <p className="brand-kicker">
                                                     Managers
                                                 </p>
-                                                <h2 className="mt-1 text-xl font-black text-slate-900">
+                                                <h2 className="mt-1 text-xl font-bold text-slate-900">
                                                     Équipe responsable
                                                 </h2>
                                             </div>
@@ -514,7 +514,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                     <div className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl">
                         <div className="flex items-start justify-between border-b border-slate-100 p-6">
                             <div>
-                                <h2 className="text-xl font-black text-slate-900">
+                                <h2 className="text-xl font-bold text-slate-900">
                                     Affecter les managers
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
@@ -644,7 +644,7 @@ function SectionTitle({
         <div className="flex items-center justify-between">
             <div>
                 <p className="brand-kicker">{eyebrow}</p>
-                <h2 className="mt-1 text-xl font-black text-slate-900">
+                <h2 className="mt-1 text-xl font-bold text-slate-900">
                     {title}
                 </h2>
             </div>

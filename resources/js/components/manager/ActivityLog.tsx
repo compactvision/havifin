@@ -137,7 +137,7 @@ export default function ActivityLog({ selectedDate }: ActivityLogProps) {
     return (
         <div className="space-y-10">
             <div>
-                <h3 className="mb-2 text-2xl font-black tracking-tight text-slate-800">
+                <h3 className="mb-2 text-2xl font-bold tracking-tight text-slate-800">
                     Journal d'activité
                 </h3>
                 <p className="text-sm font-medium text-slate-400">
@@ -162,7 +162,7 @@ export default function ActivityLog({ selectedDate }: ActivityLogProps) {
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-indigo-600" />
                                 </div>
-                                <h4 className="mb-1 text-lg font-black text-slate-900">
+                                <h4 className="mb-1 text-lg font-bold text-slate-900">
                                     {user.cashier_name}
                                 </h4>
                                 <div className="mb-6 flex items-center gap-2">
@@ -206,7 +206,7 @@ export default function ActivityLog({ selectedDate }: ActivityLogProps) {
             {/* General Log Timeline */}
             <div className="space-y-6 border-t border-slate-100 pt-10">
                 <div className="flex items-center justify-between">
-                    <h4 className="text-xl font-black tracking-tight text-slate-800">
+                    <h4 className="text-xl font-bold tracking-tight text-slate-800">
                         Derniers Événements
                     </h4>
                 </div>

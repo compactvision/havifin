@@ -121,7 +121,7 @@ export function StatsCard({
                     <p className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
                         {title}
                     </p>
-                    <h2 className="text-3xl leading-tight font-black tracking-tight text-slate-900">
+                    <h2 className="text-3xl leading-tight font-bold tracking-tight text-slate-900">
                         {value}
                     </h2>
                     {subtitle && (

@@ -91,7 +91,7 @@ export default function OperationSelector({
 
                         <h3
                             className={cn(
-                                'mb-2 text-xl font-black transition-colors',
+                                'mb-2 text-xl font-bold transition-colors',
                                 isSelected
                                     ? 'text-slate-900'
                                     : 'text-slate-700',

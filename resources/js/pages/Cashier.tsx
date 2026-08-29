@@ -160,7 +160,7 @@ export default function Cashier() {
                         </motion.div>
                         <div className="h-10 w-[1px] bg-slate-100" />
                         <div className="hidden md:block">
-                            <h1 className="text-lg font-black tracking-tighter text-slate-800 uppercase">
+                            <h1 className="text-lg font-bold tracking-tighter text-slate-800 uppercase">
                                 Terminal{' '}
                                 <span className="text-brand-blue">Caisse</span>
                             </h1>

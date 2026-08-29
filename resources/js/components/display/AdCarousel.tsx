@@ -19,15 +19,30 @@ export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
 
     const [currentIndex, setCurrentIndex] = React.useState(0);
 
-    React.useEffect(() => {
-        if (ads.length <= 1) return;
-
-        const timer = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % ads.length);
-        }, 8000);
-
-        return () => clearInterval(timer);
+    const goToNext = React.useCallback(() => {
+        setCurrentIndex((prev) =>
+            ads.length > 0 ? (prev + 1) % ads.length : 0,
+        );
     }, [ads.length]);
+
+    // Clamp the index if the ad list shrinks (e.g. refetch removes an ad).
+    React.useEffect(() => {
+        if (currentIndex >= ads.length && ads.length > 0) {
+            setCurrentIndex(0);
+        }
+    }, [ads.length, currentIndex]);
+
+    const currentAd = ads[currentIndex];
+    const isVideo = currentAd?.type === 'video';
+
+    // Image slides advance on a timer; video slides advance only once the
+    // video has actually finished playing (see the <video onEnded> below).
+    React.useEffect(() => {
+        if (ads.length <= 1 || isVideo) return;
+
+        const timer = setTimeout(goToNext, 8000);
+        return () => clearTimeout(timer);
+    }, [ads.length, isVideo, currentIndex, goToNext]);
 
     if (isLoading) {
         return (
@@ -98,13 +113,21 @@ export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
                 >
                     {ads[currentIndex].type === 'video' ? (
                         <video
+                            key={ads[currentIndex].id}
                             src={ads[currentIndex].image_url}
                             className="h-full w-full object-cover"
                             autoPlay
                             muted
-                            loop
+                            // A lone video ad loops itself; with several ads,
+                            // wait for it to finish before moving on.
+                            loop={ads.length <= 1}
                             playsInline
                             preload="auto"
+                            onEnded={ads.length > 1 ? goToNext : undefined}
+                            // A broken/expired source (e.g. a stale blob: URL)
+                            // would otherwise stall the carousel forever
+                            // since it never fires "ended".
+                            onError={ads.length > 1 ? goToNext : undefined}
                         />
                     ) : (
                         <img
@@ -123,7 +146,7 @@ export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.5 }}
-                            className="text-4xl font-black tracking-tight text-white drop-shadow-lg"
+                            className="text-4xl font-bold tracking-tight text-white drop-shadow-lg"
                         >
                             {ads[currentIndex].title}
                         </motion.h3>

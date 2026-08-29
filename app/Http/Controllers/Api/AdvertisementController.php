@@ -7,6 +7,7 @@ use App\Models\Advertisement;
 use App\Models\CashierActivity;
 use App\Support\TenantAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class AdvertisementController extends Controller
@@ -39,7 +40,8 @@ class AdvertisementController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'type' => 'required|in:image,video',
-            'image_url' => 'required|string|max:7000000',
+            'image_url' => 'required_without:media|nullable|string|max:7000000',
+            'media' => 'required_without:image_url|nullable|file|mimetypes:video/mp4,video/webm,video/ogg,video/quicktime,image/jpeg,image/png,image/gif,image/webp|max:20480',
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
@@ -52,6 +54,12 @@ class AdvertisementController extends Controller
         }
 
         $data = $validator->validated();
+
+        if ($request->hasFile('media')) {
+            $path = $request->file('media')->store('advertisements', 'public');
+            $data['image_url'] = '/storage/'.$path;
+        }
+        unset($data['media']);
 
         // Assign owner_id
         $creator = $request->user();
@@ -81,7 +89,8 @@ class AdvertisementController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|in:image,video',
-            'image_url' => 'sometimes|required|string|max:7000000',
+            'image_url' => 'sometimes|nullable|string|max:7000000',
+            'media' => 'nullable|file|mimetypes:video/mp4,video/webm,video/ogg,video/quicktime,image/jpeg,image/png,image/gif,image/webp|max:20480',
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
@@ -93,7 +102,19 @@ class AdvertisementController extends Controller
             ], 422);
         }
 
-        $advertisement->update($validator->validated());
+        $data = $validator->validated();
+
+        if ($request->hasFile('media')) {
+            if (str_starts_with((string) $advertisement->image_url, '/storage/')) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $advertisement->image_url));
+            }
+
+            $path = $request->file('media')->store('advertisements', 'public');
+            $data['image_url'] = '/storage/'.$path;
+        }
+        unset($data['media']);
+
+        $advertisement->update($data);
 
         CashierActivity::logAction('configuration_change', "Publicité mise à jour: {$advertisement->title}");
 

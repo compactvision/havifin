@@ -77,7 +77,7 @@ export default function ClientCard({
                     <div className="overflow-hidden">
                         <h4
                             className={cn(
-                                'truncate leading-tight font-black tracking-tight text-slate-800',
+                                'truncate leading-tight font-bold tracking-tight text-slate-800',
                                 isCalled ? 'text-lg' : 'text-sm',
                             )}
                         >

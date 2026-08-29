@@ -75,7 +75,7 @@ export default function UserActivityDetail({
                                         Dépôts
                                     </span>
                                 </div>
-                                <h4 className="text-2xl font-black text-slate-900">
+                                <h4 className="text-2xl font-bold text-slate-900">
                                     {stats.deposits}
                                 </h4>
                                 <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase">
@@ -94,7 +94,7 @@ export default function UserActivityDetail({
                                         Retraits
                                     </span>
                                 </div>
-                                <h4 className="text-2xl font-black text-slate-900">
+                                <h4 className="text-2xl font-bold text-slate-900">
                                     {stats.withdrawals}
                                 </h4>
                                 <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase">
@@ -113,7 +113,7 @@ export default function UserActivityDetail({
                                         Changes
                                     </span>
                                 </div>
-                                <h4 className="text-2xl font-black text-slate-900">
+                                <h4 className="text-2xl font-bold text-slate-900">
                                     {stats.exchanges}
                                 </h4>
                                 <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase">
@@ -132,7 +132,7 @@ export default function UserActivityDetail({
                                         Mouvements
                                     </span>
                                 </div>
-                                <h4 className="text-2xl font-black text-slate-900">
+                                <h4 className="text-2xl font-bold text-slate-900">
                                     {stats.adjustments_in +
                                         stats.adjustments_out}
                                 </h4>
@@ -149,7 +149,7 @@ export default function UserActivityDetail({
                                 <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
                                     Volume Traité (USD)
                                 </p>
-                                <h3 className="text-2xl font-black">
+                                <h3 className="text-2xl font-bold">
                                     $ {stats.total_amount_usd.toLocaleString()}
                                 </h3>
                             </div>
@@ -158,7 +158,7 @@ export default function UserActivityDetail({
                                 <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
                                     Volume Traité (CDF)
                                 </p>
-                                <h3 className="text-2xl font-black">
+                                <h3 className="text-2xl font-bold">
                                     {stats.total_amount_cdf.toLocaleString()} FC
                                 </h3>
                             </div>
@@ -169,7 +169,7 @@ export default function UserActivityDetail({
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
                             <Activity className="h-5 w-5 text-indigo-600" />
-                            <h4 className="text-lg font-black tracking-tight text-slate-800">
+                            <h4 className="text-lg font-bold tracking-tight text-slate-800">
                                 Dernières Activités
                             </h4>
                         </div>

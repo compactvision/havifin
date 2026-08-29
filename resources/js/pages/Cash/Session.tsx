@@ -144,7 +144,7 @@ export default function CashSessionDetail({ id }: Props) {
                         <div className="h-10 w-[1px] bg-pink-100" />
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-black tracking-tight text-slate-900">
+                                <h1 className="text-xl font-bold tracking-tight text-slate-900">
                                     Session #{session.id}
                                 </h1>
                                 <Badge
@@ -264,7 +264,7 @@ export default function CashSessionDetail({ id }: Props) {
                     <Card className="col-span-2 rounded-3xl border-slate-200/60 bg-slate-900 text-white shadow-sm">
                         <CardContent className="flex h-full items-center justify-between p-6">
                             <div>
-                                <h3 className="text-lg font-black">
+                                <h3 className="text-lg font-bold">
                                     Besoin d'aide ?
                                 </h3>
                                 <p className="text-sm text-slate-400">
@@ -283,7 +283,7 @@ export default function CashSessionDetail({ id }: Props) {
                 </div>
 
                 {/* Audit & Balance Section (The "Review" part) */}
-                <h2 className="mb-6 text-2xl font-black text-slate-900">
+                <h2 className="mb-6 text-2xl font-bold text-slate-900">
                     État de la Caisse
                 </h2>
                 <div className="mb-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -383,7 +383,7 @@ export default function CashSessionDetail({ id }: Props) {
                 </div>
 
                 {/* Movements Table */}
-                <h2 className="mb-6 text-2xl font-black text-slate-900">
+                <h2 className="mb-6 text-2xl font-bold text-slate-900">
                     Historique des Mouvements
                 </h2>
                 <div className="rounded-3xl border border-slate-200/60 bg-white p-6 shadow-sm">

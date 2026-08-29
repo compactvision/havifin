@@ -55,7 +55,7 @@ export default function CashDashboard() {
                         </Link>
                         <div className="h-10 w-[1px] bg-pink-100" />
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-black tracking-tight text-slate-900">
+                            <h1 className="text-xl font-bold tracking-tight text-slate-900">
                                 Gestion de Caisse
                             </h1>
                             <p className="text-xs font-bold text-pink-500 uppercase">
@@ -107,7 +107,7 @@ export default function CashDashboard() {
                                     <Store className="h-16 w-16 text-slate-300" />
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                                    <h3 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
                                         Aucune caisse trouvée
                                     </h3>
                                     <p className="mt-2 font-medium text-slate-500">

@@ -239,8 +239,8 @@ export default function Manager() {
     return (
         <AppMain currentPageName="Manager">
             <Head title="Manager" />
-            <div className="flex flex-col overflow-hidden bg-[#f8fafc]">
-                {/* Manager Header */}
+            <div className="flex h-screen flex-col overflow-hidden bg-[#f8fafc]">
+                {/* Manager Header (fixed) */}
                 <header className="z-20 flex h-24 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
                     <div className="flex items-center gap-6">
                         <motion.div
@@ -256,7 +256,7 @@ export default function Manager() {
                         <div className="h-10 w-[1px] bg-slate-100" />
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                                <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
                                     Console{' '}
                                     <span className="text-indigo-600">
                                         Manager
@@ -348,380 +348,369 @@ export default function Manager() {
                     </div>
                 </header>
 
-                {/* Main Content Scrollable Area */}
-                <main className="flex-1 overflow-y-auto bg-[url('/grid.svg')] bg-[length:40px_40px] px-10 py-10">
-                    <div className="w-full max-w-none space-y-10">
-                        {/* KPI Cards Section */}
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                            <StatsCard
-                                title="Clients Aujourd'hui"
-                                value={stats.todayClients}
-                                subtitle={`${stats.waiting} en attente`}
-                                icon={Users}
-                                color="blue"
-                            />
-                            <StatsCard
-                                title="Volume USD"
-                                value={`$ ${stats.volumeUSD.toLocaleString()}`}
-                                icon={TrendingUp}
-                                color="emerald"
-                            />
-                            <StatsCard
-                                title="Volume CDF"
-                                value={`${stats.volumeCDF.toLocaleString()} FC`}
-                                icon={Landmark}
-                                color="amber"
-                            />
-                            <StatsCard
-                                title="Commissions Estimées"
-                                value={`$ ${stats.commissions.toLocaleString()}`}
-                                icon={PieChart}
-                                color="indigo"
-                            />
+                {/* Body: fixed navigation sidebar + scrollable content */}
+                <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+                    {/* Navigation Sidebar (fixed, does not scroll with cards) */}
+                    <aside className="w-full shrink-0 space-y-4 overflow-y-auto p-4 lg:h-full lg:w-[280px]">
+                        <div className="rounded-[2rem] bg-white/50 p-5 shadow-sm backdrop-blur-xl">
+                            <h3 className="mb-4 px-2 text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
+                                Navigation
+                            </h3>
+                            <nav className="space-y-2">
+                                {[
+                                    {
+                                        id: 'overview',
+                                        label: "Vue d'ensemble",
+                                        icon: LayoutDashboard,
+                                    },
+                                    {
+                                        id: 'transactions',
+                                        label: 'Flux Transactions',
+                                        icon: ArrowRightLeft,
+                                    },
+                                    {
+                                        id: 'movements',
+                                        label: 'Mouvements Manuels',
+                                        icon: Banknote,
+                                    },
+                                    {
+                                        id: 'rates',
+                                        label: 'Gestion Taux',
+                                        icon: Settings,
+                                    },
+                                    {
+                                        id: 'users',
+                                        label: 'Utilisateurs',
+                                        icon: Users,
+                                    },
+                                    {
+                                        id: 'clients',
+                                        label: 'Base Clients',
+                                        icon: Users,
+                                    },
+                                    {
+                                        id: 'institutions',
+                                        label: 'Banques & Partenaires',
+                                        icon: Landmark,
+                                    },
+                                    {
+                                        id: 'logs',
+                                        label: 'Journal Activité',
+                                        icon: Activity,
+                                    },
+                                    {
+                                        id: 'sessions',
+                                        label: 'Gestion Sessions',
+                                        icon: Play,
+                                    },
+                                ].map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() =>
+                                                setActiveTab(item.id)
+                                            }
+                                            className={cn(
+                                                'flex w-full items-center justify-between rounded-2xl p-3 text-sm font-bold transition-all duration-300',
+                                                activeTab === item.id
+                                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                                                    : 'text-slate-500 hover:bg-white',
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Icon
+                                                    className={cn(
+                                                        'h-5 w-5',
+                                                        activeTab === item.id
+                                                            ? 'text-white'
+                                                            : 'text-slate-400',
+                                                    )}
+                                                />
+                                                {item.label}
+                                            </div>
+                                            <ChevronRight
+                                                className={cn(
+                                                    'h-4 w-4 transition-transform',
+                                                    activeTab === item.id
+                                                        ? 'translate-x-1'
+                                                        : 'opacity-0',
+                                                )}
+                                            />
+                                        </button>
+                                    );
+                                })}
+                            </nav>
                         </div>
 
-                        {/* Layout Board */}
-                        <div className="grid grid-cols-12 gap-8">
-                            {/* Navigation Sidebar */}
-                            <div className="col-span-12 space-y-4 lg:col-span-3">
-                                <div className="rounded-[2rem] border border-white bg-white/50 p-6 shadow-sm backdrop-blur-xl">
-                                    <h3 className="mb-6 px-2 text-[11px] font-black tracking-[0.2em] text-slate-400 uppercase">
-                                        Navigation
-                                    </h3>
-                                    <nav className="space-y-2">
-                                        {[
-                                            {
-                                                id: 'overview',
-                                                label: "Vue d'ensemble",
-                                                icon: LayoutDashboard,
-                                            },
-                                            {
-                                                id: 'transactions',
-                                                label: 'Flux Transactions',
-                                                icon: ArrowRightLeft,
-                                            },
-                                            {
-                                                id: 'movements',
-                                                label: 'Mouvements Manuels',
-                                                icon: Banknote,
-                                            },
-                                            {
-                                                id: 'rates',
-                                                label: 'Gestion Taux',
-                                                icon: Settings,
-                                            },
-                                            {
-                                                id: 'users',
-                                                label: 'Utilisateurs',
-                                                icon: Users,
-                                            },
-                                            {
-                                                id: 'clients',
-                                                label: 'Base Clients',
-                                                icon: Users,
-                                            },
-                                            {
-                                                id: 'institutions',
-                                                label: 'Banques & Partenaires',
-                                                icon: Landmark,
-                                            },
-                                            {
-                                                id: 'logs',
-                                                label: 'Journal Activité',
-                                                icon: Activity,
-                                            },
-                                            {
-                                                id: 'sessions',
-                                                label: 'Gestion Sessions',
-                                                icon: Play,
-                                            },
-                                        ].map((item) => {
-                                            const Icon = item.icon;
-                                            return (
-                                                <button
-                                                    key={item.id}
-                                                    onClick={() =>
-                                                        setActiveTab(item.id)
-                                                    }
-                                                    className={cn(
-                                                        'flex w-full items-center justify-between rounded-2xl border p-4 text-sm font-bold transition-all duration-300',
-                                                        activeTab === item.id
-                                                            ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                                                            : 'border-slate-100 bg-white/40 text-slate-500 hover:border-slate-200 hover:bg-white',
-                                                    )}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <Icon
-                                                            className={cn(
-                                                                'h-5 w-5',
-                                                                activeTab ===
-                                                                    item.id
-                                                                    ? 'text-white'
-                                                                    : 'text-slate-400',
-                                                            )}
-                                                        />
-                                                        {item.label}
-                                                    </div>
-                                                    <ChevronRight
-                                                        className={cn(
-                                                            'h-4 w-4 transition-transform',
-                                                            activeTab ===
-                                                                item.id
-                                                                ? 'translate-x-1'
-                                                                : 'opacity-0',
-                                                        )}
-                                                    />
-                                                </button>
-                                            );
-                                        })}
-                                    </nav>
-                                </div>
+                        <div className="group relative overflow-hidden rounded-[2rem] bg-slate-900 p-8 text-white shadow-2xl">
+                            <div className="absolute top-0 right-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 bg-indigo-500/20 blur-[80px]" />
+                            <h4 className="relative z-10 mb-2 text-xl font-bold">
+                                Besoin d'aide ?
+                            </h4>
+                            <p className="relative z-10 mb-6 text-xs font-medium text-slate-400">
+                                Consultez la documentation technique du bureau
+                                de change.
+                            </p>
+                            <Button className="relative z-10 w-full rounded-xl bg-white text-[10px] font-black tracking-widest text-slate-900 uppercase hover:bg-slate-100">
+                                Guide Manager
+                            </Button>
+                        </div>
+                    </aside>
 
-                                <div className="group relative overflow-hidden rounded-[2rem] bg-slate-900 p-8 text-white shadow-2xl">
-                                    <div className="absolute top-0 right-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 bg-indigo-500/20 blur-[80px]" />
-                                    <h4 className="relative z-10 mb-2 text-xl font-black">
-                                        Besoin d'aide ?
-                                    </h4>
-                                    <p className="relative z-10 mb-6 text-xs font-medium text-slate-400">
-                                        Consultez la documentation technique du
-                                        bureau de change.
-                                    </p>
-                                    <Button className="relative z-10 w-full rounded-xl bg-white text-[10px] font-black tracking-widest text-slate-900 uppercase hover:bg-slate-100">
-                                        Guide Manager
-                                    </Button>
-                                </div>
+                    {/* Scrollable Content Body (KPI cards + tab content) */}
+                    <main className="flex-1 overflow-y-auto bg-[url('/grid.svg')] bg-[length:40px_40px] px-10 py-10">
+                        <div className="w-full max-w-none space-y-10">
+                            {/* KPI Cards Section */}
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                                <StatsCard
+                                    title="Clients Aujourd'hui"
+                                    value={stats.todayClients}
+                                    subtitle={`${stats.waiting} en attente`}
+                                    icon={Users}
+                                    color="blue"
+                                />
+                                <StatsCard
+                                    title="Volume USD"
+                                    value={`$ ${stats.volumeUSD.toLocaleString()}`}
+                                    icon={TrendingUp}
+                                    color="emerald"
+                                />
+                                <StatsCard
+                                    title="Volume CDF"
+                                    value={`${stats.volumeCDF.toLocaleString()} FC`}
+                                    icon={Landmark}
+                                    color="amber"
+                                />
+                                <StatsCard
+                                    title="Commissions Estimées"
+                                    value={`$ ${stats.commissions.toLocaleString()}`}
+                                    icon={PieChart}
+                                    color="indigo"
+                                />
                             </div>
 
                             {/* Content Display */}
-                            <div className="col-span-12 lg:col-span-9">
-                                <div className="min-h-[600px] overflow-hidden rounded-[2.5rem] border border-white bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
-                                    <div className="p-10">
-                                        {activeTab === 'overview' && (
-                                            <div className="animate-in space-y-8 duration-500 fade-in slide-in-from-bottom-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <h3 className="text-2xl font-black tracking-tight text-slate-800">
-                                                            Performances du{' '}
-                                                            {moment(
-                                                                selectedDate,
-                                                            ).format(
-                                                                'DD/MM/YYYY',
-                                                            )}
-                                                        </h3>
-                                                        <p className="text-sm font-medium text-slate-400">
-                                                            Aperçu des flux
-                                                            financiers et des
-                                                            clients.
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                                    <div className="rounded-3xl border border-slate-100 bg-slate-50 p-7">
-                                                        <h4 className="mb-6 text-sm font-black tracking-wider text-slate-700 uppercase">
-                                                            Répartition des
-                                                            opérations
-                                                        </h4>
-                                                        <BreakdownList
-                                                            items={
-                                                                overviewBreakdowns.operations
-                                                            }
-                                                            color="bg-indigo-500"
-                                                        />
-                                                    </div>
-                                                    <div className="rounded-3xl border border-slate-100 bg-slate-50 p-7">
-                                                        <h4 className="mb-6 text-sm font-black tracking-wider text-slate-700 uppercase">
-                                                            Activité par
-                                                            partenaire
-                                                        </h4>
-                                                        <BreakdownList
-                                                            items={
-                                                                overviewBreakdowns.services
-                                                            }
-                                                            color="bg-emerald-500"
-                                                        />
-                                                    </div>
-                                                </div>
-
+                            <div className="min-h-[600px] overflow-hidden rounded-[2.5rem] border border-white bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+                                <div className="p-10">
+                                    {activeTab === 'overview' && (
+                                        <div className="animate-in space-y-8 duration-500 fade-in slide-in-from-bottom-4">
+                                            <div className="flex items-center justify-between">
                                                 <div>
-                                                    <div className="mb-6 flex items-center justify-between">
-                                                        <h4 className="text-lg font-black tracking-tight text-slate-800">
-                                                            Activités Récentes
-                                                        </h4>
-                                                        <Button
-                                                            variant="ghost"
-                                                            className="font-bold text-indigo-600 hover:bg-indigo-50"
-                                                            onClick={() =>
-                                                                setActiveTab(
-                                                                    'transactions',
-                                                                )
-                                                            }
-                                                        >
-                                                            Voir tout
-                                                        </Button>
-                                                    </div>
-                                                    <TransactionsTable
-                                                        transactions={transactions.slice(
-                                                            0,
-                                                            5,
-                                                        )}
+                                                    <h3 className="text-2xl font-bold tracking-tight text-slate-800">
+                                                        Performances du{' '}
+                                                        {moment(
+                                                            selectedDate,
+                                                        ).format('DD/MM/YYYY')}
+                                                    </h3>
+                                                    <p className="text-sm font-medium text-slate-400">
+                                                        Aperçu des flux
+                                                        financiers et des
+                                                        clients.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                                <div className="rounded-3xl border border-slate-100 bg-slate-50 p-7">
+                                                    <h4 className="mb-6 text-sm font-bold tracking-wider text-slate-700 uppercase">
+                                                        Répartition des
+                                                        opérations
+                                                    </h4>
+                                                    <BreakdownList
+                                                        items={
+                                                            overviewBreakdowns.operations
+                                                        }
+                                                        color="bg-indigo-500"
                                                     />
                                                 </div>
-
-                                                <div className="border-t border-slate-100 pt-8">
-                                                    <div className="mb-6 flex items-center justify-between">
-                                                        <h4 className="text-lg font-black tracking-tight text-slate-800">
-                                                            Mouvements de Caisse
-                                                            Récents
-                                                        </h4>
-                                                        <Button
-                                                            variant="ghost"
-                                                            className="font-bold text-indigo-600 hover:bg-indigo-50"
-                                                            onClick={() =>
-                                                                setActiveTab(
-                                                                    'movements',
-                                                                )
-                                                            }
-                                                        >
-                                                            Voir tout
-                                                        </Button>
-                                                    </div>
-                                                    <CashMovementsTable
-                                                        movements={cashMovements.slice(
-                                                            0,
-                                                            5,
-                                                        )}
+                                                <div className="rounded-3xl border border-slate-100 bg-slate-50 p-7">
+                                                    <h4 className="mb-6 text-sm font-bold tracking-wider text-slate-700 uppercase">
+                                                        Activité par partenaire
+                                                    </h4>
+                                                    <BreakdownList
+                                                        items={
+                                                            overviewBreakdowns.services
+                                                        }
+                                                        color="bg-emerald-500"
                                                     />
                                                 </div>
                                             </div>
-                                        )}
 
-                                        {activeTab === 'transactions' && (
-                                            <div className="animate-in space-y-6 duration-300 fade-in">
-                                                <div className="mb-4 flex items-center justify-between">
-                                                    <h3 className="text-2xl font-black tracking-tight text-slate-800">
-                                                        Journal Complet
-                                                    </h3>
-                                                    <div className="relative w-72">
-                                                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                                        <input
-                                                            placeholder="Filtrer..."
-                                                            className="h-10 w-full rounded-xl border-slate-200 pr-4 pl-10 text-sm focus:ring-indigo-500"
-                                                            value={
-                                                                transactionSearch
-                                                            }
-                                                            onChange={(event) =>
-                                                                setTransactionSearch(
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <TransactionsTable
-                                                    transactions={
-                                                        filteredTransactions
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'movements' && (
-                                            <div className="animate-in space-y-6 duration-300 fade-in">
-                                                <div className="mb-4 flex items-center justify-between">
-                                                    <h3 className="text-2xl font-black tracking-tight text-slate-800">
-                                                        Mouvements Manuels
-                                                        (Ajustements)
-                                                    </h3>
+                                            <div>
+                                                <div className="mb-6 flex items-center justify-between">
+                                                    <h4 className="text-lg font-bold tracking-tight text-slate-800">
+                                                        Activités Récentes
+                                                    </h4>
                                                     <Button
+                                                        variant="ghost"
+                                                        className="font-bold text-indigo-600 hover:bg-indigo-50"
                                                         onClick={() =>
-                                                            setIsMovementDialogOpen(
-                                                                true,
+                                                            setActiveTab(
+                                                                'transactions',
                                                             )
                                                         }
-                                                        disabled={
-                                                            !selectedShopId
+                                                    >
+                                                        Voir tout
+                                                    </Button>
+                                                </div>
+                                                <TransactionsTable
+                                                    transactions={transactions.slice(
+                                                        0,
+                                                        5,
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <div className="border-t border-slate-100 pt-8">
+                                                <div className="mb-6 flex items-center justify-between">
+                                                    <h4 className="text-lg font-bold tracking-tight text-slate-800">
+                                                        Mouvements de Caisse
+                                                        Récents
+                                                    </h4>
+                                                    <Button
+                                                        variant="ghost"
+                                                        className="font-bold text-indigo-600 hover:bg-indigo-50"
+                                                        onClick={() =>
+                                                            setActiveTab(
+                                                                'movements',
+                                                            )
                                                         }
                                                     >
-                                                        <Banknote className="mr-2 h-4 w-4" />
-                                                        Nouvelle entrée ou
-                                                        sortie
+                                                        Voir tout
                                                     </Button>
                                                 </div>
                                                 <CashMovementsTable
-                                                    movements={cashMovements}
+                                                    movements={cashMovements.slice(
+                                                        0,
+                                                        5,
+                                                    )}
                                                 />
                                             </div>
-                                        )}
+                                        </div>
+                                    )}
 
-                                        {activeTab === 'rates' && (
-                                            <div className="animate-in duration-300 fade-in">
-                                                <RatesManager />
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'institutions' && (
-                                            <div className="animate-in duration-300 fade-in">
-                                                <InstitutionManager />
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'users' && (
-                                            <div className="animate-in duration-300 fade-in">
-                                                <UserManagement />
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'clients' && (
-                                            <div className="animate-in space-y-6 duration-300 fade-in">
-                                                <div className="mb-4 flex items-center justify-between">
-                                                    <h3 className="text-2xl font-black tracking-tight text-slate-800">
-                                                        Base de Données Clients
-                                                    </h3>
-                                                    <div className="relative w-72">
-                                                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                                        <input
-                                                            placeholder="Rechercher un client..."
-                                                            className="h-10 w-full rounded-xl border-slate-200 pr-4 pl-10 text-sm focus:ring-indigo-500"
-                                                            value={clientSearch}
-                                                            onChange={(e) =>
-                                                                setClientSearch(
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
+                                    {activeTab === 'transactions' && (
+                                        <div className="animate-in space-y-6 duration-300 fade-in">
+                                            <div className="mb-4 flex items-center justify-between">
+                                                <h3 className="text-2xl font-bold tracking-tight text-slate-800">
+                                                    Journal Complet
+                                                </h3>
+                                                <div className="relative w-72">
+                                                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                                    <input
+                                                        placeholder="Filtrer..."
+                                                        className="h-10 w-full rounded-xl border-slate-200 pr-4 pl-10 text-sm focus:ring-indigo-500"
+                                                        value={
+                                                            transactionSearch
+                                                        }
+                                                        onChange={(event) =>
+                                                            setTransactionSearch(
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                    />
                                                 </div>
-                                                <ClientsTable
-                                                    clients={uniqueClients}
-                                                    isLoading={
-                                                        loadingClients ||
-                                                        (shops.length > 0 &&
-                                                            !selectedShopId)
-                                                    }
-                                                />
                                             </div>
-                                        )}
-
-                                        {activeTab === 'sessions' && (
-                                            <div className="animate-in duration-300 fade-in">
-                                                <SessionManager />
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'logs' && (
-                                            <ActivityLog
-                                                selectedDate={selectedDate}
+                                            <TransactionsTable
+                                                transactions={
+                                                    filteredTransactions
+                                                }
                                             />
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'movements' && (
+                                        <div className="animate-in space-y-6 duration-300 fade-in">
+                                            <div className="mb-4 flex items-center justify-between">
+                                                <h3 className="text-2xl font-bold tracking-tight text-slate-800">
+                                                    Mouvements Manuels
+                                                    (Ajustements)
+                                                </h3>
+                                                <Button
+                                                    onClick={() =>
+                                                        setIsMovementDialogOpen(
+                                                            true,
+                                                        )
+                                                    }
+                                                    disabled={!selectedShopId}
+                                                >
+                                                    <Banknote className="mr-2 h-4 w-4" />
+                                                    Nouvelle entrée ou sortie
+                                                </Button>
+                                            </div>
+                                            <CashMovementsTable
+                                                movements={cashMovements}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'rates' && (
+                                        <div className="animate-in duration-300 fade-in">
+                                            <RatesManager />
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'institutions' && (
+                                        <div className="animate-in duration-300 fade-in">
+                                            <InstitutionManager />
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'users' && (
+                                        <div className="animate-in duration-300 fade-in">
+                                            <UserManagement />
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'clients' && (
+                                        <div className="animate-in space-y-6 duration-300 fade-in">
+                                            <div className="mb-4 flex items-center justify-between">
+                                                <h3 className="text-2xl font-bold tracking-tight text-slate-800">
+                                                    Base de Données Clients
+                                                </h3>
+                                                <div className="relative w-72">
+                                                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                                    <input
+                                                        placeholder="Rechercher un client..."
+                                                        className="h-10 w-full rounded-xl border-slate-200 pr-4 pl-10 text-sm focus:ring-indigo-500"
+                                                        value={clientSearch}
+                                                        onChange={(e) =>
+                                                            setClientSearch(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                            <ClientsTable
+                                                clients={uniqueClients}
+                                                isLoading={
+                                                    loadingClients ||
+                                                    (shops.length > 0 &&
+                                                        !selectedShopId)
+                                                }
+                                            />
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'sessions' && (
+                                        <div className="animate-in duration-300 fade-in">
+                                            <SessionManager />
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'logs' && (
+                                        <ActivityLog
+                                            selectedDate={selectedDate}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </main>
+                    </main>
+                </div>
                 <ManualCashMovementDialog
                     open={isMovementDialogOpen}
                     onOpenChange={setIsMovementDialogOpen}

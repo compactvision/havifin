@@ -49,7 +49,7 @@ export default function ManagerShops() {
                         <div className="h-10 w-[1px] bg-slate-100" />
                         <div className="flex flex-col">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                                <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
                                     Console{' '}
                                     <span className="text-indigo-600">
                                         Manager
@@ -117,7 +117,7 @@ export default function ManagerShops() {
                                             </div>
 
                                             {/* Shop Name */}
-                                            <h3 className="mb-2 text-2xl font-black text-slate-900">
+                                            <h3 className="mb-2 text-2xl font-bold text-slate-900">
                                                 {shop.name}
                                             </h3>
 
@@ -177,7 +177,7 @@ export default function ManagerShops() {
                         <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-slate-100">
                             <Building2 className="h-12 w-12 text-slate-400" />
                         </div>
-                        <h3 className="mb-2 text-2xl font-black text-slate-900">
+                        <h3 className="mb-2 text-2xl font-bold text-slate-900">
                             Aucune boutique assignée
                         </h3>
                         <p className="max-w-md text-slate-600">

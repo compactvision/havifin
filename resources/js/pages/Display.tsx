@@ -175,7 +175,7 @@ export default function Display() {
                     />
                     <h1
                         className={cn(
-                            'text-3xl font-black',
+                            'text-3xl font-bold',
                             isDarkMode ? 'text-slate-200' : 'text-slate-800',
                         )}
                     >
@@ -319,7 +319,7 @@ export default function Display() {
                         <div className="relative z-10 w-full text-center">
                             <h2
                                 className={cn(
-                                    'mb-4 text-sm font-black tracking-[0.3em] uppercase',
+                                    'mb-4 text-sm font-bold tracking-[0.3em] uppercase',
                                     isDarkMode
                                         ? 'text-brand-cyan'
                                         : 'text-brand-blue',

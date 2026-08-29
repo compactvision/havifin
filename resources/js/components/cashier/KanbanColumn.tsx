@@ -31,7 +31,7 @@ export default function KanbanColumn({
                         <Icon className="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 className="text-xl leading-none font-black tracking-tight text-slate-800">
+                        <h3 className="text-xl leading-none font-bold tracking-tight text-slate-800">
                             {title}
                         </h3>
                         <p className="mt-1.5 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">

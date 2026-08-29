@@ -107,7 +107,7 @@ export default function RatesManager() {
                         <ArrowRightLeft className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                        <h4 className="text-sm font-black tracking-tight text-slate-800 uppercase">
+                        <h4 className="text-sm font-bold tracking-tight text-slate-800 uppercase">
                             Marché des Devises
                         </h4>
                         <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
@@ -145,7 +145,7 @@ export default function RatesManager() {
                         <div className="relative rounded-[2rem] bg-slate-900 p-8 text-white shadow-2xl">
                             <div className="pointer-events-none absolute top-0 right-0 h-64 w-64 bg-indigo-500/10 blur-[100px]" />
 
-                            <h5 className="mb-8 flex items-center gap-3 text-xl font-black tracking-tight">
+                            <h5 className="mb-8 flex items-center gap-3 text-xl font-bold tracking-tight">
                                 <Plus className="h-6 w-6 text-indigo-400" />
                                 Nouvelle Configuration
                             </h5>

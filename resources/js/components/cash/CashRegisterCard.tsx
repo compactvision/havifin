@@ -24,7 +24,7 @@ export default function CashRegisterCard({
             {/* Header */}
             <div className="mb-6 flex items-start justify-between">
                 <div>
-                    <h3 className="text-xl font-black text-slate-900">
+                    <h3 className="text-xl font-bold text-slate-900">
                         {register.name}
                     </h3>
                     <p className="text-sm text-slate-500">
