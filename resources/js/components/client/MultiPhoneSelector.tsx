@@ -72,7 +72,7 @@ export default function MultiPhoneSelector({
                                 {p.phone_number}
                             </span>
                             {p.is_primary && (
-                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black tracking-wider text-blue-500/60 uppercase">
+                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-black tracking-wider text-blue-700 uppercase">
                                     Principal
                                 </span>
                             )}
