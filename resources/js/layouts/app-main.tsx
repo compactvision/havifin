@@ -103,7 +103,9 @@ export default function AppMain({ children, currentPageName }: any) {
         return navigation.filter((item) => item.name === 'Client');
     }, [userRole]);
 
-    const hideNav = currentPageName === 'Display' && userRole !== 'manager';
+    const hideNav =
+        (currentPageName === 'Display' && userRole !== 'manager') ||
+        (currentPageName === 'Client' && userRole === 'client');
 
     return (
         <div className="brand-canvas min-h-screen font-sans text-brand-dark selection:bg-brand-blue selection:text-white">

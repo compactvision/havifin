@@ -50,7 +50,7 @@ export default function OperationSelector({
     onSelect: (id: string) => void;
 }) {
     return (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
             {operations.map((op) => {
                 const Icon = op.icon;
                 const isSelected = selectedOperation === op.id;
@@ -62,7 +62,7 @@ export default function OperationSelector({
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onSelect(op.id)}
                         className={cn(
-                            'group relative overflow-hidden rounded-[40px] border-4 p-8 text-center transition-all duration-300',
+                            'group relative overflow-hidden rounded-[28px] border-4 p-4 text-center transition-all duration-300 sm:rounded-[40px] sm:p-8',
                             isSelected
                                 ? 'border-blue-500 bg-white shadow-2xl shadow-blue-500/20'
                                 : 'border-slate-50 bg-slate-50/50 hover:border-slate-200 hover:bg-white hover:shadow-xl',
@@ -81,17 +81,17 @@ export default function OperationSelector({
 
                         <div
                             className={cn(
-                                'mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br shadow-lg transition-transform group-hover:rotate-6',
+                                'mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg transition-transform group-hover:rotate-6 sm:mb-6 sm:h-20 sm:w-20 sm:rounded-[28px]',
                                 op.color,
                                 isSelected ? 'scale-110' : '',
                             )}
                         >
-                            <Icon className="h-10 w-10 text-white" />
+                            <Icon className="h-7 w-7 text-white sm:h-10 sm:w-10" />
                         </div>
 
                         <h3
                             className={cn(
-                                'mb-2 text-xl font-bold transition-colors',
+                                'mb-1 text-base font-bold transition-colors sm:mb-2 sm:text-xl',
                                 isSelected
                                     ? 'text-slate-900'
                                     : 'text-slate-700',
@@ -100,7 +100,7 @@ export default function OperationSelector({
                             {op.name}
                         </h3>
 
-                        <p className="text-sm font-medium text-slate-400 group-hover:text-slate-500">
+                        <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 sm:text-sm">
                             {op.description}
                         </p>
 
