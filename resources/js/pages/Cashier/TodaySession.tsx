@@ -283,7 +283,10 @@ export default function CashierTodaySession() {
                                     href="/cashier"
                                     className="w-full md:w-auto"
                                 >
-                                    <Button className="h-14 w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 text-lg font-bold text-white shadow-xl shadow-indigo-500/30 transition-all hover:scale-105 hover:shadow-indigo-500/50 active:scale-95 md:w-auto">
+                                    <Button
+                                        variant="ghost"
+                                        className="h-14 w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 text-lg font-bold text-white shadow-xl shadow-indigo-500/30 transition-all hover:scale-105 hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 hover:text-white hover:shadow-indigo-500/50 active:scale-95 md:w-auto"
+                                    >
                                         Accéder au Guichet (Transacter)
                                         <ArrowRight className="ml-2 h-5 w-5" />
                                     </Button>

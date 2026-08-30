@@ -11,9 +11,9 @@
 
 @theme {
     --font-sans:
-        'Avenir Next', 'Century Gothic', 'Trebuchet MS', ui-sans-serif,
-        system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+        'Avenir Next', -apple-system, 'Segoe UI', ui-sans-serif, system-ui,
+        'Century Gothic', 'Trebuchet MS', sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -182,7 +182,7 @@
     .brand-title {
         font-family:
             'Avenir Next', 'Century Gothic', 'Trebuchet MS', sans-serif;
-        font-weight: 800;
+        font-weight: 700;
         letter-spacing: -0.045em;
     }
 

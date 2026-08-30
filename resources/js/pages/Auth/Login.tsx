@@ -95,7 +95,7 @@ export default function Login({ twoFactorChallenge = false }: LoginProps) {
                             />
                         </div>
                         <div>
-                            <p className="text-2xl font-black tracking-tight">
+                            <p className="text-2xl font-bold tracking-tight">
                                 havifin
                             </p>
                             <p className="text-xs font-bold tracking-[0.24em] text-cyan-200 uppercase">
@@ -110,7 +110,7 @@ export default function Login({ twoFactorChallenge = false }: LoginProps) {
                         transition={{ duration: 0.7 }}
                         className="relative z-10 max-w-2xl"
                     >
-                        <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black tracking-[0.18em] uppercase backdrop-blur-xl">
+                        <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold tracking-[0.18em] uppercase backdrop-blur-xl">
                             <Sparkles className="h-4 w-4 text-brand-cyan" />
                             Votre argent entre de bonnes mains
                         </div>
@@ -129,14 +129,14 @@ export default function Login({ twoFactorChallenge = false }: LoginProps) {
                         <div className="mt-9 flex flex-wrap gap-3">
                             <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-xl">
                                 <Zap className="mb-2 h-5 w-5 text-brand-pink" />
-                                <p className="text-sm font-black">Instantané</p>
+                                <p className="text-sm font-bold">Instantané</p>
                                 <p className="text-xs text-white/55">
                                     Données en temps réel
                                 </p>
                             </div>
                             <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-xl">
                                 <ShieldCheck className="mb-2 h-5 w-5 text-brand-cyan" />
-                                <p className="text-sm font-black">Sécurisé</p>
+                                <p className="text-sm font-bold">Sécurisé</p>
                                 <p className="text-xs text-white/55">
                                     Accès par rôle
                                 </p>
@@ -173,10 +173,10 @@ export default function Login({ twoFactorChallenge = false }: LoginProps) {
                                 />
                             </div>
                             <div>
-                                <p className="text-xl font-black text-brand-blue">
+                                <p className="text-xl font-bold text-brand-blue">
                                     havifin
                                 </p>
-                                <p className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                                <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                                     Finance en mouvement
                                 </p>
                             </div>
@@ -314,12 +314,12 @@ function Field({
 }) {
     return (
         <div className="space-y-2">
-            <Label className="ml-1 text-xs font-black tracking-wide text-slate-700">
+            <Label className="ml-1 text-xs font-semibold tracking-wide text-slate-700">
                 {label}
             </Label>
             <div className="relative">{children}</div>
             {error && (
-                <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-bold text-red-600">
+                <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
                     <AlertCircle className="h-4 w-4" />
                     {error}
                 </div>

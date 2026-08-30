@@ -420,7 +420,7 @@ export default function ClientForm() {
                             <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/20 bg-gradient-to-br from-brand-cyan/20 to-brand-purple/20 shadow-xl shadow-brand-purple/20 backdrop-blur-xl transition-transform group-hover:scale-110">
                                 <Phone className="h-12 w-12 text-brand-dark transition-transform group-hover:rotate-12" />
                             </div>
-                            <h2 className="text-4xl font-bold tracking-tight text-slate-800 drop-shadow-sm">
+                            <h2 className="text-4xl font-semibold tracking-tight text-slate-800 drop-shadow-sm">
                                 {showRegistration
                                     ? 'Nouvelle Inscription'
                                     : 'Bienvenue chez Havifin'}
@@ -452,8 +452,8 @@ export default function ClientForm() {
                                                     .slice(0, 10),
                                             })
                                         }
-                                        placeholder="Entrez votre numéro (10 chiffres)"
-                                        className="relative h-20 rounded-[24px] border-2 border-white/30 bg-white/40 text-center font-mono text-2xl font-black text-slate-900 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl transition-all placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30"
+                                        placeholder="Entrez votre numéro"
+                                        className="relative h-20 rounded-[24px] border-2 border-white/30 bg-white/40 text-center font-mono text-4xl font-bold text-slate-900 shadow-2xl shadow-purple-500/20 backdrop-blur-2xl transition-all placeholder:text-lg placeholder:font-medium placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-cyan-400/30 md:text-4xl"
                                         autoFocus
                                         disabled={isVerifying}
                                     />
@@ -1408,12 +1408,14 @@ export default function ClientForm() {
                 <div className="relative z-10 flex w-full flex-1 flex-col overflow-hidden px-4 pb-4">
                     {/* Compact Header */}
                     <div className="flex shrink-0 items-center justify-between py-4">
-                        <div className="flex items-center gap-4 rounded-full bg-white/10 px-6 py-2 backdrop-blur-md">
-                            <img
-                                src="/logo.png"
-                                alt="Havifin"
-                                className="h-10 w-10 object-contain"
-                            />
+                        <div className="flex items-center gap-4 rounded-2xl bg-white/10 px-6 py-2 backdrop-blur-md">
+                            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg">
+                                <img
+                                    src="/havifin-icon.png"
+                                    alt="Havifin"
+                                    className="h-full w-full object-contain p-1.5"
+                                />
+                            </div>
                             <div>
                                 <h1 className="text-xl font-bold tracking-tight text-white uppercase">
                                     Havifin
@@ -1446,6 +1448,7 @@ export default function ClientForm() {
                                             </Button>
                                         )}
                                         <Button
+                                            variant="ghost"
                                             onClick={handleNext}
                                             disabled={
                                                 !canProceed() ||
@@ -1454,7 +1457,7 @@ export default function ClientForm() {
                                                 isVerifying
                                             }
                                             size="lg"
-                                            className="h-16 rounded-3xl border border-white/30 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 px-16 text-xl font-bold text-white shadow-2xl shadow-cyan-500/30 backdrop-blur-xl transition-all hover:scale-[1.02] hover:border-white/50 hover:shadow-cyan-500/50 active:scale-[0.98]"
+                                            className="h-16 rounded-3xl border border-white/30 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 px-16 text-xl font-bold text-white shadow-2xl shadow-cyan-500/30 backdrop-blur-xl transition-all hover:scale-[1.02] hover:border-white/50 hover:bg-gradient-to-r hover:from-cyan-500 hover:via-blue-600 hover:to-purple-600 hover:text-white hover:shadow-cyan-500/50 active:scale-[0.98]"
                                         >
                                             {createClientMutation.isPending ||
                                             registerMutation.isPending ? (

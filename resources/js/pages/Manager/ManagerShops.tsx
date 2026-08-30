@@ -149,7 +149,10 @@ export default function ManagerShops() {
                                             </div>
 
                                             {/* Action Button */}
-                                            <Button className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:shadow-xl hover:shadow-indigo-500/40">
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 hover:text-white hover:shadow-xl hover:shadow-indigo-500/40"
+                                            >
                                                 Gérer cette boutique
                                                 <ArrowRight className="ml-2 h-4 w-4" />
                                             </Button>
