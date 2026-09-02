@@ -18,7 +18,11 @@ class ClientController extends Controller
         $query = Client::query()->whereIn('shop_id', $allowedShopIds);
 
         if ($request->has('status')) {
-            $query->where('status', $request->status);
+            $statuses = is_array($request->status)
+                ? $request->status
+                : explode(',', (string) $request->status);
+
+            $query->whereIn('status', $statuses);
         }
 
         if ($request->filled('cashier_id')) {

@@ -49,6 +49,7 @@ export default function ClientCard({
     const [isExpanded, setIsExpanded] = React.useState(false);
     const isCalled = client.status === 'called';
     const isCompleted = client.status === 'completed';
+    const isCancelled = client.status === 'cancelled';
     const isWaiting = client.status === 'waiting';
 
     // Auto-expand if called
@@ -69,7 +70,9 @@ export default function ClientCard({
                     ? 'rounded-[2rem] border-blue-500/30 bg-white p-5 shadow-xl ring-1 shadow-blue-500/5 ring-blue-50'
                     : isCompleted
                       ? 'rounded-2xl border border-l-4 border-slate-200 border-l-emerald-400 bg-white p-3 shadow-sm hover:shadow-md'
-                      : 'rounded-2xl border-slate-200 bg-white p-3 shadow-sm hover:border-blue-300 hover:shadow-md',
+                      : isCancelled
+                        ? 'rounded-2xl border border-l-4 border-slate-200 border-l-red-400 bg-white p-3 opacity-75 shadow-sm hover:opacity-100 hover:shadow-md'
+                        : 'rounded-2xl border-slate-200 bg-white p-3 shadow-sm hover:border-blue-300 hover:shadow-md',
             )}
         >
             {/* Header / Ticket Badge - Compact View */}
@@ -287,14 +290,23 @@ export default function ClientCard({
                 )}
             </AnimatePresence>
 
-            {/* Completed Footer */}
-            {isCompleted && (
+            {/* Completed / Cancelled Footer */}
+            {(isCompleted || isCancelled) && (
                 <div className="mt-2 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1 text-[9px] font-semibold tracking-widest text-emerald-600 uppercase">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Terminé
+                    <div
+                        className={cn(
+                            'flex items-center gap-1 text-[9px] font-semibold tracking-widest uppercase',
+                            isCompleted ? 'text-emerald-600' : 'text-red-500',
+                        )}
+                    >
+                        {isCompleted ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                        ) : (
+                            <XCircle className="h-3 w-3" />
+                        )}
+                        {isCompleted ? 'Terminé' : 'Annulé'}
                     </div>
-                    {onReprint && (
+                    {isCompleted && onReprint && (
                         <Button
                             variant="ghost"
                             size="icon"
@@ -314,6 +326,11 @@ export default function ClientCard({
                         </Button>
                     )}
                 </div>
+            )}
+            {isCancelled && client.notes && (
+                <p className="mt-1.5 truncate text-[10px] font-medium text-slate-400 italic">
+                    Motif : {client.notes}
+                </p>
             )}
 
             {/* Background Decor for Called */}
