@@ -64,8 +64,8 @@ export default function Cashier() {
         queryKey: ['clients', 'completed'],
         queryFn: () =>
             base44.entities.Client.filter(
-                { status: 'completed' },
-                '-completed_at',
+                { status: 'completed,cancelled' as Client['status'] },
+                '-created_date',
                 20,
             ),
         refetchInterval: 10000,
@@ -130,9 +130,16 @@ export default function Cashier() {
     });
 
     const cancelMutation = useMutation({
-        mutationFn: async (client: Client) => {
+        mutationFn: async ({
+            client,
+            reason,
+        }: {
+            client: Client;
+            reason: string;
+        }) => {
             await base44.entities.Client.update(client.id, {
                 status: 'cancelled',
+                notes: reason || undefined,
             });
             return client;
         },
@@ -164,12 +171,16 @@ export default function Cashier() {
     const handleRecall = (client: Client) => recallMutation.mutate(client);
     const handleCancel = (client: Client) => {
         if (
-            window.confirm(
+            !window.confirm(
                 `Annuler le ticket ${client.ticket_number} ? Cette action est irréversible.`,
             )
         ) {
-            cancelMutation.mutate(client);
+            return;
         }
+        const reason = (
+            window.prompt("Motif de l'annulation (optionnel) :", '') || ''
+        ).trim();
+        cancelMutation.mutate({ client, reason });
     };
     const handleReturnToWaiting = (client: Client) =>
         returnToWaitingMutation.mutate(client);
