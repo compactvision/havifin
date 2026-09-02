@@ -2,6 +2,7 @@
 /bootstrap/ssr
 /node_modules
 /print-server/node_modules
+/print-server/print-bridge.log
 !public/build
 /public/hot
 /public/storage
