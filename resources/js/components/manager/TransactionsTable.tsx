@@ -1,6 +1,13 @@
 import { Transaction } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
-import { ArrowDownLeft, ArrowUpRight, Clock, Hash, User } from 'lucide-react';
+import {
+    ArrowDownLeft,
+    ArrowUpRight,
+    Clock,
+    Download,
+    Hash,
+    User,
+} from 'lucide-react';
 import moment from 'moment';
 
 interface TransactionsTableProps {
@@ -43,6 +50,9 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                         </th>
                         <th className="px-6 py-4 text-right font-black">
                             Date / Heure
+                        </th>
+                        <th className="px-6 py-4 text-right font-black">
+                            Reçu
                         </th>
                     </tr>
                 </thead>
@@ -120,7 +130,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                                     ).toLocaleString()}
                                 </span>
                             </td>
-                            <td className="rounded-r-2xl border-y border-r border-slate-100 px-6 py-5 text-right group-hover:border-indigo-100">
+                            <td className="border-y border-slate-100 px-6 py-5 text-right group-hover:border-indigo-100">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-black text-slate-700">
                                         {moment(tx.created_date).format(
@@ -134,6 +144,17 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                                         )}
                                     </span>
                                 </div>
+                            </td>
+                            <td className="rounded-r-2xl border-y border-r border-slate-100 px-6 py-5 text-right group-hover:border-indigo-100">
+                                <a
+                                    href={`/api/transactions/${tx.id}/receipt`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title="Télécharger le reçu"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-colors hover:bg-indigo-600 hover:text-white"
+                                >
+                                    <Download className="h-4 w-4" />
+                                </a>
                             </td>
                         </tr>
                     ))}

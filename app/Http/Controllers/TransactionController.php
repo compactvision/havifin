@@ -8,6 +8,7 @@ use App\Models\ExchangeRate;
 use App\Models\Session;
 use App\Models\Transaction;
 use App\Services\CashService;
+use App\Services\OperationNotificationService;
 use App\Support\TenantAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +18,10 @@ class TransactionController extends Controller
 {
     protected $cashService;
 
-    public function __construct(CashService $cashService)
-    {
+    public function __construct(
+        CashService $cashService,
+        protected OperationNotificationService $notifications,
+    ) {
         $this->cashService = $cashService;
     }
 
@@ -261,6 +264,10 @@ class TransactionController extends Controller
         } catch (InvalidArgumentException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }
+
+        // Best-effort: never let a notification failure affect the response
+        // the cashier just waited on for their transaction.
+        $this->notifications->notify($transaction);
 
         return response()->json($transaction, 201);
     }
