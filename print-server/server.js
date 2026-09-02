@@ -3,6 +3,20 @@ import express from 'express';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
+
+// escpos-usb (3.0.0-alpha) still calls the legacy `usb.on('detach', ...)` API,
+// which usb@2 moved onto the nested `usb.usb` emitter. Bridge the two on the
+// cached module object before escpos-usb requires it, otherwise every print
+// throws "usb.on is not a function" *after* the printer was already found.
+const usbLib = require('usb');
+if (typeof usbLib.on !== 'function' && usbLib.usb) {
+    for (const method of ['on', 'once', 'off', 'removeListener', 'emit']) {
+        if (typeof usbLib.usb[method] === 'function') {
+            usbLib[method] = usbLib.usb[method].bind(usbLib.usb);
+        }
+    }
+}
+
 const UsbPrinter = require('escpos-usb');
 const iconv = require('iconv-lite');
 
@@ -19,6 +33,24 @@ const allowedOrigins = (
 const requestLog = new Map();
 
 // Middlewares
+
+// Logs every hit so a failing print can be told apart from a request that
+// never reached the bridge at all (a kiosk pointed at the wrong host sees
+// "connection refused" and leaves no trace here).
+//
+// The kiosk page is also served from a normal domain while posting to
+// 127.0.0.1: Chrome's Private Network Access check blocks that unless the
+// preflight is answered with this header.
+app.use((req, res, next) => {
+    console.log(
+        `[${new Date().toISOString()}] ${req.method} ${req.path} from origin=${req.headers.origin || '-'} ip=${req.ip}`,
+    );
+    if (req.headers['access-control-request-private-network']) {
+        res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
+    next();
+});
+
 app.use(
     cors({
         origin(origin, callback) {
