@@ -65,7 +65,7 @@ export default function HelpModal({
                         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/20">
                             <AlertTriangle className="h-8 w-8 text-amber-500" />
                         </div>
-                        <DialogTitle className="text-3xl font-black tracking-tight">
+                        <DialogTitle className="text-3xl font-bold tracking-tight">
                             Besoin d'aide ?
                         </DialogTitle>
                         <DialogDescription className="text-lg font-medium text-slate-400">
@@ -75,7 +75,7 @@ export default function HelpModal({
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <label className="ml-1 text-xs font-black tracking-widest text-slate-500 uppercase">
+                            <label className="ml-1 text-xs font-bold tracking-widest text-slate-500 uppercase">
                                 Message d'urgence
                             </label>
                             <Textarea
@@ -90,7 +90,7 @@ export default function HelpModal({
                             <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 p-4">
                                 <AlertCircle className="h-5 w-5 text-slate-400" />
                                 <div>
-                                    <div className="text-[10px] font-black tracking-wider text-slate-500 uppercase">
+                                    <div className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">
                                         Client associé
                                     </div>
                                     <div className="text-sm font-bold">
@@ -114,7 +114,7 @@ export default function HelpModal({
                                 disabled={
                                     mutation.isPending || !description.trim()
                                 }
-                                className="h-14 flex-[2] rounded-2xl bg-amber-500 text-lg font-black text-black shadow-lg shadow-amber-500/20 hover:bg-amber-600"
+                                className="h-14 flex-[2] rounded-2xl bg-amber-500 text-lg font-bold text-black shadow-lg shadow-amber-500/20 hover:bg-amber-600"
                             >
                                 {mutation.isPending ? (
                                     <motion.div

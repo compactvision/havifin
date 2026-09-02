@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ExchangeRateHistoryController;
 use App\Http\Controllers\Api\HelpRequestController;
 use App\Http\Controllers\Api\InstitutionController;
 use App\Http\Controllers\Api\NewsController;
+use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\UserController;
@@ -77,6 +78,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::middleware('role:cashier,manager')->group(function () {
         Route::apiResource('clients', ClientController::class)->only(['index', 'show', 'update']);
         Route::apiResource('transactions', TransactionController::class)->only(['index']);
+        Route::get('/transactions/{transaction}/receipt', [ReceiptController::class, 'show']);
     });
     Route::post('/transactions', [TransactionController::class, 'store'])
         ->middleware('role:cashier');

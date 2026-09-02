@@ -18,7 +18,7 @@ export default function KanbanColumn({
     children,
 }: KanbanColumnProps) {
     return (
-        <div className="flex h-full max-w-[450px] min-w-[320px] flex-1 flex-col">
+        <div className="flex h-full min-w-[320px] flex-1 flex-col">
             {/* Column Header */}
             <div className="mb-6 flex items-center justify-between px-1">
                 <div className="flex items-center gap-3">
@@ -34,12 +34,12 @@ export default function KanbanColumn({
                         <h3 className="text-xl leading-none font-bold tracking-tight text-slate-800">
                             {title}
                         </h3>
-                        <p className="mt-1.5 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+                        <p className="mt-1.5 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                             {count} {count > 1 ? 'Clients' : 'Client'}
                         </p>
                     </div>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-sm font-black text-slate-400 shadow-inner">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-sm font-bold text-slate-400 shadow-inner">
                     {count}
                 </div>
             </div>

@@ -327,7 +327,7 @@ export default function ProcessModal({
                 <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <span className="text-2xl font-black text-slate-800">
+                            <span className="text-2xl font-bold text-slate-800">
                                 {client.ticket_number}
                             </span>
                             <span
@@ -534,7 +534,7 @@ export default function ProcessModal({
                                                         ? 'à remettre'
                                                         : 'à recevoir'}
                                                 </div>
-                                                <div className="mt-1 text-2xl font-black text-indigo-700">
+                                                <div className="mt-1 text-2xl font-bold text-indigo-700">
                                                     {secondarySettlementAmount.toLocaleString(
                                                         undefined,
                                                         {
@@ -592,7 +592,7 @@ export default function ProcessModal({
                                                     A rendre au client
                                                 </span>
                                             </div>
-                                            <div className="text-2xl font-black text-yellow-600">
+                                            <div className="text-2xl font-bold text-yellow-600">
                                                 {calculatedAmount.toLocaleString()}{' '}
                                                 {formData.currency_from}
                                             </div>
@@ -676,7 +676,7 @@ export default function ProcessModal({
                                     <div className="mb-1 font-bold text-amber-700">
                                         Montant à remettre
                                     </div>
-                                    <div className="text-3xl font-black text-amber-600">
+                                    <div className="text-3xl font-bold text-amber-600">
                                         {calculatedAmount.toLocaleString()}{' '}
                                         {formData.currency_to}
                                     </div>

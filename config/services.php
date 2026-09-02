@@ -35,4 +35,25 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Driver-based so the provider can be swapped from .env without code
+    | changes. Set WHATSAPP_DRIVER=none to disable sending entirely (default,
+    | safe with no credentials configured) or "ultramsg" once an UltraMsg
+    | instance is provisioned.
+    |
+    */
+
+    'whatsapp' => [
+        'driver' => env('WHATSAPP_DRIVER', 'none'),
+
+        'ultramsg' => [
+            'instance_id' => env('WHATSAPP_ULTRAMSG_INSTANCE_ID'),
+            'token' => env('WHATSAPP_ULTRAMSG_TOKEN'),
+        ],
+    ],
+
 ];

@@ -5,6 +5,7 @@ import KanbanColumn from '@/components/cashier/KanbanColumn';
 import ProcessModal from '@/components/cashier/ProcessModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { usePrinter } from '@/hooks/usePrinter';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
 import { Head, usePage } from '@inertiajs/react';
@@ -19,6 +20,7 @@ import {
     UserCircle,
     Users,
 } from 'lucide-react';
+import moment from 'moment';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -29,8 +31,10 @@ export default function Cashier() {
     const [helpModalOpen, setHelpModalOpen] = useState(false);
     const [helpClient, setHelpClient] = useState<Client | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [reprintingId, setReprintingId] = useState<number | null>(null);
 
     const queryClient = useQueryClient();
+    const { printTicket } = usePrinter();
 
     // Data Fetching
     const { data: waitingClients = [] } = useQuery({
@@ -125,8 +129,50 @@ export default function Cashier() {
         },
     });
 
+    const cancelMutation = useMutation({
+        mutationFn: async (client: Client) => {
+            await base44.entities.Client.update(client.id, {
+                status: 'cancelled',
+            });
+            return client;
+        },
+        onSuccess: (client) => {
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            toast.success(`Ticket ${client.ticket_number} annulé`);
+        },
+    });
+
+    const returnToWaitingMutation = useMutation({
+        mutationFn: async (client: Client) => {
+            await base44.entities.Client.update(client.id, {
+                status: 'waiting',
+                called_at: null,
+                cashier_id: null,
+                counter_number: null,
+            });
+            return client;
+        },
+        onSuccess: (client) => {
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            toast.success(
+                `Ticket ${client.ticket_number} remis en file d'attente`,
+            );
+        },
+    });
+
     const handleCall = (client: Client) => callMutation.mutate(client);
     const handleRecall = (client: Client) => recallMutation.mutate(client);
+    const handleCancel = (client: Client) => {
+        if (
+            window.confirm(
+                `Annuler le ticket ${client.ticket_number} ? Cette action est irréversible.`,
+            )
+        ) {
+            cancelMutation.mutate(client);
+        }
+    };
+    const handleReturnToWaiting = (client: Client) =>
+        returnToWaitingMutation.mutate(client);
     const handleProcess = (client: Client) => {
         setSelectedClient(client);
         setProcessModalOpen(true);
@@ -134,6 +180,28 @@ export default function Cashier() {
     const handleHelp = (client: Client) => {
         setHelpClient(client);
         setHelpModalOpen(true);
+    };
+
+    const handleReprint = async (client: Client) => {
+        setReprintingId(client.id);
+        await printTicket({
+            shopName: auth?.user?.shop || 'Havifin',
+            address: `Caisse: ${auth?.user?.name || 'Agence Havifin'}`,
+            reference: client.ticket_number,
+            date: moment(client.completed_at || client.created_date).format(
+                'DD/MM/YYYY HH:mm',
+            ),
+            amount: client.amount != null ? String(client.amount) : undefined,
+            currency: client.currency_to,
+            items: [
+                {
+                    name: `Op: ${client.operation_type}`,
+                    amount:
+                        client.amount != null ? String(client.amount) : '0',
+                },
+            ],
+        });
+        setReprintingId(null);
     };
 
     const handleRefresh = () => {
@@ -147,20 +215,20 @@ export default function Cashier() {
             <div className="flex flex-col overflow-hidden bg-slate-50">
                 {/* Dashboard Header */}
                 <header className="z-20 flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3">
                         <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="relative flex h-16 w-36 items-center justify-center px-4"
+                            whileHover={{ scale: 1.05 }}
+                            className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center"
                         >
                             <img
-                                src="/logo-color.png"
+                                src="/havifin-icon.png"
                                 alt="Havifin"
                                 className="h-full w-full object-contain"
                             />
                         </motion.div>
                         <div className="h-10 w-[1px] bg-slate-100" />
                         <div className="hidden md:block">
-                            <h1 className="text-lg font-bold tracking-tighter text-slate-800 uppercase">
+                            <h1 className="text-lg leading-tight font-bold tracking-tighter text-slate-800 uppercase">
                                 Terminal{' '}
                                 <span className="text-brand-blue">Caisse</span>
                             </h1>
@@ -201,7 +269,7 @@ export default function Cashier() {
                                 <UserCircle className="h-6 w-6" />
                             </div>
                             <div>
-                                <div className="text-[10px] font-black tracking-wider text-slate-400 uppercase">
+                                <div className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                                     {auth.user.role}{' '}
                                     {auth.user.shop
                                         ? `• ${auth.user.shop}`
@@ -228,7 +296,7 @@ export default function Cashier() {
 
                 {/* Kanban Board Container */}
                 <main className="flex-1 overflow-x-auto overflow-y-hidden bg-[url('/grid.svg')] bg-[length:40px_40px] bg-fixed px-10 py-8">
-                    <div className="flex h-full min-w-max gap-10 pb-4">
+                    <div className="flex h-full w-full min-w-max gap-10 pb-4">
                         {/* Column: Waiting */}
                         <KanbanColumn
                             title="Clients en Attente"
@@ -242,6 +310,7 @@ export default function Cashier() {
                                         key={client.id}
                                         client={client}
                                         onCall={handleCall}
+                                        onCancel={handleCancel}
                                         isProcessing={
                                             callMutation.isPending &&
                                             callMutation.variables?.id ===
@@ -275,6 +344,10 @@ export default function Cashier() {
                                         onRecall={handleRecall}
                                         onProcess={handleProcess}
                                         onHelp={handleHelp}
+                                        onCancel={handleCancel}
+                                        onReturnToWaiting={
+                                            handleReturnToWaiting
+                                        }
                                     />
                                 ))}
                             </AnimatePresence>
@@ -300,6 +373,10 @@ export default function Cashier() {
                                     <ClientCard
                                         key={client.id}
                                         client={client}
+                                        onReprint={handleReprint}
+                                        isReprinting={
+                                            reprintingId === client.id
+                                        }
                                     />
                                 ))}
                             </AnimatePresence>

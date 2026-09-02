@@ -191,6 +191,22 @@ class ClientController extends Controller
             );
         }
 
+        // Each ticket is its own Client row, so a returning customer's email
+        // (collected once at registration) doesn't carry over automatically.
+        // Backfill it from their most recent ticket that has one, so the
+        // end-of-operation notification can actually reach them.
+        if (empty($validated['email']) && ! empty($validated['phone'])) {
+            $knownEmail = Client::where('phone', $validated['phone'])
+                ->where('owner_id', $validated['owner_id'])
+                ->whereNotNull('email')
+                ->latest('id')
+                ->value('email');
+
+            if ($knownEmail) {
+                $validated['email'] = $knownEmail;
+            }
+        }
+
         $client = DB::transaction(function () use ($validated, $activeSession) {
             Session::whereKey($activeSession->id)->lockForUpdate()->firstOrFail();
             $nextNumber = Client::where('session_id', $activeSession->id)->count() + 1;
