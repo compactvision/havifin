@@ -74,6 +74,31 @@ Pour retirer le démarrage automatique :
 powershell -ExecutionPolicy Bypass -File .\uninstall-autostart.ps1
 ```
 
+### Connexion automatique de session
+
+La tâche planifiée démarre à l’ouverture d’une session Windows — elle n’ouvre
+aucune session elle-même. Sur un kiosque, quelqu’un doit donc soit se
+connecter manuellement à chaque redémarrage, soit configurer Windows pour se
+connecter tout seul.
+
+Utilisez **[Sysinternals Autologon](https://learn.microsoft.com/sysinternals/downloads/autologon)**
+(outil officiel signé par Microsoft) plutôt qu’un réglage manuel du registre :
+il chiffre le mot de passe en secret LSA au lieu de le laisser en clair dans
+`HKLM`, lisible par n’importe quel administrateur de la machine.
+
+1. Téléchargez `Autologon64.exe` (ou `Autologon.exe` en 32 bits) depuis le lien
+   ci-dessus et lancez-le — aucune installation requise.
+2. Acceptez la licence, puis renseignez nom d’utilisateur, domaine (ou nom de
+   la machine si compte local) et mot de passe du compte utilisé pour la
+   tâche planifiée ci-dessus.
+3. Cliquez **Enable**. Autologon vérifie le mot de passe avant de l’enregistrer.
+4. Redémarrez pour confirmer : la session doit s’ouvrir seule, puis le pont
+   doit apparaître dans `Get-ScheduledTask -TaskName HavifinPrintBridge` avec
+   `LastTaskResult = 0`.
+
+Pour désactiver, relancez Autologon et cliquez **Disable** — ne supprimez pas
+la clé à la main, l’outil nettoie aussi le secret LSA associé.
+
 ### Vérifier que le pont tourne
 
 ```powershell
