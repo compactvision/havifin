@@ -134,11 +134,16 @@ export default function TicketSuccess({
                     Réimprimer
                 </Button>
 
+                {/* Thermal printing goes through the local bridge, so this
+                    markup is only the browser-print (Ctrl+P) fallback that
+                    resources/css/app.css styles under @media print. */}
                 {ticketNumber && (
-                    <PrintableTicket
-                        ticketNumber={ticketNumber}
-                        waitingAhead={waitingAhead}
-                    />
+                    <div className="hidden print:block">
+                        <PrintableTicket
+                            ticketNumber={ticketNumber}
+                            waitingAhead={waitingAhead}
+                        />
+                    </div>
                 )}
             </motion.div>
         </motion.div>
