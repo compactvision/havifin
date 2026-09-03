@@ -179,23 +179,24 @@ export default function ManagerShops() {
 
                 {/* Shop Grid */}
                 {myShops && myShops.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {myShops.map((shop, index) => (
                             <motion.div
                                 key={shop.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
+                                className="h-full"
                             >
                                 {/* Not wrapped in a Link: the day actions
                                     below are buttons, and nesting them inside
                                     an anchor makes every click navigate. */}
-                                    <div className="group relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white py-8 px-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10">
+                                    <div className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/60 bg-white py-8 px-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10">
                                         {/* Gradient Background */}
                                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                                         {/* Content */}
-                                        <div className="relative z-10">
+                                        <div className="relative z-10 flex h-full flex-col">
                                             {/* Icon */}
                                             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
                                                 <Building2 className="h-8 w-8 text-white" />
@@ -263,49 +264,72 @@ export default function ManagerShops() {
                                                             </span>
                                                         </div>
 
-                                                        {/* What happened today, in order */}
+                                                        {/* Most recent
+                                                            action only - the
+                                                            full trail used to
+                                                            grow the card by a
+                                                            line per event and
+                                                            threw cards in the
+                                                            same row out of
+                                                            alignment. */}
                                                         {session?.events
-                                                            ?.length > 0 && (
-                                                            <ul className="mb-3 space-y-1">
-                                                                {session.events.map(
-                                                                    (
-                                                                        event: any,
-                                                                    ) => (
-                                                                        <li
-                                                                            key={
-                                                                                event.id
+                                                            ?.length > 0 &&
+                                                            (() => {
+                                                                const latest =
+                                                                    session
+                                                                        .events[
+                                                                        session
+                                                                            .events
+                                                                            .length -
+                                                                            1
+                                                                    ];
+                                                                const label =
+                                                                    latest.activity_type ===
+                                                                    'session_opened'
+                                                                        ? 'Ouverte'
+                                                                        : latest.activity_type ===
+                                                                            'session_closed'
+                                                                          ? 'Fermée'
+                                                                          : 'Réouverte';
+                                                                return (
+                                                                    <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
+                                                                        <span
+                                                                            className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
+                                                                                latest.activity_type ===
+                                                                                'session_closed'
+                                                                                    ? 'bg-rose-400'
+                                                                                    : 'bg-emerald-400'
+                                                                            }`}
+                                                                        />
+                                                                        <span className="font-medium">
+                                                                            {
+                                                                                label
                                                                             }
-                                                                            className="flex items-center gap-2 text-xs text-slate-500"
-                                                                        >
-                                                                            <span
-                                                                                className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
-                                                                                    event.activity_type ===
-                                                                                    'session_closed'
-                                                                                        ? 'bg-rose-400'
-                                                                                        : 'bg-emerald-400'
-                                                                                }`}
-                                                                            />
-                                                                            <span className="font-medium">
-                                                                                {event.activity_type ===
-                                                                                'session_opened'
-                                                                                    ? 'Ouverte'
-                                                                                    : event.activity_type ===
-                                                                                        'session_closed'
-                                                                                      ? 'Fermée'
-                                                                                      : 'Réouverte'}
+                                                                        </span>
+                                                                        <span className="tabular-nums">
+                                                                            {moment(
+                                                                                latest.created_at,
+                                                                            ).format(
+                                                                                'HH:mm',
+                                                                            )}
+                                                                        </span>
+                                                                        {session
+                                                                            .events
+                                                                            .length >
+                                                                            1 && (
+                                                                            <span className="text-slate-400">
+                                                                                ·{' '}
+                                                                                {
+                                                                                    session
+                                                                                        .events
+                                                                                        .length
+                                                                                }{' '}
+                                                                                changements
                                                                             </span>
-                                                                            <span className="tabular-nums">
-                                                                                {moment(
-                                                                                    event.created_at,
-                                                                                ).format(
-                                                                                    'HH:mm',
-                                                                                )}
-                                                                            </span>
-                                                                        </li>
-                                                                    ),
-                                                                )}
-                                                            </ul>
-                                                        )}
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()}
 
                                                         {/* Manned tills */}
                                                         {isOpen && (
@@ -382,11 +406,14 @@ export default function ManagerShops() {
                                                 );
                                             })()}
 
-                                            {/* Action Button */}
+                                            {/* Action Button - mt-auto pins it
+                                                to the bottom regardless of how
+                                                tall the content above is, so it
+                                                lines up across cards in a row. */}
                                             <Button
                                                 asChild
                                                 variant="ghost"
-                                                className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 hover:text-white hover:shadow-xl hover:shadow-indigo-500/40"
+                                                className="mt-auto w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 hover:text-white hover:shadow-xl hover:shadow-indigo-500/40"
                                             >
                                                 <Link
                                                     href={`/manager/shops/${shop.id}`}
