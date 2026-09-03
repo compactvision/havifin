@@ -254,19 +254,19 @@ export default function Manager() {
                             />
                         </motion.div>
                         <div className="mr-1 h-8 w-[1px] bg-slate-100" />
-                        <div>
+                        <div className="min-w-0">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+                                <h1 className="text-2xl font-bold tracking-tight whitespace-nowrap text-slate-900 uppercase">
                                     Console{' '}
                                     <span className="text-indigo-600">
                                         Manager
                                     </span>
                                 </h1>
-                                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black tracking-widest text-emerald-600 uppercase">
+                                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black tracking-widest whitespace-nowrap text-emerald-600 uppercase">
                                     Live
                                 </span>
                             </div>
-                            <p className="mt-1 flex items-center gap-2 text-[10px] font-black tracking-[0.15em] text-slate-400 uppercase">
+                            <p className="mt-1 flex items-center gap-2 text-[10px] font-black tracking-[0.15em] whitespace-nowrap text-slate-400 uppercase">
                                 {auth.user.role} •{' '}
                                 {auth.user.shop || 'Boutique'}
                             </p>
@@ -412,7 +412,7 @@ export default function Manager() {
                                                 setActiveTab(item.id)
                                             }
                                             className={cn(
-                                                'flex w-full items-center justify-between rounded-2xl p-3 text-sm font-bold transition-all duration-300',
+                                                'flex w-full items-center justify-between rounded-2xl p-3 text-left text-sm font-bold transition-all duration-300',
                                                 activeTab === item.id
                                                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
                                                     : 'text-slate-500 hover:bg-white',

@@ -49,7 +49,7 @@ export default function ManagerShops() {
                         <div className="mr-1 h-8 w-[1px] bg-slate-100" />
                         <div className="flex flex-col">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+                                <h1 className="text-2xl font-bold tracking-tight whitespace-nowrap text-slate-900 uppercase">
                                     Console{' '}
                                     <span className="text-indigo-600">
                                         Manager
