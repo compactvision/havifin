@@ -35,18 +35,18 @@ export default function ManagerShops() {
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 px-6 py-12 md:px-10">
                 {/* Premium Header */}
                 <header className="sticky top-0 z-50 mb-12 flex h-24 w-full flex-shrink-0 items-center justify-between border-b border-white/20 bg-white/70 px-6 shadow-sm backdrop-blur-xl md:px-10">
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
                         <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="relative flex h-16 w-38 items-center justify-center px-4"
+                            whileHover={{ scale: 1.05 }}
+                            className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center"
                         >
                             <img
-                                src="/logo-color.png"
+                                src="/havifin-icon.png"
                                 alt="Havifin"
                                 className="h-full w-full object-contain"
                             />
                         </motion.div>
-                        <div className="h-10 w-[1px] bg-slate-100" />
+                        <div className="mr-1 h-8 w-[1px] bg-slate-100" />
                         <div className="flex flex-col">
                             <div className="flex items-center gap-3">
                                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">

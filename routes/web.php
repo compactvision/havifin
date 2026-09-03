@@ -58,6 +58,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         return Inertia::render('Manager');
     })->middleware(['role:manager'])->name('manager');
 
+    Route::get('/manager/guide', function () {
+        return Inertia::render('Manager/Guide');
+    })->middleware(['role:manager'])->name('manager.guide');
+
     // Manager Shop Selection & Management
     Route::get('/manager/shops', function () {
         return Inertia::render('Manager/ManagerShops');

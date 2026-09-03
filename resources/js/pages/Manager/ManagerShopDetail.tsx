@@ -516,11 +516,11 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                         </Link>
                         <div className="h-10 w-[1px] bg-indigo-100" />
                         <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="relative flex h-16 w-38 items-center justify-center p-2"
+                            whileHover={{ scale: 1.05 }}
+                            className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center"
                         >
                             <img
-                                src="/logo-color.png"
+                                src="/havifin-icon.png"
                                 alt="Havifin"
                                 className="h-full w-full object-contain"
                             />
