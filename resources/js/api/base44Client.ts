@@ -77,6 +77,23 @@ export interface ExchangeRate {
     is_active?: boolean;
 }
 
+export interface BccRateEntry {
+    code: string;
+    name?: string;
+    country?: string;
+    buy: number;
+    sell: number;
+    average?: number;
+    change1d?: number;
+    quality?: string;
+}
+
+export interface BccRatesResponse {
+    rates: BccRateEntry[];
+    asOfDate: string | null;
+    fetchedAt: string | null;
+}
+
 export interface Institution {
     id: number;
     name: string;
@@ -659,6 +676,18 @@ export const base44 = {
                 axios
                     .post<CashMovement>('/api/cash/movements', data)
                     .then(handleResponse<CashMovement>),
+        },
+        BccRate: {
+            fetch: (refresh = false) =>
+                axios
+                    .get<BccRatesResponse>('/api/bcc-rates', {
+                        params: refresh ? { refresh: 1 } : undefined,
+                    })
+                    .then(handleResponse<BccRatesResponse>),
+            apply: (code: string) =>
+                axios
+                    .post<ExchangeRate>('/api/bcc-rates/apply', { code })
+                    .then(handleResponse<ExchangeRate>),
         },
     },
 };

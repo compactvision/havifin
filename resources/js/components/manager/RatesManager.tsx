@@ -1,5 +1,6 @@
 import { base44, ExchangeRate } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { flagForCurrency } from '@/lib/flags';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -263,15 +264,27 @@ export default function RatesManager() {
                         >
                             <div className="mb-8 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 shadow-lg shadow-slate-900/10 transition-transform group-hover:rotate-6">
+                                    <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 shadow-lg shadow-slate-900/10 transition-transform group-hover:rotate-6">
                                         <span className="text-sm font-black text-white">
                                             {pair?.from || pairId.split('_')[0]}
                                         </span>
+                                        <span className="absolute -top-2 -right-2 text-base leading-none">
+                                            {flagForCurrency(
+                                                pair?.from ||
+                                                    pairId.split('_')[0],
+                                            )}
+                                        </span>
                                     </div>
                                     <TrendingUp className="h-4 w-4 text-slate-300" />
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50">
+                                    <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50">
                                         <span className="text-sm font-black text-indigo-600">
                                             {pair?.to || pairId.split('_')[1]}
+                                        </span>
+                                        <span className="absolute -top-2 -right-2 text-base leading-none">
+                                            {flagForCurrency(
+                                                pair?.to ||
+                                                    pairId.split('_')[1],
+                                            )}
                                         </span>
                                     </div>
                                 </div>

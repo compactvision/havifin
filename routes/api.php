@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\ShopController;
+use App\Http\Controllers\Api\BccRateController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ClientController;
@@ -98,6 +99,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/exchange-rates', [ExchangeRateController::class, 'store']);
         Route::match(['put', 'patch'], '/exchange-rates/{exchangeRate}', [ExchangeRateController::class, 'update']);
         Route::delete('/exchange-rates/{exchangeRate}', [ExchangeRateController::class, 'destroy']);
+        Route::get('/bcc-rates', [BccRateController::class, 'index']);
+        Route::post('/bcc-rates/apply', [BccRateController::class, 'apply']);
     });
 
     Route::get('/sessions/current', [SessionController::class, 'current'])
