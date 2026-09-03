@@ -127,7 +127,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
 
             <div className="flex flex-col space-y-8 p-10">
                 {/* Header Profile Card */}
-                <div className="relative overflow-hidden rounded-[2.5rem] border border-white bg-white/80 p-8 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+                <div className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-8 shadow-sm">
                     <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 bg-indigo-500/10 blur-[100px]" />
 
                     <div className="relative z-10 flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
@@ -220,7 +220,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                 </div>
 
                 {/* History Section */}
-                <div className="overflow-hidden rounded-[2.5rem] border border-white bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+                <div className="overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-sm">
                     <div className="border-b border-slate-100 p-8">
                         <div className="flex items-center justify-between">
                             <div>
@@ -258,7 +258,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
 
                 {/* Additional Info Cards */}
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                    <div className="col-span-1 rounded-[2.5rem] border border-white bg-white/60 p-8 shadow-lg backdrop-blur-md">
+                    <div className="col-span-1 rounded-3xl border border-slate-200/70 bg-white p-8 shadow-sm">
                         <h4 className="mb-6 text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                             Information de Profil
                         </h4>

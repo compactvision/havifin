@@ -694,7 +694,7 @@ export default function SessionManager() {
 
                 {/* Pagination Controls */}
                 {pagination && pagination.last_page > 1 && (
-                    <div className="mt-12 flex items-center justify-center gap-4 self-center rounded-3xl border border-white bg-white/50 p-4 backdrop-blur-sm">
+                    <div className="mt-12 flex items-center justify-center gap-4 self-center rounded-3xl border border-slate-200/70 bg-white p-4">
                         <Button
                             variant="ghost"
                             disabled={page === 1}
