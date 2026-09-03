@@ -30,6 +30,12 @@ import {
 import moment from 'moment';
 import { useState } from 'react';
 
+const formatAmount = (value: number) =>
+    value.toLocaleString('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+
 interface Props {
     id: string; // Session ID from URL
 }
@@ -316,7 +322,7 @@ export default function CashSessionDetail({ id }: Props) {
                                             Ouverture
                                         </p>
                                         <p className="text-lg font-bold text-slate-700">
-                                            {stat.opening.toFixed(2)}
+                                            {formatAmount(stat.opening)}
                                         </p>
                                     </div>
                                     <div className="bg-slate-50/50 p-4">
@@ -324,7 +330,7 @@ export default function CashSessionDetail({ id }: Props) {
                                             Théorique
                                         </p>
                                         <p className="text-lg font-bold text-slate-900">
-                                            {stat.theoretical.toFixed(2)}
+                                            {formatAmount(stat.theoretical)}
                                         </p>
                                     </div>
                                 </div>
@@ -334,7 +340,7 @@ export default function CashSessionDetail({ id }: Props) {
                                             Entrées
                                         </p>
                                         <p className="font-bold text-green-600">
-                                            +{stat.totalIn.toFixed(2)}
+                                            +{formatAmount(stat.totalIn)}
                                         </p>
                                     </div>
                                     <div className="p-4">
@@ -342,7 +348,7 @@ export default function CashSessionDetail({ id }: Props) {
                                             Sorties
                                         </p>
                                         <p className="font-bold text-red-600">
-                                            -{stat.totalOut.toFixed(2)}
+                                            -{formatAmount(stat.totalOut)}
                                         </p>
                                     </div>
                                 </div>
@@ -356,8 +362,8 @@ export default function CashSessionDetail({ id }: Props) {
                                                     Réel (Compté)
                                                 </p>
                                                 <p className="text-xl font-black text-slate-900">
-                                                    {stat.closingReal.toFixed(
-                                                        2,
+                                                    {formatAmount(
+                                                        stat.closingReal,
                                                     )}
                                                 </p>
                                             </div>
@@ -371,7 +377,9 @@ export default function CashSessionDetail({ id }: Props) {
                                                     {stat.difference > 0
                                                         ? '+'
                                                         : ''}
-                                                    {stat.difference.toFixed(2)}
+                                                    {formatAmount(
+                                                        stat.difference,
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
@@ -426,7 +434,9 @@ export default function CashSessionDetail({ id }: Props) {
                                             {parseFloat(movement.amount) > 0
                                                 ? '+'
                                                 : ''}
-                                            {movement.amount}{' '}
+                                            {formatAmount(
+                                                parseFloat(movement.amount),
+                                            )}{' '}
                                             {movement.currency}
                                         </span>
                                     </TableCell>
