@@ -517,7 +517,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                         <div className="h-10 w-[1px] bg-indigo-100" />
                         <motion.div
                             whileHover={{ scale: 1.05 }}
-                            className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center"
+                            className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center"
                         >
                             <img
                                 src="/havifin-icon.png"
@@ -525,6 +525,16 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                 className="h-full w-full object-contain"
                             />
                         </motion.div>
+                        {/* Without this you cannot tell which shop you are
+                            configuring - it only appeared in the tab title. */}
+                        <div className="min-w-0">
+                            <h1 className="truncate text-lg leading-tight font-bold text-slate-900">
+                                {shop.name}
+                            </h1>
+                            <p className="truncate text-xs font-medium text-slate-400">
+                                {shop.address || 'Adresse non renseignée'}
+                            </p>
+                        </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-6">
@@ -579,10 +589,10 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
 
                         <div className="flex items-center gap-4 border-l border-slate-200/50 pl-6">
                             <div className="flex flex-col items-end text-right">
-                                <div className="text-sm leading-none font-black text-slate-900">
+                                <div className="text-sm leading-none font-semibold text-slate-900">
                                     {auth.user.name}
                                 </div>
-                                <div className="mt-1 text-[9px] font-black tracking-widest text-slate-400 uppercase">
+                                <div className="mt-1 text-[9px] font-semibold tracking-widest text-slate-400 uppercase">
                                     {auth.user.role}{' '}
                                     {auth.user.shop
                                         ? `• ${auth.user.shop}`
@@ -605,10 +615,10 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                 <Store className="h-6 w-6 text-indigo-600" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-slate-500 uppercase">
+                                <p className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
                                     Guichets Actifs
                                 </p>
-                                <p className="text-2xl font-black text-slate-900">
+                                <p className="text-2xl font-bold text-slate-900 tabular-nums">
                                     {activeCounters.length} /{' '}
                                     {shop.counter_count}
                                 </p>
@@ -627,10 +637,10 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                 <UserCheck className="h-6 w-6 text-emerald-600" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-slate-500 uppercase">
+                                <p className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
                                     Guichets Assignés
                                 </p>
-                                <p className="text-2xl font-black text-slate-900">
+                                <p className="text-2xl font-bold text-slate-900 tabular-nums">
                                     {assignedCounters.length}
                                 </p>
                             </div>
@@ -648,10 +658,10 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                 <Users className="h-6 w-6 text-purple-600" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-slate-500 uppercase">
+                                <p className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
                                     Caissiers Disponibles
                                 </p>
-                                <p className="text-2xl font-black text-slate-900">
+                                <p className="text-2xl font-bold text-slate-900 tabular-nums">
                                     {availableCashiers?.length || 0}
                                 </p>
                             </div>
@@ -688,7 +698,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                     <div className="mb-4 flex items-start justify-between">
                                         <div>
                                             <div className="mb-1 flex items-center gap-2">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-lg font-black text-white">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-lg font-semibold text-white">
                                                     {counter.counter_number}
                                                 </div>
                                                 <h3 className="text-xl font-bold text-slate-900">
@@ -737,24 +747,39 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                         )}
                                     </div>
 
-                                    {/* Action Button */}
+                                    {/* An unassigned counter is the thing that
+                                        needs acting on, so make it the loud
+                                        action and keep reassignment quiet. */}
                                     <Button
                                         onClick={() => {
                                             setSelectedCounter(counter);
                                             setIsAssigningCashier(true);
                                         }}
-                                        variant="outline"
-                                        className="w-full rounded-xl border-slate-200 font-bold hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600"
+                                        variant={
+                                            counter.cashier
+                                                ? 'outline'
+                                                : 'default'
+                                        }
+                                        className={
+                                            counter.cashier
+                                                ? 'w-full rounded-xl border-slate-200 font-semibold text-slate-600 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600'
+                                                : 'w-full rounded-xl bg-indigo-600 font-semibold text-white shadow-sm hover:bg-indigo-700'
+                                        }
                                     >
-                                        {counter.cashier
-                                            ? 'Changer le caissier'
-                                            : 'Assigner un caissier'}
+                                        {counter.cashier ? (
+                                            'Changer le caissier'
+                                        ) : (
+                                            <>
+                                                <UserCheck className="mr-2 h-4 w-4" />
+                                                Assigner un caissier
+                                            </>
+                                        )}
                                     </Button>
 
                                     {/* Status Badge */}
                                     <div className="absolute top-4 right-4">
                                         <Badge
-                                            className={`rounded-full px-2 py-1 text-xs font-black uppercase ${
+                                            className={`rounded-full px-2 py-1 text-xs font-semibold uppercase ${
                                                 counter.is_active
                                                     ? 'bg-emerald-100 text-emerald-600'
                                                     : 'bg-slate-100 text-slate-400'
@@ -865,7 +890,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                         <div className="absolute top-4 right-4">
                                             <Badge
                                                 className={cn(
-                                                    'rounded-full px-3 py-1 text-xs font-black uppercase',
+                                                    'rounded-full px-3 py-1 text-xs font-semibold uppercase',
                                                     ad.is_active
                                                         ? 'bg-emerald-100 text-emerald-600'
                                                         : 'bg-slate-100 text-slate-400',
@@ -939,7 +964,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                     <h2 className="text-2xl font-bold text-slate-900">
                                         Défilé d'Informations (Ticker)
                                     </h2>
-                                    <Badge className="bg-indigo-100 text-[10px] font-black tracking-widest text-indigo-600 uppercase">
+                                    <Badge className="bg-indigo-100 text-[10px] font-semibold tracking-widest text-indigo-600 uppercase">
                                         Nouveau
                                     </Badge>
                                 </div>
@@ -978,12 +1003,12 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                     >
                                         <div className="mb-4">
                                             <div className="mb-2 flex items-center justify-between">
-                                                <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                                <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
                                                     Message #{index + 1}
                                                 </span>
                                                 <Badge
                                                     className={cn(
-                                                        'rounded-full px-2 py-0.5 text-[9px] font-black uppercase',
+                                                        'rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase',
                                                         news.is_active
                                                             ? 'bg-emerald-100 text-emerald-600'
                                                             : 'bg-slate-100 text-slate-400',
@@ -1006,7 +1031,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                                 }
                                                 variant="outline"
                                                 size="sm"
-                                                className="flex-1 rounded-xl text-xs font-black"
+                                                className="flex-1 rounded-xl text-xs font-semibold"
                                             >
                                                 {news.is_active
                                                     ? 'Masquer'
@@ -1132,7 +1157,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                 <Dialog open={isCreatingAd} onOpenChange={setIsCreatingAd}>
                     <DialogContent className="rounded-3xl sm:max-w-[600px]">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-black">
+                            <DialogTitle className="text-2xl font-semibold">
                                 Nouvelle Publicité
                             </DialogTitle>
                         </DialogHeader>
@@ -1266,7 +1291,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                 <Dialog open={isCreatingNews} onOpenChange={setIsCreatingNews}>
                     <DialogContent className="rounded-3xl sm:max-w-[500px]">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-black">
+                            <DialogTitle className="text-2xl font-semibold">
                                 Ajouter une Information
                             </DialogTitle>
                         </DialogHeader>
@@ -1329,7 +1354,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                 >
                     <DialogContent className="rounded-3xl">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-black">
+                            <DialogTitle className="text-2xl font-semibold">
                                 Nouveau Caissier
                             </DialogTitle>
                         </DialogHeader>
@@ -1464,7 +1489,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                 >
                     <DialogContent className="rounded-3xl">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-black">
+                            <DialogTitle className="text-2xl font-semibold">
                                 Nouveau Guichet
                             </DialogTitle>
                         </DialogHeader>
@@ -1535,7 +1560,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                 >
                     <DialogContent className="rounded-3xl">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-black">
+                            <DialogTitle className="text-2xl font-semibold">
                                 Assigner un Caissier
                             </DialogTitle>
                         </DialogHeader>
