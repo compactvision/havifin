@@ -151,6 +151,7 @@ export interface HelpRequest {
 export interface Advertisement {
     id: number;
     title: string;
+    show_title: boolean;
     type: 'image' | 'video';
     image_url: string;
     display_order: number;

@@ -143,19 +143,24 @@ export default function AdCarousel({
                         />
                     )}
 
-                    {/* Gradient Overlay for Text Readability */}
-                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-                    <div className="absolute inset-x-0 bottom-0 p-10">
-                        <motion.h3
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.5 }}
-                            className="text-4xl font-bold tracking-tight text-white drop-shadow-lg"
-                        >
-                            {ads[currentIndex].title}
-                        </motion.h3>
-                    </div>
+                    {/* Title is required so a manager can find the ad in the
+                        list, but showing it on screen is a separate choice -
+                        skip the whole overlay when it's off. */}
+                    {ads[currentIndex].show_title !== false && (
+                        <>
+                            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                            <div className="absolute inset-x-0 bottom-0 p-10">
+                                <motion.h3
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    transition={{ delay: 0.5 }}
+                                    className="text-4xl font-bold tracking-tight text-white drop-shadow-lg"
+                                >
+                                    {ads[currentIndex].title}
+                                </motion.h3>
+                            </div>
+                        </>
+                    )}
                 </motion.div>
             </AnimatePresence>
 
