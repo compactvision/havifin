@@ -24,6 +24,11 @@ class Shop extends Model
     /**
      * Get the users assigned to this shop.
      */
+    public function counters()
+    {
+        return $this->hasMany(Counter::class);
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class);

@@ -226,7 +226,8 @@ export default function ManagerShops() {
                                                 <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-2">
                                                     <Users className="h-4 w-4 text-purple-600" />
                                                     <span className="text-sm font-bold text-slate-700">
-                                                        {shop.users?.length ||
+                                                        {(shop as any)
+                                                            .assigned_cashiers_count ??
                                                             0}{' '}
                                                         agents
                                                     </span>
@@ -261,6 +262,82 @@ export default function ManagerShops() {
                                                                       : 'Journée non ouverte'}
                                                             </span>
                                                         </div>
+
+                                                        {/* What happened today, in order */}
+                                                        {session?.events
+                                                            ?.length > 0 && (
+                                                            <ul className="mb-3 space-y-1">
+                                                                {session.events.map(
+                                                                    (
+                                                                        event: any,
+                                                                    ) => (
+                                                                        <li
+                                                                            key={
+                                                                                event.id
+                                                                            }
+                                                                            className="flex items-center gap-2 text-xs text-slate-500"
+                                                                        >
+                                                                            <span
+                                                                                className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
+                                                                                    event.activity_type ===
+                                                                                    'session_closed'
+                                                                                        ? 'bg-rose-400'
+                                                                                        : 'bg-emerald-400'
+                                                                                }`}
+                                                                            />
+                                                                            <span className="font-medium">
+                                                                                {event.activity_type ===
+                                                                                'session_opened'
+                                                                                    ? 'Ouverte'
+                                                                                    : event.activity_type ===
+                                                                                        'session_closed'
+                                                                                      ? 'Fermée'
+                                                                                      : 'Réouverte'}
+                                                                            </span>
+                                                                            <span className="tabular-nums">
+                                                                                {moment(
+                                                                                    event.created_at,
+                                                                                ).format(
+                                                                                    'HH:mm',
+                                                                                )}
+                                                                            </span>
+                                                                        </li>
+                                                                    ),
+                                                                )}
+                                                            </ul>
+                                                        )}
+
+                                                        {/* Manned tills */}
+                                                        {isOpen && (
+                                                            <p className="mb-3 text-xs font-medium text-slate-500">
+                                                                {
+                                                                    session.open_cash_sessions_count
+                                                                }{' '}
+                                                                caisse
+                                                                {session.open_cash_sessions_count >
+                                                                1
+                                                                    ? 's'
+                                                                    : ''}{' '}
+                                                                ouverte
+                                                                {session.open_cash_sessions_count >
+                                                                1
+                                                                    ? 's'
+                                                                    : ''}{' '}
+                                                                sur{' '}
+                                                                {shop.assigned_cashiers_count ??
+                                                                    0}{' '}
+                                                                caissier
+                                                                {(shop.assigned_cashiers_count ??
+                                                                    0) > 1
+                                                                    ? 's'
+                                                                    : ''}{' '}
+                                                                assigné
+                                                                {(shop.assigned_cashiers_count ??
+                                                                    0) > 1
+                                                                    ? 's'
+                                                                    : ''}
+                                                            </p>
+                                                        )}
                                                         {isOpen ? (
                                                             <Button
                                                                 onClick={() =>
@@ -323,7 +400,7 @@ export default function ManagerShops() {
                                         {/* Status Badge */}
                                         {shop.is_active && (
                                             <div className="absolute top-4 right-4">
-                                                <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black tracking-wider text-emerald-600 uppercase">
+                                                <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold tracking-wider text-emerald-600 uppercase">
                                                     Active
                                                 </div>
                                             </div>

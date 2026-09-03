@@ -232,7 +232,12 @@ class SessionController extends Controller
     public function index(Request $request)
     {
         $allowedShopIds = TenantAccess::shopIds($request->user());
-        $query = Session::with(['opener', 'closer', 'shop'])
+        $query = Session::with(['opener', 'closer', 'shop', 'events'])
+            // How many tills are actually manned right now, against how many
+            // cashiers the shop has assigned to a counter.
+            ->withCount([
+                'cashSessions as open_cash_sessions_count' => fn ($q) => $q->where('status', 'open'),
+            ])
             ->whereIn('shop_id', $allowedShopIds);
 
         if ($request->has('status')) {
