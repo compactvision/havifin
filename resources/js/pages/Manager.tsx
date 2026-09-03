@@ -4,6 +4,7 @@ import { CashMovementsTable } from '@/components/manager/CashMovementsTable';
 import { ClientsTable } from '@/components/manager/ClientsTable';
 import InstitutionManager from '@/components/manager/InstitutionManager';
 import { ManualCashMovementDialog } from '@/components/manager/ManualCashMovementDialog';
+import BccRatesBoard from '@/components/manager/BccRatesBoard';
 import RatesManager from '@/components/manager/RatesManager';
 import SessionManager from '@/components/manager/SessionManager';
 import { StatsCard } from '@/components/manager/StatsCard';
@@ -698,8 +699,9 @@ export default function Manager() {
                                     )}
 
                                     {activeTab === 'rates' && (
-                                        <div className="animate-in duration-300 fade-in">
+                                        <div className="animate-in space-y-6 duration-300 fade-in">
                                             <RatesManager />
+                                            <BccRatesBoard />
                                         </div>
                                     )}
 
