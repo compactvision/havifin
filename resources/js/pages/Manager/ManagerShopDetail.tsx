@@ -262,13 +262,25 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
         enabled: !!shopId,
     });
 
+    // Matches AdvertisementController's max:20480 rule. Checking here turns an
+    // opaque server-side rejection into a message naming the actual size.
+    const MAX_MEDIA_MB = 20;
+
     const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            setVideoFile(file);
-            const url = URL.createObjectURL(file);
-            setVideoPreview(url);
+        if (!file) return;
+
+        const sizeMb = file.size / (1024 * 1024);
+        if (sizeMb > MAX_MEDIA_MB) {
+            toast.error(
+                `Vidéo trop volumineuse (${sizeMb.toFixed(1)} Mo). Maximum ${MAX_MEDIA_MB} Mo.`,
+            );
+            e.target.value = '';
+            return;
         }
+
+        setVideoFile(file);
+        setVideoPreview(URL.createObjectURL(file));
     };
 
     // Update advertisement mutation
