@@ -421,8 +421,8 @@
       "_createLucideIcon-BaxbJhNB.js"
     ]
   },
-  "_useMutation-CTIb1Z2j.js": {
-    "file": "assets/useMutation-CTIb1Z2j.js",
+  "_useMutation-BYBRORuN.js": {
+    "file": "assets/useMutation-BYBRORuN.js",
     "name": "useMutation",
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
@@ -438,8 +438,8 @@
       "_dist-Do1kLbC0.js"
     ]
   },
-  "_useQuery-BknxJW7X.js": {
-    "file": "assets/useQuery-BknxJW7X.js",
+  "_useQuery-Cd3DMUwN.js": {
+    "file": "assets/useQuery-Cd3DMUwN.js",
     "name": "useQuery",
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
@@ -460,7 +460,7 @@
     "name": "utils"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CpHlhD6a.css",
+    "file": "assets/app-CfuIL_dM.css",
     "name": "app",
     "names": [
       "app.css"
@@ -469,7 +469,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-BxT2_LXu.js",
+    "file": "assets/app-D08y8Nqo.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -502,7 +502,7 @@
       "resources/js/pages/SuperAdmin/Shops.tsx"
     ],
     "css": [
-      "assets/app-CpHlhD6a.css"
+      "assets/app-CfuIL_dM.css"
     ]
   },
   "resources/js/pages/Auth/ConfirmPassword.tsx": {
@@ -570,13 +570,13 @@
     ]
   },
   "resources/js/pages/Cash/Dashboard.tsx": {
-    "file": "assets/Dashboard-Dna7Om-B.js",
+    "file": "assets/Dashboard-C--3nXxj.js",
     "name": "Dashboard",
     "src": "resources/js/pages/Cash/Dashboard.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
+      "_useQuery-Cd3DMUwN.js",
       "resources/js/app.tsx",
       "_button-B4cmk4tK.js",
       "_input-x4tqj75V.js",
@@ -596,13 +596,13 @@
     ]
   },
   "resources/js/pages/Cash/RegisterHistory.tsx": {
-    "file": "assets/RegisterHistory-BFcF5HPO.js",
+    "file": "assets/RegisterHistory-B4141x0y.js",
     "name": "RegisterHistory",
     "src": "resources/js/pages/Cash/RegisterHistory.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
+      "_useQuery-Cd3DMUwN.js",
       "_button-B4cmk4tK.js",
       "_arrow-left-CIPsMsFS.js",
       "_eye-BGzcVad6.js",
@@ -616,13 +616,13 @@
     ]
   },
   "resources/js/pages/Cash/Session.tsx": {
-    "file": "assets/Session-B8AZ1Qpt.js",
+    "file": "assets/Session-CS5PDiJh.js",
     "name": "Session",
     "src": "resources/js/pages/Cash/Session.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
+      "_useQuery-Cd3DMUwN.js",
       "resources/js/app.tsx",
       "_button-B4cmk4tK.js",
       "_input-x4tqj75V.js",
@@ -649,14 +649,14 @@
     ]
   },
   "resources/js/pages/Cashier.tsx": {
-    "file": "assets/Cashier-HR54qnBg.js",
+    "file": "assets/Cashier-C0MOQbQs.js",
     "name": "Cashier",
     "src": "resources/js/pages/Cashier.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
-      "_useMutation-CTIb1Z2j.js",
+      "_useQuery-Cd3DMUwN.js",
+      "_useMutation-BYBRORuN.js",
       "resources/js/app.tsx",
       "_button-B4cmk4tK.js",
       "_utils-BTCdVlRL.js",
@@ -687,13 +687,13 @@
     ]
   },
   "resources/js/pages/Cashier/TodaySession.tsx": {
-    "file": "assets/TodaySession-DoGa3ubg.js",
+    "file": "assets/TodaySession-BAFMhBRt.js",
     "name": "TodaySession",
     "src": "resources/js/pages/Cashier/TodaySession.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
+      "_useQuery-Cd3DMUwN.js",
       "_button-B4cmk4tK.js",
       "_createLucideIcon-BaxbJhNB.js",
       "_arrow-right-CmgSsZVs.js",
@@ -708,14 +708,14 @@
     ]
   },
   "resources/js/pages/ClientForm.tsx": {
-    "file": "assets/ClientForm-Cu9NV8Cw.js",
+    "file": "assets/ClientForm-DlGEItJG.js",
     "name": "ClientForm",
     "src": "resources/js/pages/ClientForm.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
-      "_useMutation-CTIb1Z2j.js",
+      "_useQuery-Cd3DMUwN.js",
+      "_useMutation-BYBRORuN.js",
       "_button-B4cmk4tK.js",
       "_utils-BTCdVlRL.js",
       "_input-x4tqj75V.js",
@@ -745,13 +745,13 @@
     ]
   },
   "resources/js/pages/Display.tsx": {
-    "file": "assets/Display-CTGZ1-MD.js",
+    "file": "assets/Display-oCBVx-s8.js",
     "name": "Display",
     "src": "resources/js/pages/Display.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
+      "_useQuery-Cd3DMUwN.js",
       "_utils-BTCdVlRL.js",
       "_proxy-C-owQ_IU.js",
       "_users-DTVmR8gl.js",
@@ -767,14 +767,14 @@
     ]
   },
   "resources/js/pages/Manager.tsx": {
-    "file": "assets/Manager-GSl_H5FE.js",
+    "file": "assets/Manager-BiQ-3ggO.js",
     "name": "Manager",
     "src": "resources/js/pages/Manager.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
-      "_useMutation-CTIb1Z2j.js",
+      "_useQuery-Cd3DMUwN.js",
+      "_useMutation-BYBRORuN.js",
       "resources/js/app.tsx",
       "_button-B4cmk4tK.js",
       "_utils-BTCdVlRL.js",
@@ -822,13 +822,13 @@
     ]
   },
   "resources/js/pages/Manager/ClientDetail.tsx": {
-    "file": "assets/ClientDetail-DnvcPbK-.js",
+    "file": "assets/ClientDetail-8xoUa4fi.js",
     "name": "ClientDetail",
     "src": "resources/js/pages/Manager/ClientDetail.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
+      "_useQuery-Cd3DMUwN.js",
       "_button-B4cmk4tK.js",
       "_createLucideIcon-BaxbJhNB.js",
       "_TransactionsTable-hLDRnM9q.js",
@@ -868,14 +868,14 @@
     ]
   },
   "resources/js/pages/Manager/ManagerShopDetail.tsx": {
-    "file": "assets/ManagerShopDetail-NEq4jji7.js",
+    "file": "assets/ManagerShopDetail-Db-Y7DFl.js",
     "name": "ManagerShopDetail",
     "src": "resources/js/pages/Manager/ManagerShopDetail.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
-      "_useMutation-CTIb1Z2j.js",
+      "_useQuery-Cd3DMUwN.js",
+      "_useMutation-BYBRORuN.js",
       "resources/js/app.tsx",
       "_button-B4cmk4tK.js",
       "_utils-BTCdVlRL.js",
@@ -899,13 +899,13 @@
     ]
   },
   "resources/js/pages/Manager/ManagerShops.tsx": {
-    "file": "assets/ManagerShops-CRByxBFj.js",
+    "file": "assets/ManagerShops-tNVMUSb8.js",
     "name": "ManagerShops",
     "src": "resources/js/pages/Manager/ManagerShops.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
+      "_useQuery-Cd3DMUwN.js",
       "resources/js/app.tsx",
       "_button-B4cmk4tK.js",
       "_proxy-C-owQ_IU.js",
@@ -965,14 +965,14 @@
     ]
   },
   "resources/js/pages/SuperAdmin/ShopDetail.tsx": {
-    "file": "assets/ShopDetail-C1RREFIH.js",
+    "file": "assets/ShopDetail-j4hTsXVv.js",
     "name": "ShopDetail",
     "src": "resources/js/pages/SuperAdmin/ShopDetail.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
-      "_useMutation-CTIb1Z2j.js",
+      "_useQuery-Cd3DMUwN.js",
+      "_useMutation-BYBRORuN.js",
       "resources/js/app.tsx",
       "_button-B4cmk4tK.js",
       "_input-x4tqj75V.js",
@@ -995,14 +995,14 @@
     ]
   },
   "resources/js/pages/SuperAdmin/Shops.tsx": {
-    "file": "assets/Shops-BoA_24wp.js",
+    "file": "assets/Shops-CXS_OVqP.js",
     "name": "Shops",
     "src": "resources/js/pages/SuperAdmin/Shops.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-CvGK_2yF.js",
-      "_useQuery-BknxJW7X.js",
-      "_useMutation-CTIb1Z2j.js",
+      "_useQuery-Cd3DMUwN.js",
+      "_useMutation-BYBRORuN.js",
       "resources/js/app.tsx",
       "_button-B4cmk4tK.js",
       "_input-x4tqj75V.js",
