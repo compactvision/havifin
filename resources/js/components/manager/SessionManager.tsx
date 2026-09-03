@@ -101,11 +101,43 @@ export default function SessionManager() {
 
     const activeSession = sessions.find((s) => s.status === 'open');
 
+    // Opening a day is also when the manager confirms the rates for it.
+    // Read the operative table (ExchangeRate) rather than the history one:
+    // it is what ClientController and TransactionController actually apply.
+    const { data: activeRates = [] } = useQuery({
+        queryKey: ['exchange-rates'],
+        queryFn: () => base44.entities.ExchangeRate.getAll(),
+    });
+    const [isEditingRates, setIsEditingRates] = useState(false);
+    const [rateDrafts, setRateDrafts] = useState<Record<number, string>>({});
+
     const handleOpenSession = async () => {
         if (!selectedShopId) return;
         setIsOpening(true);
 
         try {
+            // Save any rate the manager edited before opening, so the day
+            // starts on the rates the cashiers will actually apply.
+            const editedRates = activeRates.filter(
+                (rate: any) =>
+                    rateDrafts[rate.id] !== undefined &&
+                    rateDrafts[rate.id] !== '' &&
+                    Number(rateDrafts[rate.id]) !== Number(rate.rate),
+            );
+
+            // `rate` is a read-only accessor over buy_rate, so write the
+            // real columns. Keep sell_rate aligned unless it already differs.
+            for (const rate of editedRates) {
+                const next = Number(rateDrafts[rate.id]);
+                await base44.entities.ExchangeRate.update(rate.id, {
+                    buy_rate: next,
+                    sell_rate:
+                        Number(rate.sell_rate) === Number(rate.buy_rate)
+                            ? next
+                            : Number(rate.sell_rate),
+                } as any);
+            }
+
             await base44.entities.Session.create({
                 session_date: moment().format('YYYY-MM-DD'),
                 shop_id: selectedShopId,
@@ -113,9 +145,15 @@ export default function SessionManager() {
             });
 
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
+            queryClient.invalidateQueries({ queryKey: ['rates'] });
             setNotes('');
+            setRateDrafts({});
+            setIsEditingRates(false);
             toast.success(
-                'Session journalière ouverte. Les caissiers peuvent maintenant ouvrir leur caisse.',
+                editedRates.length > 0
+                    ? `Session ouverte avec ${editedRates.length} taux mis à jour. Les caissiers peuvent ouvrir leur caisse.`
+                    : 'Session journalière ouverte. Les caissiers peuvent maintenant ouvrir leur caisse.',
             );
         } catch (error: any) {
             const message =
@@ -339,18 +377,135 @@ export default function SessionManager() {
                                         </h4>
                                         <p className="max-w-lg leading-relaxed font-medium text-slate-500">
                                             Aucune session n'est ouverte pour{' '}
-                                            <span className="font-bold text-indigo-600">
+                                            <span className="font-semibold text-indigo-600">
                                                 {currentShop?.name}
                                             </span>{' '}
-                                            aujourd'hui. Ouvrez une session pour
-                                            autoriser les caissiers à traiter
-                                            les tickets.
+                                            aujourd'hui.
                                         </p>
                                     </div>
                                 </div>
 
+                                {/* What opening actually does, in order. */}
+                                <div className="max-w-xl rounded-3xl border border-slate-100 bg-slate-50/70 p-6">
+                                    <p className="mb-4 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
+                                        Ce que fait l'ouverture
+                                    </p>
+                                    <ol className="space-y-3">
+                                        {[
+                                            'Les clients peuvent prendre un ticket au kiosque.',
+                                            'Les caissiers peuvent ouvrir leur caisse et saisir leur fond de départ.',
+                                            'Les taux ci-dessous s’appliquent à toutes les opérations de change du jour.',
+                                        ].map((step, i) => (
+                                            <li
+                                                key={i}
+                                                className="flex gap-3 text-sm text-slate-600"
+                                            >
+                                                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">
+                                                    {i + 1}
+                                                </span>
+                                                {step}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+
+                                {/* Confirm or adjust the day's rates */}
+                                <div className="max-w-xl rounded-3xl border border-slate-200 bg-white p-6">
+                                    <div className="mb-4 flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <ArrowRightLeft className="h-4 w-4 text-indigo-600" />
+                                            <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
+                                                Taux du jour
+                                            </span>
+                                        </div>
+                                        {activeRates.length > 0 && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                onClick={() =>
+                                                    setIsEditingRates(
+                                                        !isEditingRates,
+                                                    )
+                                                }
+                                                className="h-8 rounded-xl px-3 text-xs font-semibold text-indigo-600 hover:bg-indigo-50"
+                                            >
+                                                {isEditingRates
+                                                    ? 'Garder les taux actuels'
+                                                    : 'Définir de nouveaux taux'}
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    {activeRates.length === 0 ? (
+                                        <p className="text-sm text-slate-500">
+                                            Aucun taux actif. Les opérations de
+                                            change seront refusées tant qu'un
+                                            taux n'est pas configuré dans
+                                            « Gestion Taux ».
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {activeRates.map((rate: any) => (
+                                                <div
+                                                    key={rate.id}
+                                                    className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3"
+                                                >
+                                                    <span className="text-sm font-semibold text-slate-700">
+                                                        {rate.currency_from} →{' '}
+                                                        {rate.currency_to}
+                                                    </span>
+                                                    {isEditingRates ? (
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={
+                                                                rateDrafts[
+                                                                    rate.id
+                                                                ] ??
+                                                                String(
+                                                                    rate.rate,
+                                                                )
+                                                            }
+                                                            onChange={(e) =>
+                                                                setRateDrafts(
+                                                                    (prev) => ({
+                                                                        ...prev,
+                                                                        [rate.id]:
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                    }),
+                                                                )
+                                                            }
+                                                            className="h-10 w-40 rounded-xl border-slate-200 bg-white text-right font-mono font-semibold"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-mono text-lg font-bold text-slate-900 tabular-nums">
+                                                            {Number(
+                                                                rate.rate,
+                                                            ).toLocaleString(
+                                                                'fr-FR',
+                                                                {
+                                                                    minimumFractionDigits: 2,
+                                                                    maximumFractionDigits: 2,
+                                                                },
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            <p className="pt-1 text-xs text-slate-400">
+                                                {isEditingRates
+                                                    ? 'Les taux modifiés seront enregistrés au moment de l’ouverture.'
+                                                    : 'La session s’ouvrira avec ces taux.'}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <div className="max-w-xl space-y-4">
-                                    <Label className="ml-6 text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                    <Label className="ml-6 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
                                         Commentaire d'ouverture
                                     </Label>
                                     <Input
@@ -359,7 +514,7 @@ export default function SessionManager() {
                                             setNotes(e.target.value)
                                         }
                                         placeholder="Ex: Fond de caisse, équipe du jour..."
-                                        className="h-16 rounded-3xl border-slate-200 bg-slate-50 px-8 font-bold text-slate-700 transition-colors focus:bg-white"
+                                        className="h-16 rounded-3xl border-slate-200 bg-slate-50 px-8 font-medium text-slate-700 transition-colors focus:bg-white"
                                     />
                                 </div>
                             </div>

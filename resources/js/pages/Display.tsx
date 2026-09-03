@@ -1,12 +1,13 @@
 import { base44, Client } from '@/api/base44Client';
 import AdCarousel from '@/components/display/AdCarousel';
 import NewsTicker from '@/components/display/NewsTicker';
+import QueueRatesPanel from '@/components/display/QueueRatesPanel';
 import RateTicker from '@/components/display/RateTicker';
 import { cn } from '@/lib/utils';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronRight, Monitor, Users } from 'lucide-react';
+import { Monitor } from 'lucide-react';
 import moment from 'moment';
 import 'moment/locale/fr';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -387,107 +388,11 @@ export default function Display() {
                         </div>
                     </div>
 
-                    {/* WAITING LIST - COMPACT */}
-                    <div
-                        className={cn(
-                            'flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border',
-                            isDarkMode
-                                ? 'border-white/10 bg-brand-dark/60 backdrop-blur-xl'
-                                : 'border-slate-200 bg-white/60 backdrop-blur-xl',
-                        )}
-                    >
-                        <div
-                            className={cn(
-                                'flex items-center gap-3 border-b px-6 py-4',
-                                isDarkMode
-                                    ? 'border-white/5'
-                                    : 'border-slate-100',
-                            )}
-                        >
-                            <Users
-                                className={cn(
-                                    'h-5 w-5',
-                                    isDarkMode
-                                        ? 'text-slate-400'
-                                        : 'text-slate-500',
-                                )}
-                            />
-                            <span
-                                className={cn(
-                                    'text-xs font-black tracking-[0.2em] uppercase',
-                                    isDarkMode
-                                        ? 'text-slate-400'
-                                        : 'text-slate-500',
-                                )}
-                            >
-                                En Attente ({waitingClients.length})
-                            </span>
-                        </div>
-
-                        <div className="flex-1 scrollbar-none space-y-3 overflow-y-auto p-4">
-                            <AnimatePresence>
-                                {waitingClients
-                                    .slice(0, 5)
-                                    .map((client, idx) => (
-                                        <motion.div
-                                            key={client.id}
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: idx * 0.05 }}
-                                            className={cn(
-                                                'flex items-center justify-between rounded-2xl border p-3',
-                                                isDarkMode
-                                                    ? 'border-white/5 bg-white/5'
-                                                    : 'border-slate-100 bg-white shadow-sm',
-                                            )}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div
-                                                    className={cn(
-                                                        'flex h-10 w-10 items-center justify-center rounded-xl text-lg font-black',
-                                                        isDarkMode
-                                                            ? 'bg-slate-800 text-blue-400'
-                                                            : 'bg-blue-50 text-blue-600',
-                                                    )}
-                                                >
-                                                    {client.ticket_number}
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span
-                                                        className={cn(
-                                                            'text-[10px] font-bold tracking-wider uppercase',
-                                                            isDarkMode
-                                                                ? 'text-slate-500'
-                                                                : 'text-slate-400',
-                                                        )}
-                                                    >
-                                                        Ticket
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div
-                                                className={cn(
-                                                    'flex items-center gap-1 text-xs font-bold uppercase',
-                                                    isDarkMode
-                                                        ? 'text-slate-400'
-                                                        : 'text-slate-500',
-                                                )}
-                                            >
-                                                <ChevronRight className="h-3 w-3" />
-                                                {client.service}
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                            </AnimatePresence>
-                            {waitingClients.length === 0 && (
-                                <div className="flex h-full items-center justify-center opacity-30">
-                                    <span className="text-xs font-black tracking-widest uppercase">
-                                        Aucune attente
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    {/* Alternates between the day's rates and the queue */}
+                    <QueueRatesPanel
+                        waitingClients={waitingClients}
+                        isDarkMode={isDarkMode}
+                    />
                 </div>
             </main>
 
