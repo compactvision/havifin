@@ -718,16 +718,36 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                                 </h3>
                                             </div>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                                handleDeleteCounter(counter)
-                                            }
-                                            className="h-8 w-8 text-slate-400 hover:text-red-600"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        {/* Badge and delete share the header
+                                            row: the badge used to be absolutely
+                                            positioned and landed on top of the
+                                            delete button. */}
+                                        <div className="flex flex-shrink-0 items-center gap-2">
+                                            <Badge
+                                                className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${
+                                                    counter.is_active
+                                                        ? 'bg-emerald-100 text-emerald-600'
+                                                        : 'bg-slate-100 text-slate-400'
+                                                }`}
+                                            >
+                                                {counter.is_active
+                                                    ? 'Actif'
+                                                    : 'Inactif'}
+                                            </Badge>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() =>
+                                                    handleDeleteCounter(
+                                                        counter,
+                                                    )
+                                                }
+                                                title="Supprimer le guichet"
+                                                className="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
 
                                     {/* Cashier Assignment */}
@@ -788,20 +808,6 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                                         )}
                                     </Button>
 
-                                    {/* Status Badge */}
-                                    <div className="absolute top-4 right-4">
-                                        <Badge
-                                            className={`rounded-full px-2 py-1 text-xs font-semibold uppercase ${
-                                                counter.is_active
-                                                    ? 'bg-emerald-100 text-emerald-600'
-                                                    : 'bg-slate-100 text-slate-400'
-                                            }`}
-                                        >
-                                            {counter.is_active
-                                                ? 'Actif'
-                                                : 'Inactif'}
-                                        </Badge>
-                                    </div>
                                 </motion.div>
                             ))}
                         </div>
