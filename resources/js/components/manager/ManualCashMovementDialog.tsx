@@ -15,6 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Link } from '@inertiajs/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -98,9 +99,28 @@ export function ManualCashMovementDialog({
                 </DialogHeader>
 
                 {openSessions.length === 0 && !isLoading ? (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
-                        Aucune caisse de caissier n’est ouverte dans cette
-                        boutique. Le mouvement ne peut pas être enregistré.
+                    // A movement has to belong to an open till for the balances
+                    // to add up, so point at the way out instead of dead-ending:
+                    // a manager can open a counter's till themselves.
+                    <div className="space-y-4">
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
+                            Aucune caisse n’est ouverte dans cette boutique. Un
+                            mouvement doit être rattaché à une caisse ouverte
+                            pour rester traçable.
+                        </div>
+                        <p className="text-sm text-slate-500">
+                            Ouvrez la caisse d’un guichet — vous pouvez le faire
+                            vous-même en tant que manager, sans attendre le
+                            caissier — puis revenez enregistrer le mouvement.
+                        </p>
+                        <Button
+                            asChild
+                            className="w-full rounded-xl bg-indigo-600 font-semibold text-white hover:bg-indigo-700"
+                        >
+                            <Link href="/cash/dashboard">
+                                Ouvrir une caisse
+                            </Link>
+                        </Button>
                     </div>
                 ) : (
                     <form
