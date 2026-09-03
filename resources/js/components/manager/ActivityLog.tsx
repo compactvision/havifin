@@ -239,6 +239,11 @@ export default function ActivityLog({ selectedDate }: ActivityLogProps) {
                                                     activity.created_at,
                                                 ).format('HH:mm:ss')}
                                             </span>
+                                            <span className="text-xs font-semibold text-slate-400">
+                                                {moment(
+                                                    activity.created_at,
+                                                ).format('DD/MM/YYYY')}
+                                            </span>
                                             {getActivityIcon(
                                                 activity.activity_type,
                                                 activity.description,
