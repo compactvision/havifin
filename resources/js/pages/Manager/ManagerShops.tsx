@@ -3,12 +3,25 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { ArrowRight, Building2, MapPin, Store, Users } from 'lucide-react';
+import {
+    ArrowRight,
+    Building2,
+    MapPin,
+    Play,
+    Store,
+    StopCircle,
+    Users,
+} from 'lucide-react';
+import moment from 'moment';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function ManagerShops() {
     const { auth } = usePage().props as any;
+    const queryClient = useQueryClient();
+    const [busyShopId, setBusyShopId] = useState<number | null>(null);
 
     const { data: allShops, isLoading } = useQuery({
         queryKey: ['shops'],
@@ -17,6 +30,55 @@ export default function ManagerShops() {
 
     // The API already restricts this list to the manager's assigned shops.
     const myShops = allShops;
+
+    // One request for every shop's open day, keyed by shop below.
+    const { data: openSessionData } = useQuery({
+        queryKey: ['sessions', 'open'],
+        queryFn: () => base44.entities.Session.list({ status: 'open' }),
+    });
+    const openSessionByShop = new Map<number, any>(
+        (openSessionData?.data ?? []).map((session: any) => [
+            session.shop_id,
+            session,
+        ]),
+    );
+
+    const handleOpenDay = async (shopId: number) => {
+        setBusyShopId(shopId);
+        try {
+            await base44.entities.Session.create({
+                session_date: moment().format('YYYY-MM-DD'),
+                shop_id: shopId,
+            });
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            toast.success('Journée ouverte. Les caissiers peuvent ouvrir leur caisse.');
+        } catch (error: any) {
+            toast.error(
+                error.response?.data?.error ||
+                    error.response?.data?.message ||
+                    "Erreur lors de l'ouverture",
+            );
+        } finally {
+            setBusyShopId(null);
+        }
+    };
+
+    const handleCloseDay = async (sessionId: number, shopId: number) => {
+        setBusyShopId(shopId);
+        try {
+            await base44.entities.Session.close(sessionId);
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            toast.success('Journée clôturée');
+        } catch (error: any) {
+            toast.error(
+                error.response?.data?.error ||
+                    error.response?.data?.message ||
+                    'Erreur lors de la clôture',
+            );
+        } finally {
+            setBusyShopId(null);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -94,6 +156,17 @@ export default function ManagerShops() {
                     </div>
                 </header>
 
+                {/* Page title */}
+                <div className="mb-8">
+                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                        Mes Boutiques
+                    </h2>
+                    <p className="mt-1 text-sm font-medium text-slate-500">
+                        Ouvrez ou clôturez la journée de chaque agence, puis
+                        entrez pour gérer ses guichets.
+                    </p>
+                </div>
+
                 {/* Shop Grid */}
                 {myShops && myShops.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -104,7 +177,9 @@ export default function ManagerShops() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
                             >
-                                <Link href={`/manager/shops/${shop.id}`}>
+                                {/* Not wrapped in a Link: the day actions
+                                    below are buttons, and nesting them inside
+                                    an anchor makes every click navigate. */}
                                     <div className="group relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10">
                                         {/* Gradient Background */}
                                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -148,13 +223,83 @@ export default function ManagerShops() {
                                                 </div>
                                             </div>
 
+                                            {/* Day status + open/close */}
+                                            {(() => {
+                                                const session =
+                                                    openSessionByShop.get(
+                                                        shop.id,
+                                                    );
+                                                const isBusy =
+                                                    busyShopId === shop.id;
+                                                return (
+                                                    <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                                                        <div className="mb-3 flex items-center gap-2">
+                                                            <span
+                                                                className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                                                                    session
+                                                                        ? 'bg-emerald-500'
+                                                                        : 'bg-slate-300'
+                                                                }`}
+                                                            />
+                                                            <span className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                                                                {session
+                                                                    ? `Journée ouverte — ${moment(session.session_date).format('DD/MM')}`
+                                                                    : 'Journée fermée'}
+                                                            </span>
+                                                        </div>
+                                                        {session ? (
+                                                            <Button
+                                                                onClick={() =>
+                                                                    handleCloseDay(
+                                                                        session.id,
+                                                                        shop.id,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    isBusy
+                                                                }
+                                                                variant="outline"
+                                                                className="w-full rounded-xl border-slate-200 font-semibold text-slate-600 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                                                            >
+                                                                <StopCircle className="mr-2 h-4 w-4" />
+                                                                {isBusy
+                                                                    ? 'Clôture...'
+                                                                    : 'Clôturer la journée'}
+                                                            </Button>
+                                                        ) : (
+                                                            <Button
+                                                                onClick={() =>
+                                                                    handleOpenDay(
+                                                                        shop.id,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    isBusy
+                                                                }
+                                                                className="w-full rounded-xl bg-emerald-600 font-semibold text-white hover:bg-emerald-700"
+                                                            >
+                                                                <Play className="mr-2 h-4 w-4" />
+                                                                {isBusy
+                                                                    ? 'Ouverture...'
+                                                                    : 'Ouvrir la journée'}
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+
                                             {/* Action Button */}
                                             <Button
+                                                asChild
                                                 variant="ghost"
                                                 className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 hover:text-white hover:shadow-xl hover:shadow-indigo-500/40"
                                             >
-                                                Gérer cette boutique
-                                                <ArrowRight className="ml-2 h-4 w-4" />
+                                                <Link
+                                                    href={`/manager/shops/${shop.id}`}
+                                                >
+                                                    Gérer cette boutique
+                                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                                </Link>
                                             </Button>
                                         </div>
 
@@ -167,7 +312,6 @@ export default function ManagerShops() {
                                             </div>
                                         )}
                                     </div>
-                                </Link>
                             </motion.div>
                         ))}
                     </div>
