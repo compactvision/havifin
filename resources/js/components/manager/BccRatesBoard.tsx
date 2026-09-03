@@ -1,6 +1,6 @@
 import { base44, BccRateEntry } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { flagForCurrency } from '@/lib/flags';
+import { FlagIcon } from '@/components/ui/flag-icon';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -125,9 +125,10 @@ export default function BccRatesBoard() {
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-2xl leading-none">
-                                            {flagForCurrency(rate.code)}
-                                        </span>
+                                        <FlagIcon
+                                            currency={rate.code}
+                                            className="h-6 w-8 text-lg shadow-sm"
+                                        />
                                         <div>
                                             <p className="text-sm font-semibold text-slate-900">
                                                 {rate.code}/CDF

@@ -1,6 +1,6 @@
 import { base44, ExchangeRate } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { flagForCurrency } from '@/lib/flags';
+import { FlagIcon } from '@/components/ui/flag-icon';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -268,24 +268,26 @@ export default function RatesManager() {
                                         <span className="text-sm font-black text-white">
                                             {pair?.from || pairId.split('_')[0]}
                                         </span>
-                                        <span className="absolute -top-2 -right-2 text-base leading-none">
-                                            {flagForCurrency(
+                                        <FlagIcon
+                                            currency={
                                                 pair?.from ||
-                                                    pairId.split('_')[0],
-                                            )}
-                                        </span>
+                                                pairId.split('_')[0]
+                                            }
+                                            className="absolute -top-2 -right-2 h-4 w-5 shadow-sm"
+                                        />
                                     </div>
                                     <TrendingUp className="h-4 w-4 text-slate-300" />
                                     <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50">
                                         <span className="text-sm font-black text-indigo-600">
                                             {pair?.to || pairId.split('_')[1]}
                                         </span>
-                                        <span className="absolute -top-2 -right-2 text-base leading-none">
-                                            {flagForCurrency(
+                                        <FlagIcon
+                                            currency={
                                                 pair?.to ||
-                                                    pairId.split('_')[1],
-                                            )}
-                                        </span>
+                                                pairId.split('_')[1]
+                                            }
+                                            className="absolute -top-2 -right-2 h-4 w-5 shadow-sm"
+                                        />
                                     </div>
                                 </div>
                                 <Button

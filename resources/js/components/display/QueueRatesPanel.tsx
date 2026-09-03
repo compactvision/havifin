@@ -1,5 +1,5 @@
 import { base44, Client } from '@/api/base44Client';
-import { flagForCurrency } from '@/lib/flags';
+import { FlagIcon } from '@/components/ui/flag-icon';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -135,11 +135,10 @@ export default function QueueRatesPanel({
                                       )}
                                   >
                                       <div className="flex items-center gap-2">
-                                          <span className="text-xl leading-none">
-                                              {flagForCurrency(
-                                                  rate.currency_from,
-                                              )}
-                                          </span>
+                                          <FlagIcon
+                                              currency={rate.currency_from}
+                                              className="h-4 w-6 shadow-sm"
+                                          />
                                           <span
                                               className={cn(
                                                   'text-lg font-bold',
@@ -158,11 +157,10 @@ export default function QueueRatesPanel({
                                                       : 'text-brand-blue',
                                               )}
                                           />
-                                          <span className="text-xl leading-none">
-                                              {flagForCurrency(
-                                                  rate.currency_to,
-                                              )}
-                                          </span>
+                                          <FlagIcon
+                                              currency={rate.currency_to}
+                                              className="h-4 w-6 shadow-sm"
+                                          />
                                           <span
                                               className={cn(
                                                   'text-lg font-bold',
