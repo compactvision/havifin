@@ -23,6 +23,7 @@ import {
     Download,
     Landmark,
     LayoutDashboard,
+    Menu,
     PieChart,
     Play,
     RefreshCw,
@@ -31,6 +32,7 @@ import {
     Store,
     TrendingUp,
     Users,
+    X,
 } from 'lucide-react';
 import moment from 'moment';
 import { useEffect, useMemo, useState } from 'react';
@@ -45,6 +47,7 @@ export default function Manager() {
     );
     const [clientSearch, setClientSearch] = useState('');
     const [lastSync, setLastSync] = useState<Date | null>(null);
+    const [isNavOpen, setIsNavOpen] = useState(false);
     const [transactionSearch, setTransactionSearch] = useState('');
     const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
     const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
@@ -245,9 +248,19 @@ export default function Manager() {
                 {/* Manager Header (fixed) */}
                 <header className="z-20 flex h-24 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
                     <div className="flex items-center gap-2">
+                        {/* Below lg the sidebar becomes a drawer, so it needs
+                            a trigger; sits left of the logo as requested. */}
+                        <button
+                            type="button"
+                            onClick={() => setIsNavOpen(true)}
+                            aria-label="Ouvrir la navigation"
+                            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-indigo-500 hover:text-indigo-600 lg:hidden"
+                        >
+                            <Menu className="h-5 w-5" />
+                        </button>
                         <motion.div
                             whileHover={{ scale: 1.05 }}
-                            className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center"
+                            className="relative flex size-13 flex-shrink-0 items-center justify-center"
                         >
                             <img
                                 src="/havifin-icon.png"
@@ -264,11 +277,11 @@ export default function Manager() {
                                         Manager
                                     </span>
                                 </h1>
-                                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black tracking-widest whitespace-nowrap text-emerald-600 uppercase">
+                                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold tracking-widest whitespace-nowrap text-emerald-600 uppercase">
                                     Live
                                 </span>
                             </div>
-                            <p className="mt-1 flex items-center gap-2 text-[10px] font-black tracking-[0.15em] whitespace-nowrap text-slate-400 uppercase">
+                            <p className="flex items-center gap-2 text-[10px] font-semibold tracking-[0.15em] whitespace-nowrap text-slate-400 uppercase">
                                 {auth.user.role} •{' '}
                                 {auth.user.shop || 'Boutique'}
                             </p>
@@ -282,7 +295,7 @@ export default function Manager() {
                                     <Store className="h-4 w-4 text-slate-500" />
                                 </div>
                                 <select
-                                    className="cursor-pointer border-none bg-transparent pr-10 text-sm font-black text-slate-700 uppercase focus:ring-0"
+                                    className="cursor-pointer border-none bg-transparent pr-10 text-sm font-semibold text-slate-700 uppercase focus:ring-0"
                                     value={selectedShopId || ''}
                                     onChange={(e) =>
                                         setSelectedShopId(
@@ -306,17 +319,17 @@ export default function Manager() {
                             title="Actualiser le tableau de bord"
                             className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 transition-all hover:border-indigo-500 hover:bg-white sm:pr-5"
                         >
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-400 shadow-sm">
+                            <div className="flex size-9 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-400 shadow-sm">
                                 <RefreshCw
                                     className={cn(
-                                        'h-5 w-5',
+                                        'size-4',
                                         (loadingClients || loadingTx) &&
                                             'animate-spin',
                                     )}
                                 />
                             </div>
                             <div className="hidden text-left sm:block">
-                                <div className="text-[10px] font-black tracking-wider whitespace-nowrap text-slate-400 uppercase">
+                                <div className="text-[10px] font-semibold tracking-wider whitespace-nowrap text-slate-400 uppercase">
                                     Dernier Sync
                                 </div>
                                 <div className="text-xs font-bold whitespace-nowrap text-slate-600">
@@ -328,21 +341,21 @@ export default function Manager() {
                         </button>
 
                         <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition-all focus-within:border-indigo-500">
-                            <Search className="h-4 w-4 text-slate-400" />
+                            <Search className="size-4 text-slate-400" />
                             <input
                                 type="date"
                                 value={selectedDate}
                                 onChange={(e) =>
                                     setSelectedDate(e.target.value)
                                 }
-                                className="border-none bg-transparent text-xs font-black tracking-widest text-slate-600 uppercase focus:ring-0"
+                                className="border-none bg-transparent text-xs font-bold tracking-widest text-slate-600 uppercase focus:ring-0"
                             />
                         </div>
 
                         <Button
                             onClick={handleExport}
                             disabled={transactions.length === 0}
-                            className="h-12 rounded-2xl bg-slate-900 px-6 text-xs font-black tracking-widest text-white uppercase shadow-xl shadow-slate-900/10 transition-all hover:bg-black active:scale-95"
+                            className="h-12 rounded-2xl bg-slate-900 px-6 text-xs font-bold tracking-widest text-white uppercase shadow-xl shadow-slate-900/10 transition-all hover:bg-black active:scale-95"
                         >
                             <Download className="mr-2 h-4 w-4 text-emerald-400" />
                             Exporter Rapport
@@ -353,7 +366,35 @@ export default function Manager() {
                 {/* Body: fixed navigation sidebar + scrollable content */}
                 <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
                     {/* Navigation Sidebar (fixed, does not scroll with cards) */}
-                    <aside className="w-full shrink-0 space-y-4 overflow-y-auto p-4 lg:h-full lg:w-[280px]">
+                    {/* Backdrop, drawer only */}
+                    {isNavOpen && (
+                        <div
+                            onClick={() => setIsNavOpen(false)}
+                            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+                        />
+                    )}
+
+                    <aside
+                        className={cn(
+                            'shrink-0 space-y-4 overflow-y-auto p-4',
+                            // Drawer under lg: slides in from the left and
+                            // back out the same way when dismissed.
+                            'fixed inset-y-0 left-0 z-50 w-[300px] bg-slate-50 shadow-2xl transition-transform duration-300 ease-out',
+                            isNavOpen ? 'translate-x-0' : '-translate-x-full',
+                            // Back to a static column on large screens.
+                            'lg:static lg:z-auto lg:h-full lg:w-[280px] lg:translate-x-0 lg:bg-transparent lg:shadow-none lg:transition-none',
+                        )}
+                    >
+                        <div className="flex items-center justify-end lg:hidden">
+                            <button
+                                type="button"
+                                onClick={() => setIsNavOpen(false)}
+                                aria-label="Fermer la navigation"
+                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-indigo-600"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
                         <div className="rounded-[2rem] bg-white/50 p-5 shadow-sm backdrop-blur-xl">
                             <h3 className="mb-4 px-2 text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                                 Navigation
@@ -410,14 +451,16 @@ export default function Manager() {
                                     return (
                                         <button
                                             key={item.id}
-                                            onClick={() =>
-                                                setActiveTab(item.id)
-                                            }
+                                            onClick={() => {
+                                                setActiveTab(item.id);
+                                                setIsNavOpen(false);
+                                            }}
                                             className={cn(
-                                                'flex w-full items-center justify-between rounded-2xl p-3 text-left text-sm font-bold transition-all duration-300',
+                                                'flex w-full items-center justify-between rounded-2xl p-3 text-left text-sm font-semibold transition-all duration-300',
+                                                'hover:bg-slate-400/10 hover:text-slate-500',
                                                 activeTab === item.id
                                                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                                                    : 'text-slate-500 hover:bg-white',
+                                                    : 'hover:text-slate-400',
                                             )}
                                         >
                                             <div className="flex items-center gap-3 text-left">
