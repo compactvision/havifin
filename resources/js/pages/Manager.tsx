@@ -12,7 +12,7 @@ import { UserManagement } from '@/components/manager/UserManagement';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -242,18 +242,18 @@ export default function Manager() {
             <div className="flex h-screen flex-col overflow-hidden bg-[#f8fafc]">
                 {/* Manager Header (fixed) */}
                 <header className="z-20 flex h-24 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
                         <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="relative flex h-16 w-38 items-center justify-center px-4"
+                            whileHover={{ scale: 1.05 }}
+                            className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center"
                         >
                             <img
-                                src="/logo-color.png"
+                                src="/havifin-icon.png"
                                 alt="Havifin"
                                 className="h-full w-full object-contain"
                             />
                         </motion.div>
-                        <div className="h-10 w-[1px] bg-slate-100" />
+                        <div className="mr-1 h-8 w-[1px] bg-slate-100" />
                         <div>
                             <div className="flex items-center gap-3">
                                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
@@ -418,16 +418,18 @@ export default function Manager() {
                                                     : 'text-slate-500 hover:bg-white',
                                             )}
                                         >
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 text-left">
                                                 <Icon
                                                     className={cn(
-                                                        'h-5 w-5',
+                                                        'h-5 w-5 flex-shrink-0',
                                                         activeTab === item.id
                                                             ? 'text-white'
                                                             : 'text-slate-400',
                                                     )}
                                                 />
-                                                {item.label}
+                                                <span className="text-left whitespace-nowrap">
+                                                    {item.label}
+                                                </span>
                                             </div>
                                             <ChevronRight
                                                 className={cn(
@@ -452,8 +454,13 @@ export default function Manager() {
                                 Consultez la documentation technique du bureau
                                 de change.
                             </p>
-                            <Button className="relative z-10 w-full rounded-xl bg-white text-[10px] font-black tracking-widest text-slate-900 uppercase hover:bg-slate-100">
-                                Guide Manager
+                            <Button
+                                asChild
+                                className="relative z-10 w-full rounded-xl bg-white text-[10px] font-black tracking-widest text-slate-900 uppercase hover:bg-slate-100"
+                            >
+                                <Link href="/manager/guide">
+                                    Guide Manager
+                                </Link>
                             </Button>
                         </div>
                     </aside>
