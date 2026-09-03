@@ -31,27 +31,37 @@ export default function ManagerShops() {
     // The API already restricts this list to the manager's assigned shops.
     const myShops = allShops;
 
-    // One request for every shop's open day, keyed by shop below.
-    const { data: openSessionData } = useQuery({
-        queryKey: ['sessions', 'open'],
-        queryFn: () => base44.entities.Session.list({ status: 'open' }),
+    // Today's sessions, whatever their status: a shop that already has a
+    // closed session for today must be reopened rather than opened again,
+    // since the API refuses a second session on the same date.
+    const today = moment().format('YYYY-MM-DD');
+    const { data: todaySessionData } = useQuery({
+        queryKey: ['sessions', 'today', today],
+        queryFn: () => base44.entities.Session.list({ date: today }),
     });
     const openSessionByShop = new Map<number, any>(
-        (openSessionData?.data ?? []).map((session: any) => [
+        (todaySessionData?.data ?? []).map((session: any) => [
             session.shop_id,
             session,
         ]),
     );
 
-    const handleOpenDay = async (shopId: number) => {
+    const handleOpenDay = async (shopId: number, existingId?: number) => {
         setBusyShopId(shopId);
         try {
-            await base44.entities.Session.create({
-                session_date: moment().format('YYYY-MM-DD'),
-                shop_id: shopId,
-            });
+            if (existingId) {
+                await base44.entities.Session.reopen(existingId);
+                toast.success('Journée réouverte.');
+            } else {
+                await base44.entities.Session.create({
+                    session_date: today,
+                    shop_id: shopId,
+                });
+                toast.success(
+                    'Journée ouverte. Les caissiers peuvent ouvrir leur caisse.',
+                );
+            }
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
-            toast.success('Journée ouverte. Les caissiers peuvent ouvrir leur caisse.');
         } catch (error: any) {
             toast.error(
                 error.response?.data?.error ||
@@ -180,7 +190,7 @@ export default function ManagerShops() {
                                 {/* Not wrapped in a Link: the day actions
                                     below are buttons, and nesting them inside
                                     an anchor makes every click navigate. */}
-                                    <div className="group relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10">
+                                    <div className="group relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white py-8 px-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10">
                                         {/* Gradient Background */}
                                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
@@ -229,6 +239,8 @@ export default function ManagerShops() {
                                                     openSessionByShop.get(
                                                         shop.id,
                                                     );
+                                                const isOpen =
+                                                    session?.status === 'open';
                                                 const isBusy =
                                                     busyShopId === shop.id;
                                                 return (
@@ -236,18 +248,20 @@ export default function ManagerShops() {
                                                         <div className="mb-3 flex items-center gap-2">
                                                             <span
                                                                 className={`h-2 w-2 flex-shrink-0 rounded-full ${
-                                                                    session
+                                                                    isOpen
                                                                         ? 'bg-emerald-500'
                                                                         : 'bg-slate-300'
                                                                 }`}
                                                             />
                                                             <span className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                                                                {session
+                                                                {isOpen
                                                                     ? `Journée ouverte — ${moment(session.session_date).format('DD/MM')}`
-                                                                    : 'Journée fermée'}
+                                                                    : session
+                                                                      ? 'Journée clôturée'
+                                                                      : 'Journée non ouverte'}
                                                             </span>
                                                         </div>
-                                                        {session ? (
+                                                        {isOpen ? (
                                                             <Button
                                                                 onClick={() =>
                                                                     handleCloseDay(
@@ -271,6 +285,7 @@ export default function ManagerShops() {
                                                                 onClick={() =>
                                                                     handleOpenDay(
                                                                         shop.id,
+                                                                        session?.id,
                                                                     )
                                                                 }
                                                                 disabled={
@@ -281,7 +296,9 @@ export default function ManagerShops() {
                                                                 <Play className="mr-2 h-4 w-4" />
                                                                 {isBusy
                                                                     ? 'Ouverture...'
-                                                                    : 'Ouvrir la journée'}
+                                                                    : session
+                                                                      ? 'Rouvrir la journée'
+                                                                      : 'Ouvrir la journée'}
                                                             </Button>
                                                         )}
                                                     </div>
