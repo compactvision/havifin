@@ -137,7 +137,7 @@ export default function QueueRatesPanel({
                                       <div className="flex items-center gap-2">
                                           <FlagIcon
                                               currency={rate.currency_from}
-                                              className="h-4 w-6 shadow-sm"
+                                              className="h-5 shadow-sm"
                                           />
                                           <span
                                               className={cn(
@@ -159,7 +159,7 @@ export default function QueueRatesPanel({
                                           />
                                           <FlagIcon
                                               currency={rate.currency_to}
-                                              className="h-4 w-6 shadow-sm"
+                                              className="h-5 shadow-sm"
                                           />
                                           <span
                                               className={cn(

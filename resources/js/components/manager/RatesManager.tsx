@@ -273,7 +273,7 @@ export default function RatesManager() {
                                                 pair?.from ||
                                                 pairId.split('_')[0]
                                             }
-                                            className="absolute -top-2 -right-2 h-4 w-5 shadow-sm"
+                                            className="absolute -top-2 -right-2 h-5 shadow-sm"
                                         />
                                     </div>
                                     <TrendingUp className="h-4 w-4 text-slate-300" />
@@ -286,7 +286,7 @@ export default function RatesManager() {
                                                 pair?.to ||
                                                 pairId.split('_')[1]
                                             }
-                                            className="absolute -top-2 -right-2 h-4 w-5 shadow-sm"
+                                            className="absolute -top-2 -right-2 h-5 shadow-sm"
                                         />
                                     </div>
                                 </div>
