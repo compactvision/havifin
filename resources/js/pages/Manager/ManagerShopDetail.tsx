@@ -258,7 +258,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
     // Fetch advertisements
     const { data: advertisements = [], isLoading: isLoadingAds } = useQuery({
         queryKey: ['advertisements', shopId],
-        queryFn: base44.entities.Advertisement.list,
+        queryFn: () => base44.entities.Advertisement.list(shopId),
         enabled: !!shopId,
     });
 
@@ -405,6 +405,7 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                     String(data.display_order),
                 );
                 formData.append('is_active', '1');
+                formData.append('shop_id', String(shopId));
                 formData.append('media', videoFile);
 
                 return axios.post('/api/advertisements', formData, {
@@ -418,7 +419,10 @@ export default function ManagerShopDetail({ id }: ManagerShopDetailProps) {
                 image_url: data.image_url || imagePreview,
                 display_order: data.display_order,
                 is_active: true,
-            });
+                // Screen content belongs to the shop being configured, not to
+                // every shop of the owner.
+                shop_id: shopId,
+            } as any);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['advertisements'] });

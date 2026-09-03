@@ -15,9 +15,9 @@ class AdvertisementController extends Controller
     /**
      * Get all advertisements.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $advertisements = Advertisement::ordered()->get();
+        $advertisements = Advertisement::forShop($request->integer('shop_id'))->ordered()->get();
 
         return response()->json($advertisements);
     }
@@ -25,9 +25,9 @@ class AdvertisementController extends Controller
     /**
      * Get only active advertisements for display.
      */
-    public function active()
+    public function active(Request $request)
     {
-        $advertisements = Advertisement::active()->ordered()->get();
+        $advertisements = Advertisement::active()->forShop($request->integer('shop_id'))->ordered()->get();
 
         return response()->json($advertisements);
     }
@@ -44,6 +44,7 @@ class AdvertisementController extends Controller
             'media' => 'required_without:image_url|nullable|file|mimetypes:video/mp4,video/webm,video/ogg,video/quicktime,image/jpeg,image/png,image/gif,image/webp|max:20480',
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
+            'shop_id' => 'nullable|integer|exists:shops,id',
         ]);
 
         if ($validator->fails()) {
@@ -64,6 +65,12 @@ class AdvertisementController extends Controller
         // Assign owner_id
         $creator = $request->user();
         $data['owner_id'] = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+
+        // A null shop_id keeps the ad owner-wide; a set one must be a shop the
+        // creator actually manages.
+        if (! empty($data['shop_id'])) {
+            TenantAccess::authorizeShop($creator, (int) $data['shop_id']);
+        }
 
         $advertisement = Advertisement::create($data);
 

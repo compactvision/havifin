@@ -489,13 +489,17 @@ export const base44 = {
                     .then(handleResponse<HelpRequest>),
         },
         Advertisement: {
-            list: () =>
+            list: (shopId?: number) =>
                 axios
-                    .get<Advertisement[]>('/api/advertisements')
+                    .get<Advertisement[]>('/api/advertisements', {
+                        params: shopId ? { shop_id: shopId } : undefined,
+                    })
                     .then(handleResponse<Advertisement[]>),
-            active: () =>
+            active: (shopId?: number) =>
                 axios
-                    .get<Advertisement[]>('/api/advertisements/active')
+                    .get<Advertisement[]>('/api/advertisements/active', {
+                        params: shopId ? { shop_id: shopId } : undefined,
+                    })
                     .then(handleResponse<Advertisement[]>),
             create: (data: Partial<Advertisement>) =>
                 axios
@@ -511,11 +515,17 @@ export const base44 = {
                     .then(handleResponse<void>),
         },
         News: {
-            list: () =>
-                axios.get<News[]>('/api/news').then(handleResponse<News[]>),
-            active: () =>
+            list: (shopId?: number) =>
                 axios
-                    .get<News[]>('/api/news/active')
+                    .get<News[]>('/api/news', {
+                        params: shopId ? { shop_id: shopId } : undefined,
+                    })
+                    .then(handleResponse<News[]>),
+            active: (shopId?: number) =>
+                axios
+                    .get<News[]>('/api/news/active', {
+                        params: shopId ? { shop_id: shopId } : undefined,
+                    })
                     .then(handleResponse<News[]>),
             create: (data: Partial<News>) =>
                 axios.post<News>('/api/news', data).then(handleResponse<News>),

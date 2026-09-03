@@ -16,6 +16,7 @@ class Advertisement extends Model
         'display_order',
         'is_active',
         'owner_id',
+        'shop_id',
     ];
 
     protected $casts = [
@@ -23,6 +24,26 @@ class Advertisement extends Model
         'display_order' => 'integer',
         'type' => 'string',
     ];
+
+    /**
+     * Rows carrying this shop, plus the owner-wide ones (null shop_id) that
+     * every shop displays.
+     */
+    public function scopeForShop($query, $shopId)
+    {
+        if (! $shopId) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($shopId) {
+            $q->where('shop_id', $shopId)->orWhereNull('shop_id');
+        });
+    }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
+    }
 
     /**
      * Scope to get only active advertisements.
