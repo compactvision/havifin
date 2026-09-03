@@ -6,12 +6,16 @@ import { Newspaper } from 'lucide-react';
 
 interface NewsTickerProps {
     isDarkMode?: boolean;
+    shopId?: number | null;
 }
 
-export default function NewsTicker({ isDarkMode = true }: NewsTickerProps) {
+export default function NewsTicker({
+    isDarkMode = true,
+    shopId,
+}: NewsTickerProps) {
     const { data: news = [] } = useQuery({
-        queryKey: ['active-news'],
-        queryFn: () => base44.entities.News.active(),
+        queryKey: ['active-news', shopId],
+        queryFn: () => base44.entities.News.active(shopId ?? undefined),
         refetchInterval: 30000,
     });
 

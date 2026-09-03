@@ -27,7 +27,13 @@ class ShopController extends Controller
             ])->get();
         }
 
+        // "agents" previously read shop.users, which this query never loads,
+        // so every card showed 0. Count the counters that actually have a
+        // cashier assigned instead.
         return $user->shops()
+            ->withCount([
+                'counters as assigned_cashiers_count' => fn ($q) => $q->whereNotNull('cashier_id'),
+            ])
             ->get(['shops.id', 'name', 'slug', 'address', 'counter_count', 'is_active']);
     }
 

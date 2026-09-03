@@ -14,9 +14,9 @@ class NewsController extends Controller
     /**
      * Get all news.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $news = News::ordered()->get();
+        $news = News::forShop($request->integer('shop_id'))->ordered()->get();
 
         return response()->json($news);
     }
@@ -24,9 +24,9 @@ class NewsController extends Controller
     /**
      * Get only active news for display.
      */
-    public function active()
+    public function active(Request $request)
     {
-        $news = News::active()->ordered()->get();
+        $news = News::active()->forShop($request->integer('shop_id'))->ordered()->get();
 
         return response()->json($news);
     }
@@ -40,6 +40,7 @@ class NewsController extends Controller
             'content' => 'required|string|max:2000',
             'display_order' => 'nullable|integer',
             'is_active' => 'boolean',
+            'shop_id' => 'nullable|integer|exists:shops,id',
         ]);
 
         if ($validator->fails()) {
@@ -54,6 +55,12 @@ class NewsController extends Controller
         // Assign owner_id
         $creator = $request->user();
         $data['owner_id'] = $creator->role === 'super-admin' ? $creator->id : $creator->owner_id;
+
+        // A null shop_id keeps the message owner-wide; a set one must be a
+        // shop the creator actually manages.
+        if (! empty($data['shop_id'])) {
+            TenantAccess::authorizeShop($creator, (int) $data['shop_id']);
+        }
 
         $news = News::create($data);
         CashierActivity::logAction('configuration_change', "Message d'écran créé: {$news->id}");

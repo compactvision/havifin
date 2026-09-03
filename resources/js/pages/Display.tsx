@@ -299,7 +299,7 @@ export default function Display() {
                 {/* 1. ADVERTISING AREA - DOMINANT (75% Width) */}
                 <div className="relative flex h-full flex-[3] flex-col overflow-hidden rounded-[2rem] border shadow-2xl transition-all">
                     <div className="absolute inset-0">
-                        <AdCarousel isDarkMode={isDarkMode} />
+                        <AdCarousel isDarkMode={isDarkMode} shopId={shopId} />
                     </div>
                 </div>
 
@@ -468,7 +468,7 @@ export default function Display() {
             {/* Daily Rates Ticker */}
             <div className="relative z-10 mb-0 w-full shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
                 <RateTicker isDarkMode={isDarkMode} />
-                <NewsTicker isDarkMode={isDarkMode} />
+                <NewsTicker isDarkMode={isDarkMode} shopId={shopId} />
             </div>
 
             {/* Ambient Background Overlay (Vignette) */}

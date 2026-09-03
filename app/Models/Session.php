@@ -77,6 +77,27 @@ class Session extends Model
     /**
      * Scope to get only open sessions.
      */
+    /**
+     * The open/close/reopen trail for this day. Reopening clears closed_at,
+     * so the session row alone cannot show that a day was closed at noon and
+     * picked back up in the afternoon - the activity log can.
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(CashierActivity::class, 'session_id')
+            ->whereIn('activity_type', [
+                'session_opened',
+                'session_closed',
+                'session_reopened',
+            ])
+            ->orderBy('created_at');
+    }
+
+    public function cashSessions(): HasMany
+    {
+        return $this->hasMany(CashSession::class, 'work_session_id');
+    }
+
     public function scopeOpen($query)
     {
         return $query->where('status', 'open');

@@ -8,12 +8,17 @@ import React from 'react';
 
 interface AdCarouselProps {
     isDarkMode?: boolean;
+    shopId?: number | null;
 }
 
-export default function AdCarousel({ isDarkMode = true }: AdCarouselProps) {
+export default function AdCarousel({
+    isDarkMode = true,
+    shopId,
+}: AdCarouselProps) {
     const { data: ads = [], isLoading } = useQuery({
-        queryKey: ['active-ads'],
-        queryFn: () => base44.entities.Advertisement.active(),
+        queryKey: ['active-ads', shopId],
+        queryFn: () =>
+            base44.entities.Advertisement.active(shopId ?? undefined),
         refetchInterval: 60000,
     });
 
