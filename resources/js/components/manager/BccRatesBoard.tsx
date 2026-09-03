@@ -127,7 +127,7 @@ export default function BccRatesBoard() {
                                     <div className="flex items-center gap-2">
                                         <FlagIcon
                                             currency={rate.code}
-                                            className="h-6 w-8 text-lg shadow-sm"
+                                            className="h-7 shadow-sm"
                                         />
                                         <div>
                                             <p className="text-sm font-semibold text-slate-900">
