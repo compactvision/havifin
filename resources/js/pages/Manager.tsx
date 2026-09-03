@@ -44,6 +44,7 @@ export default function Manager() {
         moment().format('YYYY-MM-DD'),
     );
     const [clientSearch, setClientSearch] = useState('');
+    const [lastSync, setLastSync] = useState<Date | null>(null);
     const [transactionSearch, setTransactionSearch] = useState('');
     const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
     const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
@@ -189,6 +190,7 @@ export default function Manager() {
         queryClient.invalidateQueries({ queryKey: ['all-clients'] });
         queryClient.invalidateQueries({ queryKey: ['all-transactions'] });
         queryClient.invalidateQueries({ queryKey: ['all-cash-movements'] });
+        setLastSync(new Date());
         toast.success('Tableau de bord actualisé');
     };
 
@@ -296,7 +298,14 @@ export default function Manager() {
                                 </select>
                             </div>
                         )}
-                        <div className="hidden items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 pr-5 xl:flex">
+                        {/* Doubles as the refresh control: a separate button
+                            next to a passive "last sync" card was redundant. */}
+                        <button
+                            type="button"
+                            onClick={handleRefresh}
+                            title="Actualiser le tableau de bord"
+                            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 transition-all hover:border-indigo-500 hover:bg-white sm:pr-5"
+                        >
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-400 shadow-sm">
                                 <RefreshCw
                                     className={cn(
@@ -306,24 +315,17 @@ export default function Manager() {
                                     )}
                                 />
                             </div>
-                            <div>
-                                <div className="text-[10px] font-black tracking-wider text-slate-400 uppercase">
+                            <div className="hidden text-left sm:block">
+                                <div className="text-[10px] font-black tracking-wider whitespace-nowrap text-slate-400 uppercase">
                                     Dernier Sync
                                 </div>
-                                <div className="text-xs font-bold text-slate-600">
-                                    A l'instant
+                                <div className="text-xs font-bold whitespace-nowrap text-slate-600">
+                                    {lastSync
+                                        ? moment(lastSync).format('HH:mm')
+                                        : 'Actualiser'}
                                 </div>
                             </div>
-                        </div>
-
-                        <Button
-                            variant="outline"
-                            onClick={handleRefresh}
-                            className="h-12 rounded-2xl border-slate-200 bg-white px-6 text-xs font-black tracking-widest uppercase shadow-sm transition-all hover:border-indigo-500 hover:text-indigo-600"
-                        >
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Actualiser
-                        </Button>
+                        </button>
 
                         <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition-all focus-within:border-indigo-500">
                             <Search className="h-4 w-4 text-slate-400" />
