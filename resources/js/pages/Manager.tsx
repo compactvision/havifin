@@ -246,7 +246,7 @@ export default function Manager() {
             <Head title="Manager" />
             <div className="flex h-screen flex-col overflow-hidden bg-[#f8fafc]">
                 {/* Manager Header (fixed) */}
-                <header className="z-20 flex h-24 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <header className="z-20 flex py-2 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
                     <div className="flex items-center gap-2">
                         {/* Below lg the sidebar becomes a drawer, so it needs
                             a trigger; sits left of the logo as requested. */}
@@ -260,7 +260,7 @@ export default function Manager() {
                         </button>
                         <motion.div
                             whileHover={{ scale: 1.05 }}
-                            className="relative flex size-13 flex-shrink-0 items-center justify-center"
+                            className="relative flex size-17 flex-shrink-0 items-center justify-center"
                         >
                             <img
                                 src="/havifin-icon.png"
@@ -288,10 +288,10 @@ export default function Manager() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         {shops.length > 0 && (
-                            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
-                                <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
+                            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 transition-all hover:border-indigo-500 hover:bg-white sm:pr-5">
+                                <div className="flex size-9 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-400 shadow-sm">
                                     <Store className="h-4 w-4 text-slate-500" />
                                 </div>
                                 <select
@@ -490,7 +490,7 @@ export default function Manager() {
                             </nav>
                         </div>
 
-                        <div className="group relative overflow-hidden rounded-[2rem] bg-slate-900 p-8 text-white shadow-2xl">
+                        <div className="group relative overflow-hidden rounded-[2rem] bg-slate-900 p-8 text-white shadow-xl">
                             <div className="absolute top-0 right-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 bg-indigo-500/20 blur-[80px]" />
                             <h4 className="relative z-10 mb-2 text-xl font-bold">
                                 Besoin d'aide ?
@@ -514,7 +514,7 @@ export default function Manager() {
                     <main className="flex-1 overflow-y-auto bg-[url('/grid.svg')] bg-[length:40px_40px] px-10 py-10">
                         <div className="w-full max-w-none space-y-10">
                             {/* KPI Cards Section */}
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
                                 <StatsCard
                                     title="Clients Aujourd'hui"
                                     value={stats.todayClients}
