@@ -72,7 +72,7 @@ export function StatsCard({
             whileHover={{ y: -4 }}
             transition={{ type: 'spring', stiffness: 400, damping: 28 }}
             className={cn(
-                'group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm transition-[box-shadow,border-color] duration-300 hover:shadow-lg hover:shadow-slate-900/5',
+                'group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-6 transition-[box-shadow,border-color] duration-300 hover:shadow-lg hover:shadow-slate-900/5',
                 config.ring,
             )}
         >
@@ -85,14 +85,14 @@ export function StatsCard({
             />
 
             <div className="relative z-10">
-                <div className="mb-5 flex items-start justify-between">
+                <div className="mb-3 flex items-start justify-between sm:mb-5">
                     <div
                         className={cn(
-                            'flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-lg transition-transform duration-300 group-hover:scale-105',
+                            'flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-105 sm:h-11 sm:w-11 sm:rounded-2xl',
                             config.icon,
                         )}
                     >
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                     {trend && (
                         <div
@@ -108,14 +108,14 @@ export function StatsCard({
                     )}
                 </div>
 
-                <p className="text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase sm:text-[11px]">
                     {title}
                 </p>
-                <h2 className="mt-1.5 text-3xl leading-none font-bold tracking-tight text-slate-900 tabular-nums">
+                <h2 className="mt-1.5 text-2xl leading-none font-bold tracking-tight text-slate-900 tabular-nums sm:text-3xl">
                     {value}
                 </h2>
                 {subtitle && (
-                    <p className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-500">
+                    <p className="mt-2 flex items-center gap-2 text-[11px] font-medium text-slate-500 sm:mt-3 sm:text-xs">
                         <span
                             className={cn(
                                 'h-1.5 w-1.5 flex-shrink-0 rounded-full',
