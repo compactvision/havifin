@@ -457,10 +457,9 @@ export default function Manager() {
                                             }}
                                             className={cn(
                                                 'flex w-full items-center justify-between rounded-2xl p-3 text-left text-sm font-semibold transition-all duration-300',
-                                                'hover:bg-slate-400/10 hover:text-slate-500',
+                                                'hover:bg-slate-500/10 hover:text-slate-500',
                                                 activeTab === item.id
-                                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                                                    : 'hover:text-slate-400',
+                                                    && 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-800 hover:text-white'
                                             )}
                                         >
                                             <div className="flex items-center gap-3 text-left">
@@ -543,8 +542,8 @@ export default function Manager() {
                             </div>
 
                             {/* Content Display */}
-                            <div className="min-h-[600px] overflow-hidden rounded-[2.5rem] border border-white bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
-                                <div className="p-10">
+                            <div className="min-h-[600px] overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-sm">
+                                <div className="p-5 sm:p-10">
                                     {activeTab === 'overview' && (
                                         <div className="animate-in space-y-8 duration-500 fade-in slide-in-from-bottom-4">
                                             <div className="flex items-center justify-between">
