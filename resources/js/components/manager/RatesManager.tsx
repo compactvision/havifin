@@ -38,6 +38,7 @@ export default function RatesManager() {
     const [activeSubTab, setActiveSubTab] = useState<'rates' | 'history'>(
         'rates',
     );
+    const [historyPage, setHistoryPage] = useState(1);
     const [newRate, setNewRate] = useState({
         from: '',
         to: '',
@@ -50,11 +51,13 @@ export default function RatesManager() {
         queryFn: () => base44.entities.ExchangeRate.filter({ is_active: true }),
     });
 
-    const { data: history = [], isLoading: isHistoryLoading } = useQuery({
-        queryKey: ['rate-history'],
-        queryFn: () => base44.entities.ExchangeRate.history(),
+    const { data: historyPageData, isLoading: isHistoryLoading } = useQuery({
+        queryKey: ['rate-history', historyPage],
+        queryFn: () => base44.entities.ExchangeRate.history(historyPage),
         enabled: activeSubTab === 'history',
+        placeholderData: (previous) => previous,
     });
+    const history = historyPageData?.data ?? [];
 
     const updateMutation = useMutation({
         mutationFn: async ({
@@ -70,6 +73,7 @@ export default function RatesManager() {
             queryClient.invalidateQueries({ queryKey: ['rates'] });
             queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
             queryClient.invalidateQueries({ queryKey: ['rate-history'] });
+            setHistoryPage(1);
             toast.success('Taux mis à jour');
         },
     });
@@ -86,6 +90,7 @@ export default function RatesManager() {
             queryClient.invalidateQueries({ queryKey: ['rates'] });
             queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
             queryClient.invalidateQueries({ queryKey: ['rate-history'] });
+            setHistoryPage(1);
             setNewRate({ from: '', to: '', rate: '' });
             setShowAddForm(false);
             toast.success('Nouveau taux de change configuré');
@@ -101,6 +106,7 @@ export default function RatesManager() {
             queryClient.invalidateQueries({ queryKey: ['rates'] });
             queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
             queryClient.invalidateQueries({ queryKey: ['rate-history'] });
+            setHistoryPage(1);
             toast.success('Configuration supprimée');
         },
     });
@@ -218,6 +224,49 @@ export default function RatesManager() {
                             </div>
                         </div>
                     ))}
+
+                    {!isHistoryLoading &&
+                        historyPageData &&
+                        historyPageData.last_page > 1 && (
+                            <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                                <p className="text-xs text-slate-400">
+                                    Page {historyPageData.current_page} sur{' '}
+                                    {historyPageData.last_page} ·{' '}
+                                    {historyPageData.total} changements
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={
+                                            historyPageData.current_page <= 1
+                                        }
+                                        onClick={() =>
+                                            setHistoryPage((p) =>
+                                                Math.max(1, p - 1),
+                                            )
+                                        }
+                                        className="h-9 rounded-lg text-xs font-bold"
+                                    >
+                                        Précédent
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={
+                                            historyPageData.current_page >=
+                                            historyPageData.last_page
+                                        }
+                                        onClick={() =>
+                                            setHistoryPage((p) => p + 1)
+                                        }
+                                        className="h-9 rounded-lg text-xs font-bold"
+                                    >
+                                        Suivant
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                 </div>
             ) : (
                 <>
