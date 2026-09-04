@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-CvGK_2yF.js";import{t}from"./utils-BTCdVlRL.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`div`,{"data-slot":`skeleton`,className:t(`bg-primary/10 animate-pulse rounded-md`,e),...r})}export{r as t};
