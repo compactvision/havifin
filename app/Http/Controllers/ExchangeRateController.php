@@ -15,6 +15,27 @@ class ExchangeRateController extends Controller
         return ExchangeRate::where('is_active', true)->get();
     }
 
+    /**
+     * Every rate change (manual edit or BCC sync), newest first, so a
+     * manager can tell exactly when a rate moved - CashierActivity already
+     * logs each one via logAction() in store/update/destroy and in
+     * BccRateController::apply().
+     */
+    public function history(Request $request)
+    {
+        $shopIds = TenantAccess::shopIds($request->user());
+
+        $activities = CashierActivity::with('cashier:id,name')
+            ->where('activity_type', 'configuration_change')
+            ->where('description', 'like', 'Taux%')
+            ->whereHas('cashier.shops', fn ($q) => $q->whereIn('shops.id', $shopIds))
+            ->orderByDesc('created_at')
+            ->limit(200)
+            ->get();
+
+        return response()->json($activities);
+    }
+
     public function store(Request $request)
     {
         $ownerId = TenantAccess::ownerId($request->user());

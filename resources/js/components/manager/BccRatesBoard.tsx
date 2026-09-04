@@ -35,7 +35,11 @@ export default function BccRatesBoard() {
         mutationFn: (code: string) => base44.entities.BccRate.apply(code),
         onSuccess: (_result, code) => {
             queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
-            toast.success(`Taux ${code}/CDF appliqué à votre boutique`);
+            queryClient.invalidateQueries({ queryKey: ['rates'] });
+            queryClient.invalidateQueries({ queryKey: ['rate-history'] });
+            toast.success(
+                `Paires ${code}_CDF et CDF_${code} mises à jour`,
+            );
         },
         onError: (err: any, code) => {
             toast.error(

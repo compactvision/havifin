@@ -1,20 +1,14 @@
-import { base44, ExchangeRate } from '@/api/base44Client';
+import { base44, ExchangeRate, RateHistoryEntry } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { FlagIcon } from '@/components/ui/flag-icon';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     ArrowRightLeft,
+    History,
     Loader2,
     Plus,
     RefreshCw,
@@ -23,9 +17,13 @@ import {
     TrendingUp,
     X,
 } from 'lucide-react';
+import moment from 'moment';
+import 'moment/locale/fr';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+// Known pairs get a flag pair and a friendly label out of the box; a manager
+// can still type any other 3-letter code freely (see the add-pair form).
 const currencyPairs = [
     { id: 'USD_CDF', label: 'USD → CDF', from: 'USD', to: 'CDF' },
     { id: 'CDF_USD', label: 'CDF → USD', from: 'CDF', to: 'USD' },
@@ -37,8 +35,12 @@ const currencyPairs = [
 
 export default function RatesManager() {
     const queryClient = useQueryClient();
+    const [activeSubTab, setActiveSubTab] = useState<'rates' | 'history'>(
+        'rates',
+    );
     const [newRate, setNewRate] = useState({
-        currency_pair: '',
+        from: '',
+        to: '',
         rate: '',
     });
     const [showAddForm, setShowAddForm] = useState(false);
@@ -46,6 +48,12 @@ export default function RatesManager() {
     const { data: rates = [], isLoading } = useQuery({
         queryKey: ['rates'],
         queryFn: () => base44.entities.ExchangeRate.filter({ is_active: true }),
+    });
+
+    const { data: history = [], isLoading: isHistoryLoading } = useQuery({
+        queryKey: ['rate-history'],
+        queryFn: () => base44.entities.ExchangeRate.history(),
+        enabled: activeSubTab === 'history',
     });
 
     const updateMutation = useMutation({
@@ -60,21 +68,25 @@ export default function RatesManager() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rates'] });
+            queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
+            queryClient.invalidateQueries({ queryKey: ['rate-history'] });
             toast.success('Taux mis à jour');
         },
     });
 
     const createMutation = useMutation({
-        mutationFn: async (data: any) => {
+        mutationFn: async (data: typeof newRate) => {
             await base44.entities.ExchangeRate.create({
-                ...data,
+                currency_pair: `${data.from}_${data.to}`.toUpperCase(),
                 rate: parseFloat(data.rate),
                 is_active: true,
-            });
+            } as Partial<ExchangeRate>);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rates'] });
-            setNewRate({ currency_pair: '', rate: '' });
+            queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
+            queryClient.invalidateQueries({ queryKey: ['rate-history'] });
+            setNewRate({ from: '', to: '', rate: '' });
             setShowAddForm(false);
             toast.success('Nouveau taux de change configuré');
         },
@@ -87,6 +99,8 @@ export default function RatesManager() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rates'] });
+            queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
+            queryClient.invalidateQueries({ queryKey: ['rate-history'] });
             toast.success('Configuration supprimée');
         },
     });
@@ -99,10 +113,13 @@ export default function RatesManager() {
         });
     };
 
+    const pairFromValid = /^[A-Za-z]{3}$/.test(newRate.from);
+    const pairToValid = /^[A-Za-z]{3}$/.test(newRate.to);
+
     return (
         <div className="space-y-8">
             {/* Header Control */}
-            <div className="flex items-center justify-between rounded-[1.5rem] border border-slate-100 bg-slate-100/50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-slate-100 bg-slate-100/50 p-4">
                 <div className="ml-2 flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-600/20">
                         <ArrowRightLeft className="h-5 w-5 text-white" />
@@ -117,139 +134,231 @@ export default function RatesManager() {
                     </div>
                 </div>
 
-                <Button
-                    onClick={() => setShowAddForm(!showAddForm)}
-                    className={cn(
-                        'h-11 rounded-xl px-6 text-xs font-black tracking-widest uppercase transition-all',
-                        showAddForm
-                            ? 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                            : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700',
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 rounded-xl bg-white p-1 shadow-sm">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSubTab('rates')}
+                            className={cn(
+                                'rounded-lg px-4 py-2 text-xs font-bold tracking-wide uppercase transition-colors',
+                                activeSubTab === 'rates'
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'text-slate-500 hover:text-slate-800',
+                            )}
+                        >
+                            Taux
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveSubTab('history')}
+                            className={cn(
+                                'flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold tracking-wide uppercase transition-colors',
+                                activeSubTab === 'history'
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'text-slate-500 hover:text-slate-800',
+                            )}
+                        >
+                            <History className="h-3.5 w-3.5" />
+                            Historique
+                        </button>
+                    </div>
+
+                    {activeSubTab === 'rates' && (
+                        <Button
+                            onClick={() => setShowAddForm(!showAddForm)}
+                            className={cn(
+                                'h-11 rounded-xl px-6 text-xs font-black tracking-widest uppercase transition-all',
+                                showAddForm
+                                    ? 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                                    : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700',
+                            )}
+                        >
+                            {showAddForm ? (
+                                <X className="mr-2 h-4 w-4" />
+                            ) : (
+                                <Plus className="mr-2 h-4 w-4" />
+                            )}
+                            {showAddForm ? 'Fermer' : 'Ajouter une Paire'}
+                        </Button>
                     )}
-                >
-                    {showAddForm ? (
-                        <X className="mr-2 h-4 w-4" />
-                    ) : (
-                        <Plus className="mr-2 h-4 w-4" />
-                    )}
-                    {showAddForm ? 'Fermer' : 'Ajouter une Paire'}
-                </Button>
+                </div>
             </div>
 
-            <AnimatePresence>
-                {showAddForm && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                    >
-                        <div className="relative rounded-[2rem] bg-slate-900 p-8 text-white shadow-2xl">
-                            <div className="pointer-events-none absolute top-0 right-0 h-64 w-64 bg-indigo-500/10 blur-[100px]" />
-
-                            <h5 className="mb-8 flex items-center gap-3 text-xl font-bold tracking-tight">
-                                <Plus className="h-6 w-6 text-indigo-400" />
-                                Nouvelle Configuration
-                            </h5>
-
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                        Paire de devises
-                                    </Label>
-                                    <Select
-                                        value={newRate.currency_pair}
-                                        onValueChange={(v) =>
-                                            setNewRate({
-                                                ...newRate,
-                                                currency_pair: v,
-                                            })
-                                        }
-                                    >
-                                        <SelectTrigger className="h-12 rounded-xl border-white/10 bg-white/5 font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500">
-                                            <SelectValue placeholder="Choisir une paire" />
-                                        </SelectTrigger>
-                                        <SelectContent className="border-slate-800 bg-slate-900 text-white">
-                                            {currencyPairs.map((pair) => (
-                                                <SelectItem
-                                                    key={pair.id}
-                                                    value={pair.id}
-                                                    className="hover:bg-slate-800 focus:bg-slate-800"
-                                                >
-                                                    {pair.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                        Taux direct (1{' '}
-                                        {newRate.currency_pair.split('_')[0] ||
-                                            'devise source'}{' '}
-                                        = combien de{' '}
-                                        {newRate.currency_pair.split('_')[1] ||
-                                            'devise cible'}
-                                        ?)
-                                    </Label>
-                                    <div className="relative">
-                                        <TrendingUp className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-emerald-400" />
-                                        <Input
-                                            type="number"
-                                            min="0.00000001"
-                                            step="any"
-                                            placeholder="Ex. 2250 ou 0.00044"
-                                            value={newRate.rate}
-                                            onChange={(e) =>
-                                                setNewRate({
-                                                    ...newRate,
-                                                    rate: e.target.value,
-                                                })
-                                            }
-                                            className="h-12 rounded-xl border-white/10 bg-white/5 pl-11 font-mono font-black text-white"
-                                        />
-                                    </div>
-                                    <p className="ml-1 text-[10px] font-semibold text-slate-400">
-                                        Le sens inverse doit être configuré
-                                        séparément.
-                                    </p>
-                                </div>
+            {activeSubTab === 'history' ? (
+                <div className="space-y-3 rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+                    {isHistoryLoading && (
+                        <div className="flex justify-center py-10 text-slate-400">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                        </div>
+                    )}
+                    {!isHistoryLoading && history.length === 0 && (
+                        <p className="py-10 text-center text-sm text-slate-400">
+                            Aucun changement de taux enregistré.
+                        </p>
+                    )}
+                    {history.map((entry: RateHistoryEntry) => (
+                        <div
+                            key={entry.id}
+                            className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-4"
+                        >
+                            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                                <History className="h-4 w-4 text-indigo-500" />
                             </div>
-
-                            <div className="mt-10 flex justify-end gap-3">
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => setShowAddForm(false)}
-                                    className="h-12 rounded-xl px-8 text-xs font-black tracking-widest text-slate-400 uppercase hover:bg-white/5 hover:text-white"
-                                >
-                                    Annuler
-                                </Button>
-                                <Button
-                                    onClick={() =>
-                                        createMutation.mutate(newRate)
-                                    }
-                                    disabled={
-                                        createMutation.isPending ||
-                                        !newRate.currency_pair ||
-                                        Number(newRate.rate) <= 0
-                                    }
-                                    className="h-12 rounded-xl bg-white px-10 text-xs font-black tracking-widest text-slate-900 uppercase transition-all hover:bg-slate-100"
-                                >
-                                    {createMutation.isPending ? (
-                                        <RefreshCw className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <>
-                                            <Save className="mr-2 h-4 w-4" />
-                                            Activer le Taux
-                                        </>
-                                    )}
-                                </Button>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-slate-800">
+                                    {entry.description}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                    {moment(entry.created_at)
+                                        .locale('fr')
+                                        .format('DD/MM/YYYY à HH:mm')}
+                                    {entry.cashier?.name &&
+                                        ` · ${entry.cashier.name}`}
+                                </p>
                             </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    ))}
+                </div>
+            ) : (
+                <>
+                    <AnimatePresence>
+                        {showAddForm && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="relative rounded-[2rem] border-2 border-slate-100 bg-white p-8 shadow-xl shadow-slate-200/50">
+                                    <h5 className="mb-8 flex items-center gap-3 text-xl font-bold tracking-tight text-slate-900">
+                                        <Plus className="h-6 w-6 text-indigo-500" />
+                                        Nouvelle Configuration
+                                    </h5>
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                                Paire de devises
+                                            </Label>
+                                            <div className="flex items-center gap-2">
+                                                <Input
+                                                    maxLength={3}
+                                                    placeholder="USD"
+                                                    value={newRate.from}
+                                                    onChange={(e) =>
+                                                        setNewRate({
+                                                            ...newRate,
+                                                            from: e.target.value
+                                                                .toUpperCase()
+                                                                .replace(
+                                                                    /[^A-Z]/g,
+                                                                    '',
+                                                                ),
+                                                        })
+                                                    }
+                                                    className="h-12 rounded-xl border-slate-200 bg-slate-50 text-center font-mono font-black tracking-widest text-slate-900 uppercase"
+                                                />
+                                                <ArrowRightLeft className="h-4 w-4 shrink-0 text-slate-300" />
+                                                <Input
+                                                    maxLength={3}
+                                                    placeholder="CDF"
+                                                    value={newRate.to}
+                                                    onChange={(e) =>
+                                                        setNewRate({
+                                                            ...newRate,
+                                                            to: e.target.value
+                                                                .toUpperCase()
+                                                                .replace(
+                                                                    /[^A-Z]/g,
+                                                                    '',
+                                                                ),
+                                                        })
+                                                    }
+                                                    className="h-12 rounded-xl border-slate-200 bg-slate-50 text-center font-mono font-black tracking-widest text-slate-900 uppercase"
+                                                />
+                                            </div>
+                                            <p className="ml-1 text-[10px] font-semibold text-slate-400">
+                                                Codes ISO à 3 lettres, ex.
+                                                USD, EUR, CDF - toute devise
+                                                convient, pas seulement
+                                                celles listées ci-dessous.
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                                Taux direct (1{' '}
+                                                {newRate.from ||
+                                                    'devise source'}{' '}
+                                                = combien de{' '}
+                                                {newRate.to ||
+                                                    'devise cible'}
+                                                ?)
+                                            </Label>
+                                            <div className="relative">
+                                                <TrendingUp className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+                                                <Input
+                                                    type="number"
+                                                    min="0.00000001"
+                                                    step="any"
+                                                    placeholder="Ex. 2250 ou 0.00044"
+                                                    value={newRate.rate}
+                                                    onChange={(e) =>
+                                                        setNewRate({
+                                                            ...newRate,
+                                                            rate: e.target
+                                                                .value,
+                                                        })
+                                                    }
+                                                    className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 font-mono font-black text-slate-900"
+                                                />
+                                            </div>
+                                            <p className="ml-1 text-[10px] font-semibold text-slate-400">
+                                                Le sens inverse doit être
+                                                configuré séparément.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-10 flex justify-end gap-3">
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() =>
+                                                setShowAddForm(false)
+                                            }
+                                            className="h-12 rounded-xl px-8 text-xs font-black tracking-widest text-slate-500 uppercase hover:bg-slate-100"
+                                        >
+                                            Annuler
+                                        </Button>
+                                        <Button
+                                            onClick={() =>
+                                                createMutation.mutate(
+                                                    newRate,
+                                                )
+                                            }
+                                            disabled={
+                                                createMutation.isPending ||
+                                                !pairFromValid ||
+                                                !pairToValid ||
+                                                Number(newRate.rate) <= 0
+                                            }
+                                            className="h-12 rounded-xl bg-indigo-600 px-10 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700"
+                                        >
+                                            {createMutation.isPending ? (
+                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Save className="mr-2 h-4 w-4" />
+                                                    Activer le Taux
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 {rates.map((rate: ExchangeRate) => {
                     const pairId =
                         rate.currency_pair ??
@@ -343,10 +452,12 @@ export default function RatesManager() {
                     </div>
                 )}
             </div>
-            {isLoading && (
-                <div className="flex justify-center p-20">
-                    <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-                </div>
+                    {isLoading && (
+                        <div className="flex justify-center p-20">
+                            <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

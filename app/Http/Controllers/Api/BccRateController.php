@@ -27,10 +27,21 @@ class BccRateController extends Controller
     }
 
     /**
-     * Copy one BCC currency's buy/sell onto the shop's operative rate
-     * against CDF - the pair ClientController/TransactionController actually
-     * charge from. Re-fetches rather than trusting a client-supplied buy/sell,
-     * so this can only ever apply what the BCC is really quoting right now.
+     * Copy one BCC currency's buy/sell onto the shop's two operative,
+     * directional pairs against CDF - ClientController looks up a pair by
+     * its exact "{from}_{to}" string and charges from its single `rate`
+     * (buy_rate) column, so both directions need their own row:
+     *
+     *  - "{code}_CDF" - a client sells us {code}, we hand over CDF. Same
+     *    orientation as the BCC's own "achat" (the bank buying foreign
+     *    currency too), so it's used as-is: CDF per 1 {code}.
+     *  - "CDF_{code}" - a client buys {code} from us with CDF. Our
+     *    convention for this direction is the reciprocal (1 CDF = ? in
+     *    {code}), so the BCC's "vente" (CDF charged per 1 {code} sold) has
+     *    to be inverted before it's stored.
+     *
+     * Re-fetches rather than trusting a client-supplied buy/sell, so this
+     * can only ever apply what the BCC is really quoting right now.
      */
     public function apply(Request $request)
     {
@@ -48,22 +59,30 @@ class BccRateController extends Controller
         abort_if(($rate['quality'] ?? null) !== 'OK', 422, "Le taux BCC pour {$code} est marqué douteux, non appliqué.");
 
         $ownerId = TenantAccess::ownerId($request->user());
-        $pair = "{$code}_CDF";
 
-        $exchangeRate = ExchangeRate::updateOrCreate(
-            ['owner_id' => $ownerId, 'currency_pair' => $pair],
+        $buyPair = ExchangeRate::updateOrCreate(
+            ['owner_id' => $ownerId, 'currency_pair' => "{$code}_CDF"],
             [
                 'buy_rate' => $rate['buy'],
-                'sell_rate' => $rate['sell'],
+                'sell_rate' => $rate['buy'],
+                'is_active' => true,
+            ],
+        );
+
+        $sellPair = ExchangeRate::updateOrCreate(
+            ['owner_id' => $ownerId, 'currency_pair' => "CDF_{$code}"],
+            [
+                'buy_rate' => 1 / $rate['sell'],
+                'sell_rate' => 1 / $rate['sell'],
                 'is_active' => true,
             ],
         );
 
         CashierActivity::logAction(
             'configuration_change',
-            "Taux {$pair} synchronisé depuis la BCC (achat {$rate['buy']}, vente {$rate['sell']})",
+            "Taux {$code}/CDF synchronisé depuis la BCC ({$code}_CDF: {$buyPair->buy_rate}, CDF_{$code}: {$sellPair->buy_rate})",
         );
 
-        return response()->json($exchangeRate);
+        return response()->json(['buy_pair' => $buyPair, 'sell_pair' => $sellPair]);
     }
 }
