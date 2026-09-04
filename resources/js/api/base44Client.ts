@@ -376,10 +376,15 @@ export const base44 = {
                         params: { ...params, sort, limit },
                     })
                     .then(handleResponse<ExchangeRate[]>),
-            history: () =>
+            history: (page = 1) =>
                 axios
-                    .get<RateHistoryEntry[]>('/api/exchange-rates/history')
-                    .then(handleResponse<RateHistoryEntry[]>),
+                    .get<PaginatedResponse<RateHistoryEntry>>(
+                        '/api/exchange-rates/history',
+                        { params: { page } },
+                    )
+                    .then(
+                        handleResponse<PaginatedResponse<RateHistoryEntry>>,
+                    ),
         },
         Institution: {
             list: (params?: { type?: string; is_active?: boolean }) =>

@@ -24,14 +24,14 @@ class ExchangeRateController extends Controller
     public function history(Request $request)
     {
         $shopIds = TenantAccess::shopIds($request->user());
+        $perPage = min((int) $request->integer('per_page', 15), 50);
 
         $activities = CashierActivity::with('cashier:id,name')
             ->where('activity_type', 'configuration_change')
             ->where('description', 'like', 'Taux%')
             ->whereHas('cashier.shops', fn ($q) => $q->whereIn('shops.id', $shopIds))
             ->orderByDesc('created_at')
-            ->limit(200)
-            ->get();
+            ->paginate($perPage);
 
         return response()->json($activities);
     }
