@@ -94,6 +94,13 @@ export interface BccRatesResponse {
     fetchedAt: string | null;
 }
 
+export interface RateHistoryEntry {
+    id: number;
+    description: string;
+    created_at: string;
+    cashier?: { id: number; name: string };
+}
+
 export interface Institution {
     id: number;
     name: string;
@@ -369,6 +376,10 @@ export const base44 = {
                         params: { ...params, sort, limit },
                     })
                     .then(handleResponse<ExchangeRate[]>),
+            history: () =>
+                axios
+                    .get<RateHistoryEntry[]>('/api/exchange-rates/history')
+                    .then(handleResponse<RateHistoryEntry[]>),
         },
         Institution: {
             list: (params?: { type?: string; is_active?: boolean }) =>
@@ -686,8 +697,16 @@ export const base44 = {
                     .then(handleResponse<BccRatesResponse>),
             apply: (code: string) =>
                 axios
-                    .post<ExchangeRate>('/api/bcc-rates/apply', { code })
-                    .then(handleResponse<ExchangeRate>),
+                    .post<{
+                        buy_pair: ExchangeRate;
+                        sell_pair: ExchangeRate;
+                    }>('/api/bcc-rates/apply', { code })
+                    .then(
+                        handleResponse<{
+                            buy_pair: ExchangeRate;
+                            sell_pair: ExchangeRate;
+                        }>,
+                    ),
         },
     },
 };
