@@ -15,6 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Set deploy path
         id: vars
         run: |
@@ -24,7 +27,22 @@ jobs:
             echo "path=/home/makarios/dev.havifin.com" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Deploy over SSH
+      # cPanel's SSH terminal has no Node/npm, so the frontend is built here
+      # on the runner and shipped as files (see the rsync step below) -
+      # the server only ever runs composer and artisan, never npm.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install JS deps
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Pull code and install PHP deps on server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -41,8 +59,29 @@ jobs:
 
             composer install --no-dev --optimize-autoloader --no-interaction
 
-            npm ci
-            npm run build
+      - name: Load deploy SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Ship built assets to server
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          rsync -az --delete \
+            public/build/ \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ steps.vars.outputs.path }}/public/build/"
+
+      - name: Run migrations and refresh caches
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd "${{ steps.vars.outputs.path }}"
 
             php artisan migrate --force
             php artisan config:cache
