@@ -121,9 +121,11 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('/exchange-rate-history/current-rate', [ExchangeRateHistoryController::class, 'currentRate'])
         ->middleware('role:client,cashier,manager');
 
-    Route::middleware('role:manager')->group(function () {
+    Route::middleware('role:manager,super-admin')->group(function () {
         Route::get('/cashier-activities/stats', [CashierActivityController::class, 'stats']);
         Route::get('/cashier-activities', [CashierActivityController::class, 'index']);
+    });
+    Route::middleware('role:manager')->group(function () {
         Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);
         Route::get('/help-requests', [HelpRequestController::class, 'index']);
     });
