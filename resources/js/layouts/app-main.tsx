@@ -122,7 +122,7 @@ export default function AppMain({ children, currentPageName }: any) {
 
             {/* Floating Action Button (FAB) */}
             {!hideNav && (
-                <div className="fixed right-5 bottom-5 z-50 sm:right-7 sm:bottom-7">
+                <div className="fixed right-5 bottom-5 z-50 print:hidden sm:right-7 sm:bottom-7">
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}

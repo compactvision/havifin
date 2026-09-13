@@ -14,6 +14,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppMain from '@/layouts/app-main';
+import { exportToXlsx } from '@/lib/xlsxExport';
 import { CashMovement, CashSession } from '@/types/cash';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,10 +24,12 @@ import {
     Banknote,
     CheckCircle2,
     Clock,
+    Download,
     History,
     Landmark,
     Lock,
     MoreHorizontal,
+    Printer,
     Smartphone,
     Unlock,
     User,
@@ -262,13 +265,74 @@ export default function CashSessionDetail({ id }: Props) {
             b.institution?.type !== 'bank',
     );
 
+    const handlePrint = () => window.print();
+
+    const handleExport = () => {
+        exportToXlsx(`session-caisse-${session.id}`, [
+            {
+                name: 'Devises',
+                columnWidths: [10, 14, 14, 14, 12],
+                rows: [
+                    ['Devise', 'Ouverture', 'Théorique', 'Réel', 'Écart'],
+                    ...stats.map((stat: any) => [
+                        stat.currency,
+                        stat.opening,
+                        stat.theoretical,
+                        stat.closingReal ?? '',
+                        stat.difference ?? '',
+                    ]),
+                ],
+            },
+            {
+                name: 'Opérateurs',
+                columnWidths: [20, 10, 14, 14, 14, 12],
+                rows: [
+                    [
+                        'Opérateur',
+                        'Devise',
+                        'Ouverture',
+                        'Théorique',
+                        'Réel',
+                        'Écart',
+                    ],
+                    ...institutionBalances.map((balance) => [
+                        balance.institution?.name ?? '',
+                        balance.currency,
+                        parseFloat(balance.opening_amount),
+                        parseFloat(balance.current_theoretical),
+                        balance.closing_amount_real != null
+                            ? parseFloat(balance.closing_amount_real)
+                            : '',
+                        balance.difference != null
+                            ? parseFloat(balance.difference)
+                            : '',
+                    ]),
+                ],
+            },
+            {
+                name: 'Mouvements',
+                columnWidths: [10, 16, 30, 16, 14],
+                rows: [
+                    ['Heure', 'Type', 'Description', 'Acteur', 'Montant'],
+                    ...movements.map((movement) => [
+                        moment(movement.created_at).format('HH:mm'),
+                        movement.type,
+                        movement.description ?? '',
+                        movement.user?.name ?? '-',
+                        `${movement.amount} ${movement.currency}`,
+                    ]),
+                ],
+            },
+        ]);
+    };
+
     return (
         <AppMain currentPageName="CashMoney">
             <Head title={`Session #${session.id}`} />
 
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-pink-50/30 px-6 py-8 md:px-10">
                 {/* Premium Header */}
-                <header className="sticky top-0 z-50 mb-10 flex h-24 w-full flex-col gap-6 border-b border-white/20 bg-white/70 px-6 py-4 shadow-sm backdrop-blur-xl md:flex-row md:items-center md:justify-between md:px-10">
+                <header className="sticky top-0 z-50 mb-10 flex h-24 w-full flex-col gap-6 border-b border-white/20 bg-white/70 px-6 py-4 shadow-sm backdrop-blur-xl print:hidden md:flex-row md:items-center md:justify-between md:px-10">
                     <div className="flex items-center gap-4">
                         <Link href="/cash/dashboard">
                             <Button
@@ -309,6 +373,22 @@ export default function CashSessionDetail({ id }: Props) {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <Button
+                            onClick={handlePrint}
+                            variant="outline"
+                            className="h-11 rounded-xl border-slate-200"
+                        >
+                            <Printer className="mr-2 h-4 w-4" />
+                            Imprimer
+                        </Button>
+                        <Button
+                            onClick={handleExport}
+                            variant="outline"
+                            className="h-11 rounded-xl border-slate-200"
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Exporter XLSX
+                        </Button>
                         {isOpen && (
                             <>
                                 {auth.user.role === 'manager' && (

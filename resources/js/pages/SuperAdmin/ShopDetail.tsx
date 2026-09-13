@@ -147,7 +147,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
             <Head title={`Dashboard · ${shop.name}`} />
 
             <div className="brand-canvas min-h-screen pb-20">
-                <header className="brand-hero mb-8 px-4 py-8 text-white sm:px-6 lg:px-10 lg:py-10">
+                <header className="brand-hero mb-8 px-4 py-8 text-white print:hidden sm:px-6 lg:px-10 lg:py-10">
                     <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
                             <Link href="/admin/shops">
