@@ -39,7 +39,11 @@ export default function AddMovementModal({
     onSuccess,
 }: Props) {
     const [isLoading, setIsLoading] = useState(false);
-    const [type, setType] = useState<'deposit' | 'withdrawal'>('deposit');
+    // Matches CashMovementController::store()'s validated 'type' enum -
+    // 'deposit'/'withdrawal' would 422 there every time.
+    const [type, setType] = useState<'adjustment_in' | 'adjustment_out'>(
+        'adjustment_in',
+    );
     const [amount, setAmount] = useState('');
     const [currency, setCurrency] = useState('USD');
     const [description, setDescription] = useState('');
@@ -96,7 +100,7 @@ export default function AddMovementModal({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="overflow-hidden rounded-3xl border-none bg-white p-0 shadow-2xl sm:max-w-[450px]">
                 <div
-                    className={`h-2 w-full ${type === 'deposit' ? 'bg-green-500' : 'bg-red-500'}`}
+                    className={`h-2 w-full ${type === 'adjustment_in' ? 'bg-green-500' : 'bg-red-500'}`}
                 />
 
                 <form onSubmit={handleSubmit}>
@@ -117,9 +121,9 @@ export default function AddMovementModal({
                             <div className="flex gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setType('deposit')}
+                                    onClick={() => setType('adjustment_in')}
                                     className={`flex flex-1 flex-col items-center justify-center rounded-2xl border-2 p-4 transition-all ${
-                                        type === 'deposit'
+                                        type === 'adjustment_in'
                                             ? 'border-green-500 bg-green-50 text-green-700'
                                             : 'border-slate-100 bg-slate-50 text-slate-400 grayscale hover:border-green-200 hover:grayscale-0'
                                     }`}
@@ -131,9 +135,9 @@ export default function AddMovementModal({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setType('withdrawal')}
+                                    onClick={() => setType('adjustment_out')}
                                     className={`flex flex-1 flex-col items-center justify-center rounded-2xl border-2 p-4 transition-all ${
-                                        type === 'withdrawal'
+                                        type === 'adjustment_out'
                                             ? 'border-red-500 bg-red-50 text-red-700'
                                             : 'border-slate-100 bg-slate-50 text-slate-400 grayscale hover:border-red-200 hover:grayscale-0'
                                     }`}
@@ -248,7 +252,7 @@ export default function AddMovementModal({
                             type="submit"
                             disabled={isLoading}
                             className={`h-12 rounded-xl px-8 font-black text-white shadow-lg transition-all active:scale-95 ${
-                                type === 'deposit'
+                                type === 'adjustment_in'
                                     ? 'bg-green-600 shadow-green-200 hover:bg-green-700'
                                     : 'bg-red-600 shadow-red-200 hover:bg-red-700'
                             }`}
