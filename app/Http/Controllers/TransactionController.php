@@ -31,7 +31,7 @@ class TransactionController extends Controller
         $allowedShopIds = TenantAccess::shopIds($user);
         $query = Transaction::query()->whereIn('shop_id', $allowedShopIds);
 
-        if ($allowedShopIds->isNotEmpty() && ! $request->has('session_id') && ! $request->has('date')) {
+        if ($allowedShopIds->isNotEmpty() && ! $request->has('session_id') && ! $request->has('date') && ! $request->has('start_date')) {
             $activeSessionIds = Session::open()
                 ->latest('session_date')
                 ->whereIn('shop_id', $allowedShopIds)
@@ -57,6 +57,21 @@ class TransactionController extends Controller
             $date = $request->date;
             $query->whereHas('session', function ($q) use ($date) {
                 $q->whereDate('session_date', $date);
+            });
+        }
+
+        // For audit-style reports (rate history, accounting export) that
+        // need more than a single day at a time.
+        if ($request->has('start_date') || $request->has('end_date')) {
+            $start = $request->input('start_date');
+            $end = $request->input('end_date');
+            $query->whereHas('session', function ($q) use ($start, $end) {
+                if ($start) {
+                    $q->whereDate('session_date', '>=', $start);
+                }
+                if ($end) {
+                    $q->whereDate('session_date', '<=', $end);
+                }
             });
         }
 

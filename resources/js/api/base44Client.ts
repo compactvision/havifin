@@ -122,6 +122,49 @@ export interface Institution {
     low_balance_threshold?: number | string | null;
 }
 
+export interface ConsolidatedCashOverview {
+    sessions: {
+        session_id: number;
+        shop: string | null;
+        counter: string | null;
+        cashier: string | null;
+        opened_at: string;
+        cash: { currency: string; opening: number }[];
+        institutions: {
+            institution: string | null;
+            type: string | null;
+            currency: string;
+            theoretical: number;
+        }[];
+    }[];
+    cash_totals: Record<string, number>;
+    institution_totals: {
+        institution: string;
+        currency: string;
+        theoretical: number;
+    }[];
+    open_sessions_count: number;
+    generated_at: string;
+}
+
+export interface CashForecastWindow {
+    avg_inflow: number;
+    avg_outflow: number;
+    avg_net: number;
+    active_days: number;
+}
+
+export interface CashForecast {
+    shop_id: number | null;
+    forecast: {
+        currency: string;
+        windows: Record<'7d' | '14d' | '30d', CashForecastWindow>;
+        recommended_opening_fund: number;
+    }[];
+    based_on_days: number;
+    generated_at: string;
+}
+
 export interface LowBalanceAlert {
     id: number;
     institution: string;
@@ -353,6 +396,8 @@ export const base44 = {
                 sort?: string;
                 limit?: number;
                 date?: string;
+                start_date?: string;
+                end_date?: string;
                 client_id?: number | string;
                 client_phone?: string;
                 shop_id?: number | string;
@@ -712,6 +757,18 @@ export const base44 = {
                 axios
                     .post<CashMovement>('/api/cash/movements', data)
                     .then(handleResponse<CashMovement>),
+        },
+        ConsolidatedCash: {
+            overview: () =>
+                axios
+                    .get<ConsolidatedCashOverview>('/api/cash/consolidated')
+                    .then(handleResponse<ConsolidatedCashOverview>),
+            forecast: (shopId?: number) =>
+                axios
+                    .get<CashForecast>('/api/cash/forecast', {
+                        params: shopId ? { shop_id: shopId } : undefined,
+                    })
+                    .then(handleResponse<CashForecast>),
         },
         BccRate: {
             fetch: (refresh = false) =>
