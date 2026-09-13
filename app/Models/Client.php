@@ -22,6 +22,7 @@ class Client extends Model
         'is_registered',
         'operation_type',
         'service',
+        'institution_id',
         'currency_from',
         'currency_to',
         'amount',
@@ -99,6 +100,11 @@ class Client extends Model
     public function session()
     {
         return $this->belongsTo(Session::class);
+    }
+
+    public function institution()
+    {
+        return $this->belongsTo(Institution::class);
     }
 
     public function transactions()

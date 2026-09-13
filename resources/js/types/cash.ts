@@ -32,6 +32,7 @@ export interface CashSession {
     register?: CashRegister;
     work_session?: any; // You can define a WorkSession interface if needed
     amounts?: CashSessionAmount[];
+    institution_balances?: CashSessionInstitutionBalance[];
     movements?: CashMovement[];
     user?: any;
 }
@@ -42,6 +43,18 @@ export interface CashSessionAmount {
     currency: string;
     opening_amount: string;
     closing_amount_theoretical?: string;
+    closing_amount_real?: string;
+    difference?: string;
+}
+
+export interface CashSessionInstitutionBalance {
+    id: number;
+    cash_session_id: number;
+    institution_id: number;
+    institution?: { id: number; name: string; type: string };
+    currency: string;
+    opening_amount: string;
+    current_theoretical: string;
     closing_amount_real?: string;
     difference?: string;
 }

@@ -103,6 +103,10 @@ class CashSessionController extends Controller
             'cash_register_id' => 'required|exists:cash_registers,id',
             'opening_amounts' => 'required|array|max:10',
             'opening_amounts.*' => 'numeric|min:0',
+            'opening_institution_balances' => 'nullable|array|max:20',
+            'opening_institution_balances.*.institution_id' => 'required_with:opening_institution_balances|integer|exists:institutions,id',
+            'opening_institution_balances.*.currency' => 'required_with:opening_institution_balances|string|size:3',
+            'opening_institution_balances.*.amount' => 'required_with:opening_institution_balances|numeric|min:0',
             'notes' => 'nullable|string|max:2000',
         ]);
 
@@ -134,7 +138,8 @@ class CashSessionController extends Controller
                 $register,
                 $validated['opening_amounts'],
                 $validated['notes'] ?? null,
-                $workSession->id
+                $workSession->id,
+                $validated['opening_institution_balances'] ?? [],
             );
 
             return response()->json($session, 201);
@@ -151,6 +156,10 @@ class CashSessionController extends Controller
         $validated = $request->validate([
             'closing_amounts' => 'required|array|max:10',
             'closing_amounts.*' => 'numeric|min:0',
+            'closing_institution_balances' => 'nullable|array|max:20',
+            'closing_institution_balances.*.institution_id' => 'required_with:closing_institution_balances|integer|exists:institutions,id',
+            'closing_institution_balances.*.currency' => 'required_with:closing_institution_balances|string|size:3',
+            'closing_institution_balances.*.amount' => 'required_with:closing_institution_balances|numeric|min:0',
             'notes' => 'nullable|string|max:2000',
         ]);
 
@@ -158,7 +167,8 @@ class CashSessionController extends Controller
             $session = $this->cashService->closeSession(
                 $session,
                 $validated['closing_amounts'],
-                $validated['notes'] ?? null
+                $validated['notes'] ?? null,
+                $validated['closing_institution_balances'] ?? [],
             );
 
             return response()->json($session);
@@ -171,7 +181,7 @@ class CashSessionController extends Controller
     {
         TenantAccess::authorizeCashSession($request->user(), $session);
 
-        return $session->load(['register', 'amounts', 'movements.transaction', 'user', 'workSession']);
+        return $session->load(['register', 'amounts', 'institutionBalances.institution', 'movements.transaction', 'user', 'workSession']);
     }
 
     public function report(Request $request, CashSession $session)
@@ -204,10 +214,30 @@ class CashSessionController extends Controller
             ];
         });
 
+        // 3. Float equivalence per operator: what was declared at open, what
+        // the transactions imply it should be now, and (once closed) what
+        // was actually counted.
+        $institutionBalances = $session->institutionBalances()
+            ->with('institution:id,name,type')
+            ->get()
+            ->map(fn ($balance) => [
+                'institution' => $balance->institution?->name,
+                'currency' => $balance->currency,
+                'opening_amount' => (float) $balance->opening_amount,
+                'theoretical_amount' => (float) $balance->current_theoretical,
+                'closing_amount_real' => $balance->closing_amount_real !== null
+                    ? (float) $balance->closing_amount_real
+                    : null,
+                'difference' => $balance->difference !== null
+                    ? (float) $balance->difference
+                    : null,
+            ]);
+
         return response()->json([
             'session_id' => $session->id,
             'summary' => $summary,
             'institution_breakdown' => $institutionBreakdown,
+            'institution_balances' => $institutionBalances,
             'total_movements' => $movements->count(),
         ]);
     }

@@ -9,6 +9,7 @@ use App\Models\CashMovement;
 use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\CashSessionAmount;
+use App\Models\CashSessionInstitutionBalance;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -20,9 +21,9 @@ class CashService
     /**
      * Open a new cash session for a user on a register.
      */
-    public function openSession(User $user, CashRegister $register, array $openingAmounts, ?string $notes = null, ?int $workSessionId = null): CashSession
+    public function openSession(User $user, CashRegister $register, array $openingAmounts, ?string $notes = null, ?int $workSessionId = null, array $openingInstitutionBalances = []): CashSession
     {
-        return DB::transaction(function () use ($user, $register, $openingAmounts, $notes, $workSessionId) {
+        return DB::transaction(function () use ($user, $register, $openingAmounts, $notes, $workSessionId, $openingInstitutionBalances) {
             $lockedRegister = CashRegister::whereKey($register->id)->lockForUpdate()->firstOrFail();
             if ($lockedRegister->activeSession()->exists()) {
                 throw new InvalidArgumentException('A session is already open on this register.');
@@ -64,6 +65,23 @@ class CashService
                 );
             }
 
+            // 3. Record opening float per operator (M-Pesa, Orange Money, ...)
+            // so equivalence can be tracked alongside physical cash.
+            foreach ($openingInstitutionBalances as $balance) {
+                $currency = strtoupper((string) ($balance['currency'] ?? ''));
+                if (! preg_match('/^[A-Z]{3}$/', $currency)) {
+                    throw new InvalidArgumentException('Invalid currency code.');
+                }
+                CashSessionInstitutionBalance::create([
+                    'cash_session_id' => $session->id,
+                    'institution_id' => $balance['institution_id'],
+                    'currency' => $currency,
+                    'opening_amount' => $balance['amount'],
+                    'current_theoretical' => $balance['amount'],
+                    'owner_id' => $register->shop->owner_id,
+                ]);
+            }
+
             $this->audit('opened_session', $session, null, $session->toArray());
 
             return $session;
@@ -73,9 +91,9 @@ class CashService
     /**
      * Close a cash session.
      */
-    public function closeSession(CashSession $session, array $closingAmounts, ?string $notes = null): CashSession
+    public function closeSession(CashSession $session, array $closingAmounts, ?string $notes = null, array $closingInstitutionBalances = []): CashSession
     {
-        return DB::transaction(function () use ($session, $closingAmounts, $notes) {
+        return DB::transaction(function () use ($session, $closingAmounts, $notes, $closingInstitutionBalances) {
             $lockedSession = CashSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
             if ($lockedSession->status !== 'open') {
                 throw new InvalidArgumentException('Session is already closed.');
@@ -107,6 +125,27 @@ class CashService
                         'owner_id' => $lockedSession->owner_id,
                     ]
                 );
+            }
+
+            foreach ($closingInstitutionBalances as $balance) {
+                $currency = strtoupper((string) ($balance['currency'] ?? ''));
+                if (! preg_match('/^[A-Z]{3}$/', $currency)) {
+                    throw new InvalidArgumentException('Invalid currency code.');
+                }
+
+                $row = CashSessionInstitutionBalance::firstOrCreate(
+                    [
+                        'cash_session_id' => $lockedSession->id,
+                        'institution_id' => $balance['institution_id'],
+                        'currency' => $currency,
+                    ],
+                    ['owner_id' => $lockedSession->owner_id],
+                );
+
+                $row->update([
+                    'closing_amount_real' => $balance['amount'],
+                    'difference' => (float) $balance['amount'] - (float) $row->current_theoretical,
+                ]);
             }
 
             $this->audit('closed_session', $lockedSession, $oldValues, $lockedSession->fresh()->toArray());
@@ -231,6 +270,18 @@ class CashService
                 "Retrait #{$transaction->ticket_number}",
                 $transaction->id
             );
+
+            // The client's mobile money is debited to fund this cash payout,
+            // so the operator's float moves back up by the same amount -
+            // opposite direction from the till.
+            if ($transaction->institution_id) {
+                $this->adjustInstitutionFloat(
+                    $session,
+                    $transaction->institution_id,
+                    $transaction->currency_from,
+                    abs($transaction->amount_from),
+                );
+            }
         } elseif (in_array($type, ['depot', 'paiement'], true)) {
             // Deposit/payment: the client gives cash to the cashier.
             $label = $type === 'paiement' ? 'Paiement' : 'Dépôt';
@@ -258,6 +309,17 @@ class CashService
                 "{$label} #{$transaction->ticket_number}",
                 $transaction->id
             );
+
+            // The agent sends mobile money out to the client, so their float
+            // drops by the same amount they just took in as cash.
+            if ($transaction->institution_id) {
+                $this->adjustInstitutionFloat(
+                    $session,
+                    $transaction->institution_id,
+                    $transaction->currency_from,
+                    -abs($transaction->amount_from),
+                );
+            }
         } elseif ($type === 'change') {
             // Exchange:
             // 1. Add currency received from client
@@ -279,6 +341,31 @@ class CashService
                 $transaction->id
             );
         }
+    }
+
+    /**
+     * Adjust the running theoretical float for one institution within a
+     * session. Auto-vivifies the row (opening 0) if the cashier never
+     * declared a float for this operator at open - keeps the equivalence
+     * report accurate instead of silently dropping the movement.
+     */
+    private function adjustInstitutionFloat(CashSession $session, int $institutionId, string $currency, float $delta): void
+    {
+        $currency = strtoupper($currency);
+        $row = CashSessionInstitutionBalance::firstOrCreate(
+            [
+                'cash_session_id' => $session->id,
+                'institution_id' => $institutionId,
+                'currency' => $currency,
+            ],
+            [
+                'opening_amount' => 0,
+                'current_theoretical' => 0,
+                'owner_id' => $session->owner_id,
+            ],
+        );
+
+        $row->increment('current_theoretical', $delta);
     }
 
     private function audit(string $event, Model $auditable, ?array $oldValues, ?array $newValues): void

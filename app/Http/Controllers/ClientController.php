@@ -114,6 +114,7 @@ class ClientController extends Controller
             'phone' => 'required|string',
             'operation_type' => ['required', Rule::in(['depot', 'retrait', 'change', 'paiement'])],
             'service' => 'required|string|max:100',
+            'institution_id' => 'nullable|integer|exists:institutions,id',
             'amount' => 'nullable|numeric|min:0.01',
             'amount_from' => 'nullable|numeric',
             'exchange_rate' => 'nullable|numeric',

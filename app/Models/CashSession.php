@@ -55,6 +55,11 @@ class CashSession extends Model
         return $this->hasMany(CashSessionAmount::class);
     }
 
+    public function institutionBalances()
+    {
+        return $this->hasMany(CashSessionInstitutionBalance::class);
+    }
+
     public function movements()
     {
         return $this->hasMany(CashMovement::class);
