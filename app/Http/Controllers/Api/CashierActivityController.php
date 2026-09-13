@@ -21,6 +21,12 @@ class CashierActivityController extends Controller
     {
         $query = CashierActivity::with(['cashier', 'session', 'client']);
         $shopIds = TenantAccess::shopIds($request->user());
+
+        if ($request->has('shop_id')) {
+            TenantAccess::authorizeShop($request->user(), $request->integer('shop_id'));
+            $shopIds = collect([$request->integer('shop_id')]);
+        }
+
         $query->whereHas('cashier.shops', fn ($q) => $q->whereIn('shops.id', $shopIds));
 
         // Filter by cashier
@@ -117,6 +123,12 @@ class CashierActivityController extends Controller
     {
         $query = CashierActivity::with('cashier');
         $allowedShopIds = TenantAccess::shopIds($request->user());
+
+        if ($request->has('shop_id')) {
+            TenantAccess::authorizeShop($request->user(), $request->integer('shop_id'));
+            $allowedShopIds = collect([$request->integer('shop_id')]);
+        }
+
         $query->whereHas('cashier.shops', fn ($q) => $q->whereIn('shops.id', $allowedShopIds));
 
         // Filter by session if provided

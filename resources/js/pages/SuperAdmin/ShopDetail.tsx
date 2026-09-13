@@ -1,5 +1,6 @@
 import { base44, type User } from '@/api/base44Client';
 import ManagerModal from '@/components/admin/ManagerModal';
+import ActivityLog from '@/components/manager/ActivityLog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +24,7 @@ import {
     WalletCards,
     X,
 } from 'lucide-react';
+import moment from 'moment';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -40,6 +42,9 @@ export default function ShopDetail({ id }: ShopDetailProps) {
     const [isCreatingManager, setIsCreatingManager] = useState(false);
     const [isAssigningManagers, setIsAssigningManagers] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activityDate, setActivityDate] = useState(
+        moment().format('YYYY-MM-DD'),
+    );
 
     const {
         data: shops,
@@ -120,8 +125,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
             <AppMain currentPageName="Admin">
                 <div className="brand-canvas flex min-h-screen flex-col items-center justify-center gap-4">
                     <Store className="h-12 w-12 text-slate-300" />
-                    <h1 className="text-2xl font-bold text-slate-900">
-                        Boutique introuvable
+                    <h1 className="text-2xl font-semibold text-slate-900">                        Boutique introuvable
                     </h1>
                     <Link href="/admin/shops">
                         <Button>Retour aux boutiques</Button>
@@ -157,7 +161,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                 </Button>
                             </Link>
                             <div>
-                                <p className="mb-1 text-[10px] font-black tracking-[0.22em] text-brand-cyan uppercase">
+                                <p className="mb-1 text-[10px] font-semibold tracking-[0.22em] text-brand-cyan uppercase">
                                     Dashboard boutique
                                 </p>
                                 <div className="flex items-center gap-2">
@@ -291,8 +295,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                                 <p className="brand-kicker">
                                                     Activité
                                                 </p>
-                                                <h2 className="mt-1 text-xl font-bold text-slate-900">
-                                                    Les 7 derniers jours
+                                                <h2 className="mt-1 text-xl font-semibold text-slate-900">                                                    Les 7 derniers jours
                                                 </h2>
                                             </div>
                                             <BarChart3 className="h-6 w-6 text-slate-300" />
@@ -319,7 +322,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                                             }}
                                                         />
                                                     </div>
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase">
+                                                    <span className="text-[10px] font-semibold text-slate-400 uppercase">
                                                         {day.label}
                                                     </span>
                                                 </div>
@@ -345,8 +348,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                                 <p className="brand-kicker">
                                                     Managers
                                                 </p>
-                                                <h2 className="mt-1 text-xl font-bold text-slate-900">
-                                                    Équipe responsable
+                                                <h2 className="mt-1 text-xl font-semibold text-slate-900">                                                    Équipe responsable
                                                 </h2>
                                             </div>
                                             <Badge variant="outline">
@@ -363,13 +365,13 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                                             key={manager.id}
                                                             className="flex items-center gap-3 rounded-2xl bg-brand-blue/[0.035] p-3"
                                                         >
-                                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-blue/10 to-brand-cyan/20 font-black text-brand-blue">
+                                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-blue/10 to-brand-cyan/20 font-semibold text-brand-blue">
                                                                 {manager.name
                                                                     .charAt(0)
                                                                     .toUpperCase()}
                                                             </div>
                                                             <div className="min-w-0 flex-1">
-                                                                <p className="truncate text-sm font-black text-slate-800">
+                                                                <p className="truncate text-sm font-semibold text-slate-800">
                                                                     {
                                                                         manager.name
                                                                     }
@@ -426,7 +428,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                                                             service.service
                                                                         }
                                                                     </span>
-                                                                    <span className="font-black text-slate-500">
+                                                                    <span className="font-semibold text-slate-500">
                                                                         {
                                                                             service.count
                                                                         }
@@ -482,7 +484,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                                                 </p>
                                                             </div>
                                                             <div className="text-right">
-                                                                <p className="text-lg font-black text-slate-900">
+                                                                <p className="text-lg font-semibold text-slate-900">
                                                                     {numberFormatter.format(
                                                                         volume.amount,
                                                                     )}
@@ -504,6 +506,31 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                     </CardContent>
                                 </Card>
                             </section>
+
+                            <section className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm">
+                                <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <p className="brand-kicker">
+                                            Rapport d'activité
+                                        </p>
+                                        <h2 className="mt-1 text-xl font-semibold text-slate-900">
+                                            Mouvements de tous les agents
+                                        </h2>
+                                    </div>
+                                    <input
+                                        type="date"
+                                        value={activityDate}
+                                        onChange={(e) =>
+                                            setActivityDate(e.target.value)
+                                        }
+                                        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold tracking-wide text-slate-600 uppercase focus:border-indigo-500 focus:ring-0"
+                                    />
+                                </div>
+                                <ActivityLog
+                                    selectedDate={activityDate}
+                                    shopId={shopId}
+                                />
+                            </section>
                         </>
                     )}
                 </main>
@@ -514,8 +541,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                     <div className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl">
                         <div className="flex items-start justify-between border-b border-slate-100 p-6">
                             <div>
-                                <h2 className="text-xl font-bold text-slate-900">
-                                    Affecter les managers
+                                <h2 className="text-xl font-semibold text-slate-900">                                    Affecter les managers
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
                                     Boutique : {shop.name}
@@ -558,7 +584,7 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                             }
                                         />
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate font-black text-slate-800">
+                                            <p className="truncate font-semibold text-slate-800">
                                                 {manager.name}
                                             </p>
                                             <p className="truncate text-xs text-slate-500">
@@ -606,13 +632,13 @@ function StatCard({
             <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                     <div>
-                        <p className="text-[11px] font-black tracking-wider text-slate-400 uppercase">
+                        <p className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
                             {label}
                         </p>
                         {loading ? (
                             <div className="mt-3 h-9 w-20 animate-pulse rounded-lg bg-slate-100" />
                         ) : (
-                            <p className="mt-2 text-3xl font-black text-slate-900">
+                            <p className="mt-2 text-3xl font-semibold text-slate-900">
                                 {value ?? 0}
                             </p>
                         )}
@@ -644,8 +670,7 @@ function SectionTitle({
         <div className="flex items-center justify-between">
             <div>
                 <p className="brand-kicker">{eyebrow}</p>
-                <h2 className="mt-1 text-xl font-bold text-slate-900">
-                    {title}
+                <h2 className="mt-1 text-xl font-semibold text-slate-900">                    {title}
                 </h2>
             </div>
             <Icon className="h-6 w-6 text-slate-300" />
