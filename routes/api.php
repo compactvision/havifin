@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdvertisementController;
 use App\Http\Controllers\Api\CashierActivityController;
 use App\Http\Controllers\Api\CashMovementController;
+use App\Http\Controllers\Api\ConsolidatedCashController;
 use App\Http\Controllers\Api\CashRegisterController;
 use App\Http\Controllers\Api\CashSessionController;
 use App\Http\Controllers\Api\ClientVerificationController;
@@ -125,6 +126,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/cashier-activities/stats', [CashierActivityController::class, 'stats']);
         Route::get('/cashier-activities', [CashierActivityController::class, 'index']);
         Route::get('/institutions/low-balance-alerts', [InstitutionController::class, 'lowBalanceAlerts']);
+        Route::get('/cash/consolidated', [ConsolidatedCashController::class, 'overview']);
+        Route::get('/cash/forecast', [ConsolidatedCashController::class, 'forecast']);
     });
     Route::middleware('role:manager')->group(function () {
         Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);

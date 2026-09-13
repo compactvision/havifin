@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import ActivityLog from '@/components/manager/ActivityLog';
+import AdvancedReports from '@/components/manager/AdvancedReports';
 import LowBalanceAlertsBanner from '@/components/manager/LowBalanceAlertsBanner';
 import { CashMovementsTable } from '@/components/manager/CashMovementsTable';
 import { ClientsTable } from '@/components/manager/ClientsTable';
@@ -452,6 +453,11 @@ export default function Manager() {
                                         label: 'Gestion Sessions',
                                         icon: Play,
                                     },
+                                    {
+                                        id: 'advanced-reports',
+                                        label: 'Rapports Avancés',
+                                        icon: TrendingUp,
+                                    },
                                 ].map((item) => {
                                     const Icon = item.icon;
                                     return (
@@ -765,6 +771,12 @@ export default function Manager() {
                                         <ActivityLog
                                             selectedDate={selectedDate}
                                         />
+                                    )}
+
+                                    {activeTab === 'advanced-reports' && (
+                                        <div className="animate-in duration-300 fade-in">
+                                            <AdvancedReports />
+                                        </div>
                                     )}
                                 </div>
                             </div>
