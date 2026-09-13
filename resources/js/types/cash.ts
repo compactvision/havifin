@@ -51,7 +51,12 @@ export interface CashSessionInstitutionBalance {
     id: number;
     cash_session_id: number;
     institution_id: number;
-    institution?: { id: number; name: string; type: string };
+    institution?: {
+        id: number;
+        name: string;
+        type: string;
+        low_balance_threshold?: string | number | null;
+    };
     currency: string;
     opening_amount: string;
     current_theoretical: string;

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashierActivity;
+use App\Models\CashSessionInstitutionBalance;
 use App\Models\Institution;
 use App\Support\TenantAccess;
 use Illuminate\Http\Request;
@@ -58,6 +59,7 @@ class InstitutionController extends Controller
             'logo' => 'nullable|image|max:2048', // Allow image upload
             'is_active' => 'boolean',
             'settings' => 'nullable|array',
+            'low_balance_threshold' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -108,6 +110,7 @@ class InstitutionController extends Controller
             'logo' => $logoValidation,
             'is_active' => 'sometimes', // Can be boolean or "1"/"0" string from FormData
             'settings' => 'sometimes|nullable|array',
+            'low_balance_threshold' => 'sometimes|nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -166,5 +169,42 @@ class InstitutionController extends Controller
         $institutions = Institution::active()->orderBy('name')->get();
 
         return response()->json($institutions);
+    }
+
+    /**
+     * Every operator float, in every currently open till, that has dropped
+     * below its configured floor - the live counterpart to the
+     * low_balance_alert entries CashService writes to the activity log,
+     * for a manager/super-admin dashboard banner.
+     */
+    public function lowBalanceAlerts(Request $request)
+    {
+        $shopIds = TenantAccess::shopIds($request->user());
+
+        $alerts = CashSessionInstitutionBalance::query()
+            ->with([
+                'institution:id,name,type,low_balance_threshold',
+                'session.register.shop:id,name',
+                'session.user:id,name',
+            ])
+            ->whereHas('session', fn ($query) => $query
+                ->where('status', 'open')
+                ->whereHas('register', fn ($registerQuery) => $registerQuery->whereIn('shop_id', $shopIds)))
+            ->whereHas('institution', fn ($query) => $query->whereNotNull('low_balance_threshold'))
+            ->get()
+            ->filter(fn ($balance) => (float) $balance->current_theoretical < (float) $balance->institution->low_balance_threshold)
+            ->map(fn ($balance) => [
+                'id' => $balance->id,
+                'institution' => $balance->institution->name,
+                'currency' => $balance->currency,
+                'current_theoretical' => (float) $balance->current_theoretical,
+                'threshold' => (float) $balance->institution->low_balance_threshold,
+                'shop' => $balance->session->register->shop->name ?? null,
+                'cashier' => $balance->session->user->name ?? null,
+                'cash_session_id' => $balance->cash_session_id,
+            ])
+            ->values();
+
+        return response()->json($alerts);
     }
 }

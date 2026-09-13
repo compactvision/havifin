@@ -17,11 +17,13 @@ class Institution extends Model
         'is_active',
         'owner_id',
         'settings',
+        'low_balance_threshold',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'settings' => 'array',
+        'low_balance_threshold' => 'decimal:4',
     ];
 
     /**

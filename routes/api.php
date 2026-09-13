@@ -124,6 +124,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::middleware('role:manager,super-admin')->group(function () {
         Route::get('/cashier-activities/stats', [CashierActivityController::class, 'stats']);
         Route::get('/cashier-activities', [CashierActivityController::class, 'index']);
+        Route::get('/institutions/low-balance-alerts', [InstitutionController::class, 'lowBalanceAlerts']);
     });
     Route::middleware('role:manager')->group(function () {
         Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);

@@ -46,11 +46,13 @@ export default function InstitutionManager() {
         type: 'bank' | 'mobile_money' | 'payment' | 'other';
         code: string;
         logo: File | null;
+        low_balance_threshold: string;
     }>({
         name: '',
         type: 'bank',
         code: '',
         logo: null,
+        low_balance_threshold: '',
     });
     const [cropperImage, setCropperImage] = useState<{
         src: string;
@@ -77,6 +79,12 @@ export default function InstitutionManager() {
             formData.append('name', data.name);
             formData.append('type', data.type);
             formData.append('code', data.code);
+            if (data.low_balance_threshold) {
+                formData.append(
+                    'low_balance_threshold',
+                    data.low_balance_threshold,
+                );
+            }
             if (data.logo) {
                 formData.append('logo', data.logo);
             }
@@ -117,6 +125,10 @@ export default function InstitutionManager() {
             formData.append('name', data.name);
             formData.append('type', data.type);
             formData.append('code', data.code);
+            formData.append(
+                'low_balance_threshold',
+                data.low_balance_threshold,
+            );
             if (data.logo) {
                 formData.append('logo', data.logo);
             }
@@ -161,7 +173,13 @@ export default function InstitutionManager() {
     });
 
     const resetForm = () => {
-        setNewInstitution({ name: '', type: 'bank', code: '', logo: null });
+        setNewInstitution({
+            name: '',
+            type: 'bank',
+            code: '',
+            logo: null,
+            low_balance_threshold: '',
+        });
         setEditingId(null);
         setShowAddForm(false);
     };
@@ -172,6 +190,10 @@ export default function InstitutionManager() {
             type: inst.type as 'bank' | 'mobile_money' | 'payment' | 'other',
             code: inst.code,
             logo: null,
+            low_balance_threshold:
+                inst.low_balance_threshold != null
+                    ? String(inst.low_balance_threshold)
+                    : '',
         });
         setEditingId(inst.id);
         setShowAddForm(true);
@@ -424,6 +446,33 @@ export default function InstitutionManager() {
                                         className="h-12 rounded-xl border-white/10 bg-white/5 font-mono font-black text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="mt-6 space-y-2">
+                                <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                    Seuil d'alerte critique (Optionnel)
+                                </Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="ex: 20000"
+                                    value={newInstitution.low_balance_threshold}
+                                    onChange={(e) =>
+                                        setNewInstitution({
+                                            ...newInstitution,
+                                            low_balance_threshold:
+                                                e.target.value,
+                                        })
+                                    }
+                                    className="h-12 rounded-xl border-white/10 bg-white/5 font-black text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <p className="ml-1 text-[10px] text-white/40">
+                                    Une alerte "seuil critique" apparaît dans
+                                    le journal d'activité dès que le flottant
+                                    théorique de ce partenaire descend
+                                    en-dessous de ce montant.
+                                </p>
                             </div>
 
                             <div className="mt-6 space-y-2">
