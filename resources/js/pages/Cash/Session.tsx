@@ -4,6 +4,7 @@ import CloseSessionModal from '@/components/cash/CloseSessionModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Table,
     TableBody,
@@ -23,9 +24,13 @@ import {
     CheckCircle2,
     Clock,
     History,
+    Landmark,
     Lock,
+    MoreHorizontal,
+    Smartphone,
     Unlock,
     User,
+    Wallet,
 } from 'lucide-react';
 import moment from 'moment';
 import { useState } from 'react';
@@ -35,6 +40,117 @@ const formatAmount = (value: number) =>
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
+
+interface BalanceCardProps {
+    label: string;
+    opening: number;
+    theoretical: number;
+    closingReal: number | null;
+    difference: number | null;
+    totalIn?: number;
+    totalOut?: number;
+}
+
+// Shared by the "Cash" tab (per-currency) and the operator tabs
+// (per-institution) - same shape, same math, just a different label.
+// totalIn/totalOut are cash-only (institution floats don't split
+// movements that finely) so they're optional.
+function BalanceCard({
+    label,
+    opening,
+    theoretical,
+    closingReal,
+    difference,
+    totalIn,
+    totalOut,
+}: BalanceCardProps) {
+    const hasMismatch = Math.abs(difference ?? 0) > 0.01;
+
+    return (
+        <Card className="overflow-hidden rounded-3xl border-slate-200/60 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
+                <span className="font-semibold text-slate-500">{label}</span>
+                {closingReal !== null &&
+                    (hasMismatch ? (
+                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                            <AlertTriangle className="mr-1 h-3 w-3" /> ÉCART
+                        </Badge>
+                    ) : (
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                            <CheckCircle2 className="mr-1 h-3 w-3" /> OK
+                        </Badge>
+                    ))}
+            </div>
+            <CardContent className="p-0">
+                <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100">
+                    <div className="p-4">
+                        <p className="text-xs font-semibold text-slate-400 uppercase">
+                            Ouverture
+                        </p>
+                        <p className="text-lg font-semibold text-slate-700">
+                            {formatAmount(opening)}
+                        </p>
+                    </div>
+                    <div className="bg-slate-50/50 p-4">
+                        <p className="text-xs font-semibold text-slate-400 uppercase">
+                            Théorique
+                        </p>
+                        <p className="text-lg font-semibold text-slate-900">
+                            {formatAmount(theoretical)}
+                        </p>
+                    </div>
+                </div>
+                {totalIn !== undefined && totalOut !== undefined && (
+                    <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100">
+                        <div className="p-4">
+                            <p className="text-xs font-semibold text-green-500 uppercase">
+                                Entrées
+                            </p>
+                            <p className="font-semibold text-green-600">
+                                +{formatAmount(totalIn)}
+                            </p>
+                        </div>
+                        <div className="p-4">
+                            <p className="text-xs font-semibold text-red-500 uppercase">
+                                Sorties
+                            </p>
+                            <p className="font-semibold text-red-600">
+                                -{formatAmount(totalOut)}
+                            </p>
+                        </div>
+                    </div>
+                )}
+                {closingReal !== null && (
+                    <div
+                        className={`p-4 ${hasMismatch ? 'bg-red-50' : 'bg-green-50'}`}
+                    >
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500 uppercase">
+                                    Réel (Compté)
+                                </p>
+                                <p className="text-xl font-semibold text-slate-900">
+                                    {formatAmount(closingReal)}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs font-semibold text-slate-500 uppercase">
+                                    Écart
+                                </p>
+                                <p
+                                    className={`text-xl font-semibold ${hasMismatch ? 'text-red-600' : 'text-green-600'}`}
+                                >
+                                    {(difference ?? 0) > 0 ? '+' : ''}
+                                    {formatAmount(difference ?? 0)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 interface Props {
     id: string; // Session ID from URL
@@ -129,6 +245,22 @@ export default function CashSessionDetail({ id }: Props) {
 
     const currencies = ['USD', 'CDF', 'EUR'];
     const stats = currencies.map((c) => calculateStats(c)).filter(Boolean);
+
+    const institutionBalances = session.institution_balances ?? [];
+    const mobileMoneyBalances = institutionBalances.filter(
+        (b) => b.institution?.type === 'mobile_money',
+    );
+    const bankBalances = institutionBalances.filter(
+        (b) => b.institution?.type === 'bank',
+    );
+    // Anything that isn't mobile money or a bank (payment partners, or a
+    // type we don't otherwise categorize) lands in "Autre" rather than
+    // being silently dropped from the report.
+    const otherBalances = institutionBalances.filter(
+        (b) =>
+            b.institution?.type !== 'mobile_money' &&
+            b.institution?.type !== 'bank',
+    );
 
     return (
         <AppMain currentPageName="CashMoney">
@@ -288,218 +420,143 @@ export default function CashSessionDetail({ id }: Props) {
                     </Card>
                 </div>
 
-                {/* Audit & Balance Section (The "Review" part) */}
-                <h2 className="mb-6 text-2xl font-bold text-slate-900">
+                {/* Audit & Balance Section (The "Review" part), grouped into
+                    tabs by category so a long list of operators doesn't bury
+                    the cash tally. */}
+                <h2 className="mb-6 text-2xl font-semibold text-slate-900">
                     État de la Caisse
                 </h2>
-                <div className="mb-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    {stats.map((stat: any) => (
-                        <Card
-                            key={stat.currency}
-                            className="overflow-hidden rounded-3xl border-slate-200/60 shadow-sm"
-                        >
-                            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
-                                <span className="font-black text-slate-500">
-                                    {stat.currency}
-                                </span>
-                                {stat.status === 'perfect' && (
-                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                                        <CheckCircle2 className="mr-1 h-3 w-3" />{' '}
-                                        OK
-                                    </Badge>
-                                )}
-                                {stat.status === 'mismatch' && (
-                                    <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                                        <AlertTriangle className="mr-1 h-3 w-3" />{' '}
-                                        ÉCART
-                                    </Badge>
-                                )}
-                            </div>
-                            <CardContent className="p-0">
-                                <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100">
-                                    <div className="p-4">
-                                        <p className="text-xs font-bold text-slate-400 uppercase">
-                                            Ouverture
-                                        </p>
-                                        <p className="text-lg font-bold text-slate-700">
-                                            {formatAmount(stat.opening)}
-                                        </p>
-                                    </div>
-                                    <div className="bg-slate-50/50 p-4">
-                                        <p className="text-xs font-bold text-slate-400 uppercase">
-                                            Théorique
-                                        </p>
-                                        <p className="text-lg font-bold text-slate-900">
-                                            {formatAmount(stat.theoretical)}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 divide-x divide-slate-100">
-                                    <div className="p-4">
-                                        <p className="text-xs font-bold text-green-500 uppercase">
-                                            Entrées
-                                        </p>
-                                        <p className="font-bold text-green-600">
-                                            +{formatAmount(stat.totalIn)}
-                                        </p>
-                                    </div>
-                                    <div className="p-4">
-                                        <p className="text-xs font-bold text-red-500 uppercase">
-                                            Sorties
-                                        </p>
-                                        <p className="font-bold text-red-600">
-                                            -{formatAmount(stat.totalOut)}
-                                        </p>
-                                    </div>
-                                </div>
-                                {stat.closingReal !== null && (
-                                    <div
-                                        className={`border-t border-slate-100 p-4 ${Math.abs(stat.difference) > 0.01 ? 'bg-red-50' : 'bg-green-50'}`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-xs font-bold text-slate-500 uppercase">
-                                                    Réel (Compté)
-                                                </p>
-                                                <p className="text-xl font-black text-slate-900">
-                                                    {formatAmount(
-                                                        stat.closingReal,
-                                                    )}
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-xs font-bold text-slate-500 uppercase">
-                                                    Écart
-                                                </p>
-                                                <p
-                                                    className={`text-xl font-black ${Math.abs(stat.difference) > 0.01 ? 'text-red-600' : 'text-green-600'}`}
-                                                >
-                                                    {stat.difference > 0
-                                                        ? '+'
-                                                        : ''}
-                                                    {formatAmount(
-                                                        stat.difference,
-                                                    )}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                <Tabs defaultValue="cash" className="mb-10">
+                    <TabsList>
+                        <TabsTrigger value="cash" className="gap-1.5">
+                            <Wallet className="h-3.5 w-3.5" />
+                            Cash
+                        </TabsTrigger>
+                        {mobileMoneyBalances.length > 0 && (
+                            <TabsTrigger
+                                value="mobile_money"
+                                className="gap-1.5"
+                            >
+                                <Smartphone className="h-3.5 w-3.5" />
+                                Mobile Money
+                            </TabsTrigger>
+                        )}
+                        {bankBalances.length > 0 && (
+                            <TabsTrigger value="bank" className="gap-1.5">
+                                <Landmark className="h-3.5 w-3.5" />
+                                Banque
+                            </TabsTrigger>
+                        )}
+                        {otherBalances.length > 0 && (
+                            <TabsTrigger value="other" className="gap-1.5">
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                                Autre
+                            </TabsTrigger>
+                        )}
+                    </TabsList>
 
-                {/* Operator float section - M-Pesa/Orange Money/... equivalence */}
-                {(session.institution_balances?.length ?? 0) > 0 && (
-                    <>
-                        <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-                            État des Opérateurs
-                        </h2>
-                        <div className="mb-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                            {session.institution_balances!.map((balance) => {
-                                const opening = parseFloat(
-                                    balance.opening_amount,
-                                );
-                                const theoretical = parseFloat(
+                    <TabsContent
+                        value="cash"
+                        className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3"
+                    >
+                        {stats.map((stat: any) => (
+                            <BalanceCard
+                                key={stat.currency}
+                                label={stat.currency}
+                                opening={stat.opening}
+                                theoretical={stat.theoretical}
+                                closingReal={stat.closingReal}
+                                difference={stat.difference}
+                                totalIn={stat.totalIn}
+                                totalOut={stat.totalOut}
+                            />
+                        ))}
+                    </TabsContent>
+
+                    <TabsContent
+                        value="mobile_money"
+                        className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3"
+                    >
+                        {mobileMoneyBalances.map((balance) => (
+                            <BalanceCard
+                                key={balance.id}
+                                label={`${balance.institution?.name} (${balance.currency})`}
+                                opening={parseFloat(balance.opening_amount)}
+                                theoretical={parseFloat(
                                     balance.current_theoretical,
-                                );
-                                const closingReal =
-                                    balance.closing_amount_real !== undefined &&
-                                    balance.closing_amount_real !== null
-                                        ? parseFloat(balance.closing_amount_real)
-                                        : null;
-                                const difference =
-                                    balance.difference !== undefined &&
-                                    balance.difference !== null
+                                )}
+                                closingReal={
+                                    balance.closing_amount_real != null
+                                        ? parseFloat(
+                                              balance.closing_amount_real,
+                                          )
+                                        : null
+                                }
+                                difference={
+                                    balance.difference != null
                                         ? parseFloat(balance.difference)
-                                        : null;
+                                        : null
+                                }
+                            />
+                        ))}
+                    </TabsContent>
 
-                                return (
-                                    <Card
-                                        key={balance.id}
-                                        className="overflow-hidden rounded-3xl border-slate-200/60 shadow-sm"
-                                    >
-                                        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
-                                            <span className="font-semibold text-slate-500">
-                                                {balance.institution?.name} (
-                                                {balance.currency})
-                                            </span>
-                                            {closingReal !== null &&
-                                                (Math.abs(difference ?? 0) <
-                                                0.01 ? (
-                                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                                                        <CheckCircle2 className="mr-1 h-3 w-3" />{' '}
-                                                        OK
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                                                        <AlertTriangle className="mr-1 h-3 w-3" />{' '}
-                                                        ÉCART
-                                                    </Badge>
-                                                ))}
-                                        </div>
-                                        <CardContent className="p-0">
-                                            <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100">
-                                                <div className="p-4">
-                                                    <p className="text-xs font-semibold text-slate-400 uppercase">
-                                                        Ouverture
-                                                    </p>
-                                                    <p className="text-lg font-semibold text-slate-700">
-                                                        {opening.toFixed(2)}
-                                                    </p>
-                                                </div>
-                                                <div className="bg-slate-50/50 p-4">
-                                                    <p className="text-xs font-semibold text-slate-400 uppercase">
-                                                        Théorique
-                                                    </p>
-                                                    <p className="text-lg font-semibold text-slate-900">
-                                                        {theoretical.toFixed(2)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            {closingReal !== null && (
-                                                <div
-                                                    className={`p-4 ${Math.abs(difference ?? 0) > 0.01 ? 'bg-red-50' : 'bg-green-50'}`}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-xs font-semibold text-slate-500 uppercase">
-                                                                Réel (Compté)
-                                                            </p>
-                                                            <p className="text-xl font-semibold text-slate-900">
-                                                                {closingReal.toFixed(
-                                                                    2,
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-xs font-semibold text-slate-500 uppercase">
-                                                                Écart
-                                                            </p>
-                                                            <p
-                                                                className={`text-xl font-semibold ${Math.abs(difference ?? 0) > 0.01 ? 'text-red-600' : 'text-green-600'}`}
-                                                            >
-                                                                {(difference ??
-                                                                    0) > 0
-                                                                    ? '+'
-                                                                    : ''}
-                                                                {(
-                                                                    difference ??
-                                                                    0
-                                                                ).toFixed(2)}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
-                        </div>
-                    </>
-                )}
+                    <TabsContent
+                        value="bank"
+                        className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3"
+                    >
+                        {bankBalances.map((balance) => (
+                            <BalanceCard
+                                key={balance.id}
+                                label={`${balance.institution?.name} (${balance.currency})`}
+                                opening={parseFloat(balance.opening_amount)}
+                                theoretical={parseFloat(
+                                    balance.current_theoretical,
+                                )}
+                                closingReal={
+                                    balance.closing_amount_real != null
+                                        ? parseFloat(
+                                              balance.closing_amount_real,
+                                          )
+                                        : null
+                                }
+                                difference={
+                                    balance.difference != null
+                                        ? parseFloat(balance.difference)
+                                        : null
+                                }
+                            />
+                        ))}
+                    </TabsContent>
+
+                    <TabsContent
+                        value="other"
+                        className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3"
+                    >
+                        {otherBalances.map((balance) => (
+                            <BalanceCard
+                                key={balance.id}
+                                label={`${balance.institution?.name} (${balance.currency})`}
+                                opening={parseFloat(balance.opening_amount)}
+                                theoretical={parseFloat(
+                                    balance.current_theoretical,
+                                )}
+                                closingReal={
+                                    balance.closing_amount_real != null
+                                        ? parseFloat(
+                                              balance.closing_amount_real,
+                                          )
+                                        : null
+                                }
+                                difference={
+                                    balance.difference != null
+                                        ? parseFloat(balance.difference)
+                                        : null
+                                }
+                            />
+                        ))}
+                    </TabsContent>
+                </Tabs>
 
                 {/* Movements Table */}
                 <h2 className="mb-6 text-2xl font-bold text-slate-900">
