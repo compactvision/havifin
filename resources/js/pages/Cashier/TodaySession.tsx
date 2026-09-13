@@ -14,6 +14,7 @@ import {
     Settings,
     Store,
     Unlock,
+    Wallet,
 } from 'lucide-react';
 import moment from 'moment';
 
@@ -279,6 +280,19 @@ export default function CashierTodaySession() {
                             </div>
 
                             <div className="mt-8 flex flex-col gap-4 md:flex-row md:justify-end">
+                                <Link
+                                    href={`/cash/sessions/${session.id}`}
+                                    className="w-full md:w-auto"
+                                >
+                                    <Button
+                                        variant="outline"
+                                        className="h-14 w-full rounded-2xl border-slate-200 px-8 text-lg font-semibold text-slate-700 md:w-auto"
+                                    >
+                                        <Wallet className="mr-2 h-5 w-5" />
+                                        Gérer ma caisse
+                                    </Button>
+                                </Link>
+
                                 <Link
                                     href="/cashier"
                                     className="w-full md:w-auto"
