@@ -481,6 +481,7 @@ export const base44 = {
             list: (params?: {
                 cashier_id?: number;
                 session_id?: number;
+                shop_id?: number;
                 start_date?: string;
                 end_date?: string;
                 date?: string;
@@ -496,6 +497,7 @@ export const base44 = {
                     .then(handleResponse<CashierActivity>),
             stats: (params?: {
                 session_id?: number;
+                shop_id?: number;
                 start_date?: string;
                 end_date?: string;
                 date?: string;

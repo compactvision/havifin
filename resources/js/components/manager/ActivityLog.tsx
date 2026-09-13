@@ -9,23 +9,31 @@ import UserActivityDetail from './UserActivityDetail';
 
 interface ActivityLogProps {
     selectedDate: string;
+    shopId?: number;
 }
 
-export default function ActivityLog({ selectedDate }: ActivityLogProps) {
+export default function ActivityLog({
+    selectedDate,
+    shopId,
+}: ActivityLogProps) {
     const [selectedUser, setSelectedUser] = useState<any>(null);
 
     const { data: stats = [], isLoading: loadingStats } = useQuery({
-        queryKey: ['cashier-stats', selectedDate],
+        queryKey: ['cashier-stats', selectedDate, shopId],
         queryFn: () =>
             base44.entities.CashierActivity.stats({
                 date: selectedDate,
+                shop_id: shopId,
             }) as Promise<any[]>,
     });
 
     const { data: activities = [], isLoading: loadingActivities } = useQuery({
-        queryKey: ['cashier-activities', selectedDate],
+        queryKey: ['cashier-activities', selectedDate, shopId],
         queryFn: () =>
-            base44.entities.CashierActivity.list({ date: selectedDate }),
+            base44.entities.CashierActivity.list({
+                date: selectedDate,
+                shop_id: shopId,
+            }),
     });
 
     const getActivityIcon = (type: string, description?: string) => {
