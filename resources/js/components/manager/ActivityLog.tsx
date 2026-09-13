@@ -1,8 +1,17 @@
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { exportToXlsx } from '@/lib/xlsxExport';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, ChevronRight, Clock, User as UserIcon } from 'lucide-react';
+import {
+    Activity,
+    ChevronRight,
+    Clock,
+    Download,
+    Printer,
+    User as UserIcon,
+} from 'lucide-react';
 import moment from 'moment';
 import { useState } from 'react';
 import UserActivityDetail from './UserActivityDetail';
@@ -142,16 +151,82 @@ export default function ActivityLog({
         );
     }
 
+    const handlePrint = () => window.print();
+
+    const handleExport = () => {
+        exportToXlsx(`journal-activite-${selectedDate}`, [
+            {
+                name: 'Résumé par agent',
+                columnWidths: [20, 24, 12, 12, 12, 16],
+                rows: [
+                    [
+                        'Agent',
+                        'Email',
+                        'Connecté à',
+                        'Opérations',
+                        'Connexions',
+                        'Déconnexions',
+                    ],
+                    ...stats.map((user: any) => [
+                        user.cashier_name,
+                        user.cashier_email,
+                        user.connection_time ?? '',
+                        user.transactions_completed,
+                        user.logins,
+                        user.logouts,
+                    ]),
+                ],
+            },
+            {
+                name: 'Événements',
+                columnWidths: [10, 20, 40, 20],
+                rows: [
+                    ['Heure', 'Type', 'Description', 'Agent'],
+                    ...activities.map((activity: any) => [
+                        moment(activity.created_at).format('HH:mm:ss'),
+                        activity.activity_type,
+                        activity.description ?? '',
+                        activity.cashier?.name ??
+                            activity.cashier_name ??
+                            'Système',
+                    ]),
+                ],
+            },
+        ]);
+    };
+
     return (
         <div className="space-y-10">
-            <div>
-                <h3 className="mb-2 text-2xl font-bold tracking-tight text-slate-800">
-                    Journal d'activité
-                </h3>
-                <p className="text-sm font-medium text-slate-400">
-                    Performance et mouvements des utilisateurs pour le{' '}
-                    {moment(selectedDate).format('DD/MM/YYYY')}
-                </p>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h3 className="mb-2 text-2xl font-bold tracking-tight text-slate-800">
+                        Journal d'activité
+                    </h3>
+                    <p className="text-sm font-medium text-slate-400">
+                        Performance et mouvements des utilisateurs pour le{' '}
+                        {moment(selectedDate).format('DD/MM/YYYY')}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2 print:hidden">
+                    <Button
+                        onClick={handlePrint}
+                        variant="outline"
+                        size="sm"
+                        className="h-9 rounded-xl border-slate-200"
+                    >
+                        <Printer className="mr-2 h-3.5 w-3.5" />
+                        Imprimer
+                    </Button>
+                    <Button
+                        onClick={handleExport}
+                        variant="outline"
+                        size="sm"
+                        className="h-9 rounded-xl border-slate-200"
+                    >
+                        <Download className="mr-2 h-3.5 w-3.5" />
+                        Exporter XLSX
+                    </Button>
+                </div>
             </div>
 
             {/* Users Summary List */}

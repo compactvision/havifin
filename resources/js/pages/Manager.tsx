@@ -13,6 +13,7 @@ import { UserManagement } from '@/components/manager/UserManagement';
 import { Button } from '@/components/ui/button';
 import AppMain from '@/layouts/app-main';
 import { cn } from '@/lib/utils';
+import { exportToXlsx } from '@/lib/xlsxExport';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -27,6 +28,7 @@ import {
     Menu,
     PieChart,
     Play,
+    Printer,
     RefreshCw,
     Search,
     Settings,
@@ -199,55 +201,47 @@ export default function Manager() {
     };
 
     const handleExport = () => {
-        const protectCsvValue = (value: unknown) => {
-            const text = String(value ?? '');
-            const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
-
-            return `"${safeText.replaceAll('"', '""')}"`;
-        };
-        const rows = [
-            [
-                'Ticket',
-                'Date',
-                'Opération',
-                'Service',
-                'Devise source',
-                'Montant source',
-                'Devise cible',
-                'Montant cible',
-                'Commission',
-            ],
-            ...transactions.map((transaction) => [
-                transaction.ticket_number,
-                transaction.created_date,
-                transaction.operation_type,
-                transaction.service,
-                transaction.currency_from,
-                transaction.amount_from,
-                transaction.currency_to,
-                transaction.amount_to,
-                transaction.commission,
-            ]),
-        ];
-        const csv = rows
-            .map((row) => row.map(protectCsvValue).join(','))
-            .join('\n');
-        const url = URL.createObjectURL(
-            new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }),
-        );
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `rapport-havifin-${selectedDate}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
+        exportToXlsx(`rapport-havifin-${selectedDate}`, [
+            {
+                name: 'Transactions',
+                columnWidths: [14, 18, 12, 16, 12, 14, 12, 14, 12],
+                rows: [
+                    [
+                        'Ticket',
+                        'Date',
+                        'Opération',
+                        'Service',
+                        'Devise source',
+                        'Montant source',
+                        'Devise cible',
+                        'Montant cible',
+                        'Commission',
+                    ],
+                    ...transactions.map((transaction) => [
+                        transaction.ticket_number,
+                        transaction.created_date,
+                        transaction.operation_type,
+                        transaction.service,
+                        transaction.currency_from,
+                        transaction.amount_from,
+                        transaction.currency_to,
+                        transaction.amount_to,
+                        transaction.commission,
+                    ]),
+                ],
+            },
+        ]);
     };
+
+    // The nav/buttons/tabs carry `print:hidden`; only the report body prints.
+    const handlePrint = () => window.print();
 
     return (
         <AppMain currentPageName="Manager">
             <Head title="Manager" />
             <div className="flex h-screen flex-col overflow-hidden bg-[#f8fafc]">
                 {/* Manager Header (fixed) */}
-                <header className="z-20 flex py-2 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <header className="z-20 flex flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-10 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.02)] print:hidden">
                     <div className="flex items-center gap-2">
                         {/* Below lg the sidebar becomes a drawer, so it needs
                             a trigger; sits left of the logo as requested. */}
@@ -354,12 +348,22 @@ export default function Manager() {
                         </div>
 
                         <Button
+                            onClick={handlePrint}
+                            disabled={transactions.length === 0}
+                            variant="outline"
+                            className="h-12 rounded-2xl border-slate-200 px-6 text-xs font-black tracking-widest uppercase transition-all active:scale-95"
+                        >
+                            <Printer className="mr-2 h-4 w-4" />
+                            Imprimer
+                        </Button>
+
+                        <Button
                             onClick={handleExport}
                             disabled={transactions.length === 0}
                             className="h-12 rounded-2xl bg-slate-900 px-6 text-xs font-bold tracking-widest text-white uppercase shadow-xl shadow-slate-900/10 transition-all hover:bg-black active:scale-95"
                         >
                             <Download className="mr-2 h-4 w-4 text-emerald-400" />
-                            Exporter Rapport
+                            Exporter XLSX
                         </Button>
                     </div>
                 </header>
@@ -377,7 +381,7 @@ export default function Manager() {
 
                     <aside
                         className={cn(
-                            'shrink-0 space-y-4 overflow-y-auto p-4',
+                            'shrink-0 space-y-4 overflow-y-auto p-4 print:hidden',
                             // Drawer under lg: slides in from the left and
                             // back out the same way when dismissed.
                             'fixed inset-y-0 left-0 z-50 w-[300px] bg-slate-50 shadow-2xl transition-transform duration-300 ease-out',
