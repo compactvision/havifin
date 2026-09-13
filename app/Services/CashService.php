@@ -10,6 +10,7 @@ use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\CashSessionAmount;
 use App\Models\CashSessionInstitutionBalance;
+use App\Models\Institution;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -365,7 +366,42 @@ class CashService
             ],
         );
 
+        $before = (float) $row->current_theoretical;
         $row->increment('current_theoretical', $delta);
+        $after = $before + $delta;
+
+        $this->maybeAlertLowBalance($session, $row, $before, $after);
+    }
+
+    /**
+     * Logs a single alert the moment an operator's float first crosses
+     * below its configured floor - not on every movement that follows
+     * while it stays low, so the activity log doesn't get spammed by a
+     * run of small withdrawals against an already-depleted float.
+     */
+    private function maybeAlertLowBalance(CashSession $session, CashSessionInstitutionBalance $row, float $before, float $after): void
+    {
+        $institution = Institution::find($row->institution_id);
+        $threshold = $institution?->low_balance_threshold;
+
+        if ($threshold === null || $after >= (float) $threshold || $before < (float) $threshold) {
+            return;
+        }
+
+        CashierActivity::create([
+            'cashier_id' => auth()->id() ?? $session->user_id,
+            'session_id' => $session->work_session_id,
+            'activity_type' => 'low_balance_alert',
+            'description' => sprintf(
+                'Seuil critique atteint: %s — solde théorique %s %s sous le seuil de %s %s',
+                $institution->name,
+                number_format($after, 2, ',', ' '),
+                $row->currency,
+                number_format((float) $threshold, 2, ',', ' '),
+                $row->currency,
+            ),
+            'created_at' => now(),
+        ]);
     }
 
     private function audit(string $event, Model $auditable, ?array $oldValues, ?array $newValues): void

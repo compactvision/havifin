@@ -1,6 +1,7 @@
 import { base44, type User } from '@/api/base44Client';
 import ManagerModal from '@/components/admin/ManagerModal';
 import ActivityLog from '@/components/manager/ActivityLog';
+import LowBalanceAlertsBanner from '@/components/manager/LowBalanceAlertsBanner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -286,6 +287,8 @@ export default function ShopDetail({ id }: ShopDetailProps) {
                                     loading={isLoadingStatistics}
                                 />
                             </section>
+
+                            <LowBalanceAlertsBanner />
 
                             <section className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
                                 <Card className="rounded-3xl">

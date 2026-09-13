@@ -119,6 +119,18 @@ export interface Institution {
             operation_type?: 'depot' | 'retrait' | 'both';
         }[];
     };
+    low_balance_threshold?: number | string | null;
+}
+
+export interface LowBalanceAlert {
+    id: number;
+    institution: string;
+    currency: string;
+    current_theoretical: number;
+    threshold: number;
+    shop: string | null;
+    cashier: string | null;
+    cash_session_id: number;
 }
 
 export interface Session {
@@ -407,6 +419,12 @@ export const base44 = {
                 axios
                     .delete(`/api/institutions/${id}`)
                     .then(handleResponse<void>),
+            lowBalanceAlerts: () =>
+                axios
+                    .get<LowBalanceAlert[]>(
+                        '/api/institutions/low-balance-alerts',
+                    )
+                    .then(handleResponse<LowBalanceAlert[]>),
         },
         Session: {
             current: () =>

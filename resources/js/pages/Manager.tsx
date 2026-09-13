@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import ActivityLog from '@/components/manager/ActivityLog';
+import LowBalanceAlertsBanner from '@/components/manager/LowBalanceAlertsBanner';
 import { CashMovementsTable } from '@/components/manager/CashMovementsTable';
 import { ClientsTable } from '@/components/manager/ClientsTable';
 import InstitutionManager from '@/components/manager/InstitutionManager';
@@ -566,6 +567,8 @@ export default function Manager() {
                                                     </p>
                                                 </div>
                                             </div>
+
+                                            <LowBalanceAlertsBanner />
 
                                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                                 <div className="rounded-3xl border border-slate-100 bg-slate-50 p-7">

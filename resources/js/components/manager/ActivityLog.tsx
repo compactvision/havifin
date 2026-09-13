@@ -119,6 +119,12 @@ export default function ActivityLog({
                         AJUSTEMENT
                     </Badge>
                 );
+            case 'low_balance_alert':
+                return (
+                    <Badge className="animate-pulse border-none bg-red-100 text-red-600">
+                        SEUIL CRITIQUE
+                    </Badge>
+                );
             case 'login':
                 return (
                     <Badge className="border-none bg-emerald-100 text-emerald-600">

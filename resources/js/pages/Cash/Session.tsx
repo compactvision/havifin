@@ -52,12 +52,14 @@ interface BalanceCardProps {
     difference: number | null;
     totalIn?: number;
     totalOut?: number;
+    lowBalanceThreshold?: number | null;
 }
 
 // Shared by the "Cash" tab (per-currency) and the operator tabs
 // (per-institution) - same shape, same math, just a different label.
 // totalIn/totalOut are cash-only (institution floats don't split
-// movements that finely) so they're optional.
+// movements that finely) so they're optional. lowBalanceThreshold only
+// ever applies to operator floats, never physical cash.
 function BalanceCard({
     label,
     opening,
@@ -66,23 +68,37 @@ function BalanceCard({
     difference,
     totalIn,
     totalOut,
+    lowBalanceThreshold,
 }: BalanceCardProps) {
     const hasMismatch = Math.abs(difference ?? 0) > 0.01;
+    const isBelowThreshold =
+        lowBalanceThreshold != null && theoretical < lowBalanceThreshold;
 
     return (
-        <Card className="overflow-hidden rounded-3xl border-slate-200/60 shadow-sm">
+        <Card
+            className={`overflow-hidden rounded-3xl shadow-sm ${isBelowThreshold ? 'border-2 border-red-300' : 'border-slate-200/60'}`}
+        >
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
                 <span className="font-semibold text-slate-500">{label}</span>
-                {closingReal !== null &&
-                    (hasMismatch ? (
-                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                            <AlertTriangle className="mr-1 h-3 w-3" /> ÉCART
+                <div className="flex items-center gap-2">
+                    {isBelowThreshold && (
+                        <Badge className="animate-pulse bg-red-600 text-white hover:bg-red-600">
+                            <AlertTriangle className="mr-1 h-3 w-3" /> SEUIL
+                            CRITIQUE
                         </Badge>
-                    ) : (
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                            <CheckCircle2 className="mr-1 h-3 w-3" /> OK
-                        </Badge>
-                    ))}
+                    )}
+                    {closingReal !== null &&
+                        (hasMismatch ? (
+                            <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                                <AlertTriangle className="mr-1 h-3 w-3" />{' '}
+                                ÉCART
+                            </Badge>
+                        ) : (
+                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                                <CheckCircle2 className="mr-1 h-3 w-3" /> OK
+                            </Badge>
+                        ))}
+                </div>
             </div>
             <CardContent className="p-0">
                 <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100">
@@ -577,6 +593,14 @@ export default function CashSessionDetail({ id }: Props) {
                                         ? parseFloat(balance.difference)
                                         : null
                                 }
+                                lowBalanceThreshold={
+                                    balance.institution?.low_balance_threshold != null
+                                        ? Number(
+                                              balance.institution
+                                                  .low_balance_threshold,
+                                          )
+                                        : null
+                                }
                             />
                         ))}
                     </TabsContent>
@@ -605,6 +629,14 @@ export default function CashSessionDetail({ id }: Props) {
                                         ? parseFloat(balance.difference)
                                         : null
                                 }
+                                lowBalanceThreshold={
+                                    balance.institution?.low_balance_threshold != null
+                                        ? Number(
+                                              balance.institution
+                                                  .low_balance_threshold,
+                                          )
+                                        : null
+                                }
                             />
                         ))}
                     </TabsContent>
@@ -631,6 +663,14 @@ export default function CashSessionDetail({ id }: Props) {
                                 difference={
                                     balance.difference != null
                                         ? parseFloat(balance.difference)
+                                        : null
+                                }
+                                lowBalanceThreshold={
+                                    balance.institution?.low_balance_threshold != null
+                                        ? Number(
+                                              balance.institution
+                                                  .low_balance_threshold,
+                                          )
                                         : null
                                 }
                             />
