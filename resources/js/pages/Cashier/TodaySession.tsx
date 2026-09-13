@@ -44,7 +44,7 @@ export default function CashierTodaySession() {
                 <div className="flex h-screen items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
                         <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
-                        <p className="font-bold text-slate-500">
+                        <p className="font-semibold text-slate-500">
                             Chargement de votre session...
                         </p>
                     </div>
@@ -61,7 +61,7 @@ export default function CashierTodaySession() {
                     <div className="mb-6 rounded-full bg-indigo-100 p-6 text-indigo-600">
                         <Store className="h-12 w-12" />
                     </div>
-                    <h1 className="mb-2 text-2xl font-bold text-slate-900">
+                    <h1 className="mb-2 text-2xl font-semibold text-slate-900">
                         Aucune session active
                     </h1>
                     <p className="mb-8 max-w-md text-slate-500">
@@ -93,7 +93,7 @@ export default function CashierTodaySession() {
                     <Badge className="mb-4 bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                         JOURNÉE OUVERTE
                     </Badge>
-                    <h1 className="mb-2 text-2xl font-bold text-slate-900">
+                    <h1 className="mb-2 text-2xl font-semibold text-slate-900">
                         La session de la boutique est active
                     </h1>
                     <p className="mb-2 max-w-md text-slate-500">
@@ -109,7 +109,7 @@ export default function CashierTodaySession() {
 
                     {hasAssignedCounter ? (
                         <div className="mt-8 flex flex-col items-center gap-4">
-                            <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-3 text-sm font-bold text-indigo-700">
+                            <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-3 text-sm font-semibold text-indigo-700">
                                 Guichet assigné : {auth.user.counter}
                             </div>
                             <Button asChild className="h-14 px-8 text-base">
@@ -125,7 +125,7 @@ export default function CashierTodaySession() {
                             <div className="flex items-start gap-3">
                                 <Settings className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                                 <div>
-                                    <p className="font-black text-amber-900">
+                                    <p className="font-semibold text-amber-900">
                                         Aucun guichet assigné
                                     </p>
                                     <p className="mt-1 text-sm leading-relaxed text-amber-800">
@@ -156,7 +156,7 @@ export default function CashierTodaySession() {
             <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50/30 px-6 py-8 md:px-10">
                 <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">
+                        <h1 className="text-3xl font-semibold text-slate-900">
                             Bonjour, {auth.user.name} 👋
                         </h1>
                         <p className="mt-1 text-slate-500">
@@ -165,10 +165,10 @@ export default function CashierTodaySession() {
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex flex-col items-end">
-                            <span className="text-xs font-bold text-slate-400 uppercase">
+                            <span className="text-xs font-semibold text-slate-400 uppercase">
                                 Date
                             </span>
-                            <span className="font-black text-slate-900">
+                            <span className="font-semibold text-slate-900">
                                 {moment().format('DD/MM/YYYY')}
                             </span>
                         </div>
@@ -178,7 +178,7 @@ export default function CashierTodaySession() {
                                 <span
                                     className={`h-2 w-2 rounded-full ${session.status === 'open' ? 'bg-green-500' : 'bg-red-500'}`}
                                 />
-                                <span className="font-bold text-slate-700">
+                                <span className="font-semibold text-slate-700">
                                     {session.status === 'open'
                                         ? 'En ligne'
                                         : 'Hors ligne'}
@@ -202,7 +202,7 @@ export default function CashierTodaySession() {
                                         <Banknote className="h-8 w-8" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-bold text-slate-900">
+                                        <h2 className="text-2xl font-semibold text-slate-900">
                                             Session #{session.id}
                                         </h2>
                                         <p className="font-medium text-slate-500">
@@ -216,7 +216,7 @@ export default function CashierTodaySession() {
                                             ).isBefore(moment(), 'day') && (
                                                 <Badge
                                                     variant="destructive"
-                                                    className="mt-1 text-[10px] font-black uppercase"
+                                                    className="mt-1 text-[10px] font-semibold uppercase"
                                                 >
                                                     Session d'une date
                                                     antérieure (
@@ -229,7 +229,7 @@ export default function CashierTodaySession() {
                                             )}
                                     </div>
                                 </div>
-                                <Badge className="bg-green-100 px-4 py-2 text-sm font-black text-green-700 hover:bg-green-100">
+                                <Badge className="bg-green-100 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100">
                                     <Unlock className="mr-2 h-4 w-4" />
                                     OUVERTE
                                 </Badge>
@@ -239,11 +239,11 @@ export default function CashierTodaySession() {
                                 <div className="rounded-2xl bg-slate-50 p-4">
                                     <div className="mb-2 flex items-center gap-2 text-slate-400">
                                         <Clock className="h-4 w-4" />
-                                        <span className="text-xs font-bold uppercase">
+                                        <span className="text-xs font-semibold uppercase">
                                             Ouverture
                                         </span>
                                     </div>
-                                    <p className="text-xl font-black text-slate-900">
+                                    <p className="text-xl font-semibold text-slate-900">
                                         {moment(session.opened_at).format(
                                             'HH:mm',
                                         )}
@@ -256,7 +256,7 @@ export default function CashierTodaySession() {
                                 <div className="col-span-2 rounded-2xl bg-slate-50 p-4">
                                     <div className="mb-2 flex items-center gap-2 text-slate-400">
                                         <DollarSign className="h-4 w-4" />
-                                        <span className="text-xs font-bold uppercase">
+                                        <span className="text-xs font-semibold uppercase">
                                             Fonds de caisse initial
                                         </span>
                                     </div>
@@ -266,10 +266,10 @@ export default function CashierTodaySession() {
                                                 key={amount.currency}
                                                 className="flex items-baseline gap-1"
                                             >
-                                                <span className="text-xl font-black text-slate-900">
+                                                <span className="text-xl font-semibold text-slate-900">
                                                     {amount.opening_amount}
                                                 </span>
-                                                <span className="text-xs font-bold text-slate-500">
+                                                <span className="text-xs font-semibold text-slate-500">
                                                     {amount.currency}
                                                 </span>
                                             </div>
@@ -283,17 +283,14 @@ export default function CashierTodaySession() {
                                     href="/cashier"
                                     className="w-full md:w-auto"
                                 >
-                                    <Button
-                                        variant="ghost"
-                                        className="h-14 w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 text-lg font-bold text-white shadow-xl shadow-indigo-500/30 transition-all hover:scale-105 hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 hover:text-white hover:shadow-indigo-500/50 active:scale-95 md:w-auto"
-                                    >
+                                    <Button className="h-14 w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 text-lg font-semibold text-white shadow-xl shadow-indigo-500/30 transition-all hover:scale-105 hover:shadow-indigo-500/50 active:scale-95 md:w-auto">
                                         Accéder au Guichet (Transacter)
                                         <ArrowRight className="ml-2 h-5 w-5" />
                                     </Button>
                                 </Link>
 
                                 {session.work_session?.status === 'closed' && (
-                                    <p className="text-center text-xs font-bold text-red-500 italic md:text-right">
+                                    <p className="text-center text-xs font-semibold text-red-500 italic md:text-right">
                                         Note: Cette session appartient à une
                                         journée clôturée par le manager.
                                     </p>
