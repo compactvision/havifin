@@ -37,6 +37,11 @@ export default function CloseSessionModal({
         EUR: '0',
     });
     const [notes, setNotes] = useState('');
+    const [institutionAmounts, setInstitutionAmounts] = useState<
+        Record<number, string>
+    >({});
+
+    const institutionBalances = session?.institution_balances ?? [];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,8 +57,17 @@ export default function CloseSessionModal({
 
         setIsLoading(true);
         try {
+            const closing_institution_balances = institutionBalances
+                .filter((b) => institutionAmounts[b.institution_id] !== undefined)
+                .map((b) => ({
+                    institution_id: b.institution_id,
+                    currency: b.currency,
+                    amount: Number(institutionAmounts[b.institution_id] || 0),
+                }));
+
             await base44.entities.CashSession.close(session.id, {
                 closing_amounts: amounts,
+                closing_institution_balances,
                 notes: notes,
             });
             toast.success('Session clôturée avec succès');
@@ -108,6 +122,51 @@ export default function CloseSessionModal({
                             </div>
                         ))}
                     </div>
+                    {institutionBalances.length > 0 && (
+                        <div className="grid gap-3 border-t pt-4">
+                            <p className="text-sm font-semibold text-slate-700">
+                                Fonds opérateurs (M-Pesa, Orange Money, ...)
+                            </p>
+                            <p className="-mt-2 text-xs text-slate-400">
+                                Comptez le solde restant sur chaque compte
+                                partenaire pour vérifier l'équivalence.
+                            </p>
+                            {institutionBalances.map((balance) => (
+                                <div
+                                    key={balance.id}
+                                    className="grid grid-cols-4 items-center gap-4"
+                                >
+                                    <Label className="text-right text-sm font-medium">
+                                        {balance.institution?.name}
+                                        <span className="block text-[10px] font-normal text-slate-400">
+                                            Théo.{' '}
+                                            {balance.current_theoretical}{' '}
+                                            {balance.currency}
+                                        </span>
+                                    </Label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={
+                                            institutionAmounts[
+                                                balance.institution_id
+                                            ] ?? ''
+                                        }
+                                        onChange={(e) =>
+                                            setInstitutionAmounts({
+                                                ...institutionAmounts,
+                                                [balance.institution_id]:
+                                                    e.target.value,
+                                            })
+                                        }
+                                        placeholder="0"
+                                        className="col-span-3"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="close-notes" className="text-right">
                             Notes

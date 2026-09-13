@@ -165,6 +165,7 @@ class TransactionController extends Controller
                     'client_id' => $client->id,
                     'operation_type' => $operationType,
                     'service' => $client->service,
+                    'institution_id' => $client->institution_id,
                     'currency_from' => strtoupper((string) $client->currency_from),
                     'currency_to' => strtoupper((string) $client->currency_to),
                     'amount_from' => $operationAmount,

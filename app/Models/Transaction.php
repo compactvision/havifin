@@ -17,6 +17,7 @@ class Transaction extends Model
         'ticket_number',
         'operation_type',
         'service',
+        'institution_id',
         'currency_from',
         'currency_to',
         'amount_from',
@@ -45,6 +46,11 @@ class Transaction extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function institution()
+    {
+        return $this->belongsTo(Institution::class);
     }
 
     /**

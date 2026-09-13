@@ -390,6 +390,117 @@ export default function CashSessionDetail({ id }: Props) {
                     ))}
                 </div>
 
+                {/* Operator float section - M-Pesa/Orange Money/... equivalence */}
+                {(session.institution_balances?.length ?? 0) > 0 && (
+                    <>
+                        <h2 className="mb-6 text-2xl font-semibold text-slate-900">
+                            État des Opérateurs
+                        </h2>
+                        <div className="mb-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            {session.institution_balances!.map((balance) => {
+                                const opening = parseFloat(
+                                    balance.opening_amount,
+                                );
+                                const theoretical = parseFloat(
+                                    balance.current_theoretical,
+                                );
+                                const closingReal =
+                                    balance.closing_amount_real !== undefined &&
+                                    balance.closing_amount_real !== null
+                                        ? parseFloat(balance.closing_amount_real)
+                                        : null;
+                                const difference =
+                                    balance.difference !== undefined &&
+                                    balance.difference !== null
+                                        ? parseFloat(balance.difference)
+                                        : null;
+
+                                return (
+                                    <Card
+                                        key={balance.id}
+                                        className="overflow-hidden rounded-3xl border-slate-200/60 shadow-sm"
+                                    >
+                                        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
+                                            <span className="font-semibold text-slate-500">
+                                                {balance.institution?.name} (
+                                                {balance.currency})
+                                            </span>
+                                            {closingReal !== null &&
+                                                (Math.abs(difference ?? 0) <
+                                                0.01 ? (
+                                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                                                        <CheckCircle2 className="mr-1 h-3 w-3" />{' '}
+                                                        OK
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                                                        <AlertTriangle className="mr-1 h-3 w-3" />{' '}
+                                                        ÉCART
+                                                    </Badge>
+                                                ))}
+                                        </div>
+                                        <CardContent className="p-0">
+                                            <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100">
+                                                <div className="p-4">
+                                                    <p className="text-xs font-semibold text-slate-400 uppercase">
+                                                        Ouverture
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-slate-700">
+                                                        {opening.toFixed(2)}
+                                                    </p>
+                                                </div>
+                                                <div className="bg-slate-50/50 p-4">
+                                                    <p className="text-xs font-semibold text-slate-400 uppercase">
+                                                        Théorique
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-slate-900">
+                                                        {theoretical.toFixed(2)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {closingReal !== null && (
+                                                <div
+                                                    className={`p-4 ${Math.abs(difference ?? 0) > 0.01 ? 'bg-red-50' : 'bg-green-50'}`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-xs font-semibold text-slate-500 uppercase">
+                                                                Réel (Compté)
+                                                            </p>
+                                                            <p className="text-xl font-semibold text-slate-900">
+                                                                {closingReal.toFixed(
+                                                                    2,
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-xs font-semibold text-slate-500 uppercase">
+                                                                Écart
+                                                            </p>
+                                                            <p
+                                                                className={`text-xl font-semibold ${Math.abs(difference ?? 0) > 0.01 ? 'text-red-600' : 'text-green-600'}`}
+                                                            >
+                                                                {(difference ??
+                                                                    0) > 0
+                                                                    ? '+'
+                                                                    : ''}
+                                                                {(
+                                                                    difference ??
+                                                                    0
+                                                                ).toFixed(2)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    </>
+                )}
+
                 {/* Movements Table */}
                 <h2 className="mb-6 text-2xl font-bold text-slate-900">
                     Historique des Mouvements
