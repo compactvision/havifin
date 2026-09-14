@@ -92,7 +92,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('/clients/register', [ClientVerificationController::class, 'register'])
         ->middleware('role:client,cashier,manager');
     Route::post('/clients/add-phone', [ClientVerificationController::class, 'addPhone'])
-        ->middleware('role:client,cashier,manager');
+        ->middleware('role:cashier,manager');
 
     Route::get('/exchange-rates', [ExchangeRateController::class, 'index'])
         ->middleware('role:client,cashier,manager');
