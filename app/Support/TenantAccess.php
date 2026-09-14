@@ -64,12 +64,50 @@ final class TenantAccess
         );
     }
 
+    public static function assertShopActive(Shop|int $shop): void
+    {
+        $isActive = $shop instanceof Shop
+            ? (bool) $shop->is_active
+            : (bool) Shop::whereKey($shop)->value('is_active');
+
+        abort_unless($isActive, 409, 'Cette boutique est désactivée.');
+    }
+
+    /**
+     * Resolve a single operative shop.
+     *
+     * Never silently pick the first pivot row when several shops are
+     * assigned — that misroutes tickets and "current" day sessions.
+     * Cashiers with a counter use that counter's shop.
+     */
     public static function resolveShopId(User $user, int|string|null $requestedShopId = null): int
     {
-        $shopId = $requestedShopId !== null
-            ? (int) $requestedShopId
-            : (int) $user->shops()->value('shops.id');
+        if ($requestedShopId !== null && $requestedShopId !== '') {
+            $shopId = (int) $requestedShopId;
+            self::authorizeShop($user, $shopId);
 
+            return $shopId;
+        }
+
+        if ($user->isCashier() && $user->counter_id) {
+            $user->loadMissing('counter');
+            $counterShopId = (int) ($user->counter?->shop_id ?? 0);
+            if ($counterShopId) {
+                self::authorizeShop($user, $counterShopId);
+
+                return $counterShopId;
+            }
+        }
+
+        $shopIds = self::shopIds($user);
+        abort_if($shopIds->isEmpty(), 403, 'Aucune boutique valide.');
+        abort_if(
+            $shopIds->count() > 1,
+            422,
+            'shop_id requis lorsque plusieurs boutiques sont assignées.',
+        );
+
+        $shopId = (int) $shopIds->first();
         self::authorizeShop($user, $shopId);
 
         return $shopId;

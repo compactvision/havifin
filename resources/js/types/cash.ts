@@ -25,6 +25,7 @@ export interface CashSession {
     user_id: number;
     work_session_id?: number;
     status: 'open' | 'closed';
+    force_closed?: boolean;
     opened_at: string;
     closed_at?: string;
     opening_notes?: string;

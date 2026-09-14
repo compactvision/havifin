@@ -33,11 +33,14 @@ trait HasOwner
 
                     $query->where($table.'.owner_id', $user->owner_id);
 
-                    // Optional shop isolation for cashiers and clients
+                    // Cashiers/clients may be on several shops — scope to the
+                    // full assignment set, never the silent first pivot row.
                     if ($user->hasApplicationRole('cashier', 'client') && \Schema::hasColumn($table, 'shop_id')) {
-                        $shopId = $user->shops()->first()?->id;
-                        if ($shopId) {
-                            $query->where($table.'.shop_id', $shopId);
+                        $shopIds = $user->shops()->pluck('shops.id');
+                        if ($shopIds->isNotEmpty()) {
+                            $query->whereIn($table.'.shop_id', $shopIds);
+                        } else {
+                            $query->whereRaw('1 = 0');
                         }
                     }
                 }

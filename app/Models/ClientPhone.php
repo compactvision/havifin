@@ -51,9 +51,11 @@ class ClientPhone extends Model
 
                     // Further filter by shop if it's a cashier or client
                     if (in_array($user->role, ['cashier', 'client'])) {
-                        $shopId = $user->shops()->first()?->id;
-                        if ($shopId) {
-                            $query->where($table.'.shop_id', $shopId);
+                        $shopIds = $user->shops()->pluck('shops.id');
+                        if ($shopIds->isNotEmpty()) {
+                            $query->whereIn($table.'.shop_id', $shopIds);
+                        } else {
+                            $query->whereRaw('1 = 0');
                         }
                     }
                 }

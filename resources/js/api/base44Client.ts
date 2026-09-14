@@ -472,15 +472,16 @@ export const base44 = {
                     .then(handleResponse<LowBalanceAlert[]>),
         },
         Session: {
-            current: () =>
+            current: (params?: { shop_id?: number | string }) =>
                 axios
-                    .get<Session | null>('/api/sessions/current')
+                    .get<Session | null>('/api/sessions/current', { params })
                     .then(handleResponse<Session | null>),
             list: (params?: {
                 status?: string;
                 shop_id?: string;
                 date?: string;
                 page?: string;
+                per_page?: string | number;
             }) =>
                 axios
                     .get<

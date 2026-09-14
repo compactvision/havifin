@@ -46,7 +46,10 @@ class SessionController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'session_date' => 'required|date|before_or_equal:today',
+            // Opening a past date still "open" would backdate cashiers and
+            // transactions onto a closed accounting day. Catch-up belongs to
+            // reopen (today only) or a dedicated admin flow, not store.
+            'session_date' => 'required|date|date_equals:today',
             'shop_id' => 'required|exists:shops,id',
             'notes' => 'nullable|string',
         ]);
@@ -61,10 +64,12 @@ class SessionController extends Controller
         $user = $request->user();
         $shopId = $request->shop_id;
         TenantAccess::authorizeShop($user, (int) $shopId);
+        TenantAccess::assertShopActive((int) $shopId);
 
         try {
             $session = DB::transaction(function () use ($request, $user, $shopId) {
-                Shop::whereKey($shopId)->lockForUpdate()->firstOrFail();
+                $shop = Shop::whereKey($shopId)->lockForUpdate()->firstOrFail();
+                abort_unless($shop->is_active, 409, 'Cette boutique est désactivée.');
 
                 $openSession = Session::open()->where('shop_id', $shopId)->first();
                 abort_if($openSession, 409, 'Une session est déjà ouverte pour cette boutique.');
@@ -145,6 +150,7 @@ class SessionController extends Controller
         $session = DB::transaction(function () use ($request, $id) {
             $session = Session::whereKey($id)->lockForUpdate()->firstOrFail();
             TenantAccess::authorizeShop($request->user(), $session->shop_id);
+            TenantAccess::assertShopActive((int) $session->shop_id);
             abort_unless($session->status === 'closed', 409, 'Cette session n’est pas clôturée.');
             abort_unless(
                 $session->session_date->isToday(),
@@ -162,6 +168,7 @@ class SessionController extends Controller
 
             $session->update([
                 'status' => 'open',
+                'force_closed' => false,
                 'closed_at' => null,
                 'closed_by' => null,
             ]);
@@ -253,7 +260,11 @@ class SessionController extends Controller
             $query->whereDate('session_date', $request->date);
         }
 
-        $perPage = min(max((int) $request->query('per_page', 15), 1), 100);
+        // A day filter is usually "all shops for that date" (ManagerShops) or
+        // one shop's day card — not a long history page. Default to the API
+        // ceiling so a manager with many boutiques does not miss today's row.
+        $defaultPerPage = $request->has('date') ? 100 : 15;
+        $perPage = min(max((int) $request->query('per_page', $defaultPerPage), 1), 100);
         $sessions = $query->orderBy('session_date', 'desc')->paginate($perPage);
 
         return response()->json($sessions);

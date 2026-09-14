@@ -18,6 +18,7 @@ class CashSession extends Model
         'closed_by',
         'work_session_id',
         'status',
+        'force_closed',
         'opened_at',
         'closed_at',
         'opening_notes',
@@ -28,6 +29,7 @@ class CashSession extends Model
     protected $casts = [
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
+        'force_closed' => 'boolean',
     ];
 
     public function register()

@@ -9,6 +9,7 @@ use App\Models\Session;
 use App\Services\CashService;
 use App\Support\TenantAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CashSessionController extends Controller
 {
@@ -79,13 +80,15 @@ class CashSessionController extends Controller
             $query->where('cash_register_id', $register->id);
         }
 
-        // Default to current active work session if no historical date range provided
+        // Default to every currently open work session across the allowed
+        // shops — not just the latest one shop's day.
         if (! $request->has('date')) {
-            $workSession = Session::open()->latest('session_date')->whereIn('shop_id', $shopIds)->first();
-            if ($workSession) {
-                $query->where('work_session_id', $workSession->id);
+            $workSessionIds = Session::open()
+                ->whereIn('shop_id', $shopIds)
+                ->pluck('id');
+            if ($workSessionIds->isNotEmpty()) {
+                $query->whereIn('work_session_id', $workSessionIds);
             } else {
-                // If no active session, maybe show today's anyway?
                 $query->whereDate('opened_at', today());
             }
         }
@@ -113,6 +116,7 @@ class CashSessionController extends Controller
         $register = CashRegister::with('counter.cashier')->findOrFail($validated['cash_register_id']);
         $actor = $request->user();
         TenantAccess::authorizeShop($actor, $register->shop_id);
+        TenantAccess::assertShopActive((int) $register->shop_id);
         abort_unless($register->is_active, 409, 'Cette caisse est désactivée.');
         abort_if($register->counter && ! $register->counter->is_active, 409, 'Ce guichet est désactivé.');
 
@@ -124,23 +128,39 @@ class CashSessionController extends Controller
             );
             $sessionUser = $actor;
         } else {
-            $sessionUser = $register->counter?->cashier ?? $actor;
+            // Managers may open on behalf of the assigned cashier (Guide),
+            // but never attribute the till to themselves when none is set.
+            $sessionUser = $register->counter?->cashier;
+            abort_unless(
+                $sessionUser,
+                409,
+                'Assignez un caissier à ce guichet avant d’ouvrir la caisse.',
+            );
         }
         abort_unless($sessionUser->isActive(), 409, 'Le compte affecté à cette caisse est désactivé.');
 
-        // Link to current active work session for this shop
-        $workSession = Session::open()->latest('session_date')->where('shop_id', $register->shop_id)->first();
-        abort_unless($workSession, 409, 'La session journalière de la boutique doit être ouverte.');
-
         try {
-            $session = $this->cashService->openSession(
-                $sessionUser,
-                $register,
-                $validated['opening_amounts'],
-                $validated['notes'] ?? null,
-                $workSession->id,
-                $validated['opening_institution_balances'] ?? [],
-            );
+            // Lock the work session for the same critical section as
+            // SessionController::close. Without this, a till can open after
+            // close has already verified "no open cash sessions" and still
+            // land on a day that finishes as closed.
+            $session = DB::transaction(function () use ($sessionUser, $register, $validated) {
+                $workSession = Session::open()
+                    ->where('shop_id', $register->shop_id)
+                    ->latest('session_date')
+                    ->lockForUpdate()
+                    ->first();
+                abort_unless($workSession, 409, 'La session journalière de la boutique doit être ouverte.');
+
+                return $this->cashService->openSession(
+                    $sessionUser,
+                    $register,
+                    $validated['opening_amounts'],
+                    $validated['notes'] ?? null,
+                    $workSession->id,
+                    $validated['opening_institution_balances'] ?? [],
+                );
+            });
 
             return response()->json($session, 201);
         } catch (\InvalidArgumentException $e) {

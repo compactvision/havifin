@@ -130,6 +130,7 @@ class ClientController extends Controller
 
         $user = $request->user();
         $shopId = TenantAccess::resolveShopId($user, $validated['shop_id'] ?? null);
+        TenantAccess::assertShopActive($shopId);
         $activeSession = Session::open()->where('shop_id', $shopId)->first();
 
         if (! $activeSession) {

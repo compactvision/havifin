@@ -150,7 +150,7 @@ const SECTIONS: GuideSection[] = [
             "À l'ouverture, le caissier saisit le fond de caisse de départ, devise par devise (USD, CDF, EUR).",
             "Pendant la session, le montant théorique se recalcule automatiquement à partir du fond de départ et des mouvements (entrées/sorties).",
             "À la clôture, le caissier compte physiquement l'argent et saisit le montant réel — l'écart avec le montant théorique est calculé et enregistré, c'est ce qui sert à l'analyse de performance.",
-            "Un manager peut aussi ouvrir la caisse au nom du caissier assigné si besoin.",
+            "Un manager peut ouvrir la caisse au nom du caissier assigné au guichet (jamais sans caissier affecté).",
         ],
     },
     {
