@@ -39,6 +39,16 @@ jobs:
       - name: Install JS deps
         run: npm ci
 
+      # vite-plugin-wayfinder shells out to `php artisan` during the build
+      # to generate route types, so vendor/ has to exist on the runner too.
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install PHP deps
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
       - name: Build frontend
         run: npm run build
 
