@@ -89,11 +89,23 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script_stop: true
+          envs: GITHUB_REF_NAME
           script: |
             set -e
             cd "${{ steps.vars.outputs.path }}"
 
             php artisan migrate --force
+
+            # Seeders are idempotent (firstOrCreate/updateOrCreate) but are
+            # only meant to populate the sandbox with demo data - never run
+            # them against production. config:clear first because the
+            # seeder reads HAVIFIN_SEED_PASSWORD straight from the .env via
+            # env(), which returns nothing once config is cached.
+            if [ "${GITHUB_REF_NAME}" != "main" ]; then
+              php artisan config:clear
+              php artisan db:seed --force
+            fi
+
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
