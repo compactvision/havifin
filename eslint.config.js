@@ -26,7 +26,7 @@ export default [
         },
     },
     {
-        files: ['print-server/**/*.js'],
+        files: ['print-server/**/*.js', 'resources/mjml/**/*.cjs'],
         languageOptions: {
             globals: {
                 ...globals.node,
@@ -34,6 +34,7 @@ export default [
         },
         rules: {
             'no-control-regex': 'off',
+            '@typescript-eslint/no-require-imports': 'off',
         },
     },
     {
