@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import ActivityLog from '@/components/manager/ActivityLog';
 import AdvancedReports from '@/components/manager/AdvancedReports';
+import LeaderboardReport from '@/components/manager/LeaderboardReport';
 import LowBalanceAlertsBanner from '@/components/manager/LowBalanceAlertsBanner';
 import { CashMovementsTable } from '@/components/manager/CashMovementsTable';
 import { ClientsTable } from '@/components/manager/ClientsTable';
@@ -36,6 +37,7 @@ import {
     Settings,
     Store,
     TrendingUp,
+    Trophy,
     Users,
     X,
 } from 'lucide-react';
@@ -458,6 +460,11 @@ export default function Manager() {
                                         label: 'Rapports Avancés',
                                         icon: TrendingUp,
                                     },
+                                    {
+                                        id: 'leaderboard',
+                                        label: 'Classement',
+                                        icon: Trophy,
+                                    },
                                 ].map((item) => {
                                     const Icon = item.icon;
                                     return (
@@ -776,6 +783,12 @@ export default function Manager() {
                                     {activeTab === 'advanced-reports' && (
                                         <div className="animate-in duration-300 fade-in">
                                             <AdvancedReports />
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'leaderboard' && (
+                                        <div className="animate-in duration-300 fade-in">
+                                            <LeaderboardReport />
                                         </div>
                                     )}
                                 </div>

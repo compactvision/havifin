@@ -165,6 +165,42 @@ export interface CashForecast {
     generated_at: string;
 }
 
+export interface CashierRankingRow {
+    cashier_id: number | null;
+    cashier_name: string;
+    cashier_email: string;
+    tickets_treated: number;
+    volume_by_currency: Record<string, number>;
+    operations: {
+        depot: number;
+        retrait: number;
+        change: number;
+        paiement: number;
+    };
+    total_difference_by_currency: Record<string, number>;
+}
+
+export interface ShopRankingRow {
+    shop_id: number;
+    shop_name: string;
+    tickets_treated: number;
+    volume_by_currency: Record<string, number>;
+    active_cashiers: number;
+    total_difference_by_currency: Record<string, number>;
+}
+
+export interface CashierLeaderboard {
+    start_date: string;
+    end_date: string;
+    ranking: CashierRankingRow[];
+}
+
+export interface ShopLeaderboard {
+    start_date: string;
+    end_date: string;
+    ranking: ShopRankingRow[];
+}
+
 export interface LowBalanceAlert {
     id: number;
     institution: string;
@@ -770,6 +806,16 @@ export const base44 = {
                         params: shopId ? { shop_id: shopId } : undefined,
                     })
                     .then(handleResponse<CashForecast>),
+        },
+        Leaderboard: {
+            cashiers: (params?: { shop_id?: number; start_date?: string; end_date?: string }) =>
+                axios
+                    .get<CashierLeaderboard>('/api/leaderboard/cashiers', { params })
+                    .then(handleResponse<CashierLeaderboard>),
+            shops: (params?: { start_date?: string; end_date?: string }) =>
+                axios
+                    .get<ShopLeaderboard>('/api/leaderboard/shops', { params })
+                    .then(handleResponse<ShopLeaderboard>),
         },
         BccRate: {
             fetch: (refresh = false) =>
