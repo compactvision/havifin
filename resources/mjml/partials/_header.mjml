@@ -1,0 +1,22 @@
+<!--
+    Shared header for every outgoing email. Include it with:
+        <mj-include path="./partials/_header.mjml" />
+    right after <mj-body>. Do not fork this file per-email - any brand
+    change (logo, colors) should only ever need editing here.
+-->
+<mj-section background-color="#ffffff" padding="24px 32px 16px">
+    <mj-column width="100%">
+        <mj-image
+            src="{{ asset('logo-color.png') }}"
+            alt="Havifin"
+            width="140px"
+            align="left"
+            padding="0"
+        />
+    </mj-column>
+</mj-section>
+<mj-section padding="0">
+    <mj-column>
+        <mj-divider border-width="4px" border-color="#1f61e4" padding="0" />
+    </mj-column>
+</mj-section>
