@@ -1,0 +1,13 @@
+<!--
+    Shared footer for every outgoing email. Include it with:
+        <mj-include path="./partials/_footer.mjml" />
+    right before </mj-body>.
+-->
+<mj-section background-color="#f8fafc" padding="20px 32px">
+    <mj-column>
+        <mj-text align="center" color="#94a3b8" font-size="11px" line-height="1.6" padding="0">
+            Ce message est généré automatiquement, merci de ne pas y répondre.<br />
+            © {{ date('Y') }} Havifin. Tous droits réservés.
+        </mj-text>
+    </mj-column>
+</mj-section>
