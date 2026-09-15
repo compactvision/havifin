@@ -82,12 +82,14 @@ class WhatsAppNotifier
         }
 
         try {
-            $response = Http::withToken($apiKey)->post($endpoint, [
-                'instance_id' => $instanceId,
-                'to' => '+'.$this->normalizePhone($phone),
-                'message_type' => 'text',
-                'body' => $message,
-            ]);
+            $response = Http::withToken($apiKey)
+                ->withHeaders(['Idempotency-Key' => (string) \Illuminate\Support\Str::uuid()])
+                ->post($endpoint, [
+                    'instance_id' => $instanceId,
+                    'to' => '+'.$this->normalizePhone($phone),
+                    'message_type' => 'text',
+                    'body' => $message,
+                ]);
         } catch (\Throwable $exception) {
             Log::error('WhatsApp Makira request threw an exception.', [
                 'phone' => $phone,
