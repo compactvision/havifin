@@ -42,8 +42,8 @@ return [
     |
     | Driver-based so the provider can be swapped from .env without code
     | changes. Set WHATSAPP_DRIVER=none to disable sending entirely (default,
-    | safe with no credentials configured) or "ultramsg" once an UltraMsg
-    | instance is provisioned.
+    | safe with no credentials configured), "ultramsg" once an UltraMsg
+    | instance is provisioned, or "makira" for the Makira/Whasend gateway.
     |
     */
 
@@ -53,6 +53,12 @@ return [
         'ultramsg' => [
             'instance_id' => env('WHATSAPP_ULTRAMSG_INSTANCE_ID'),
             'token' => env('WHATSAPP_ULTRAMSG_TOKEN'),
+        ],
+
+        'makira' => [
+            'endpoint' => env('WHATSAPP_MAKIRA_ENDPOINT', 'https://sender.makiradrc.com/api/v1/messages'),
+            'instance_id' => env('WHATSAPP_MAKIRA_INSTANCE_ID'),
+            'api_key' => env('WHATSAPP_MAKIRA_API_KEY'),
         ],
     ],
 

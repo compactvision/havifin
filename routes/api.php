@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\CounterController;
 use App\Http\Controllers\Api\ExchangeRateHistoryController;
 use App\Http\Controllers\Api\HelpRequestController;
 use App\Http\Controllers\Api\InstitutionController;
+use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\Api\SessionController;
@@ -128,6 +129,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/institutions/low-balance-alerts', [InstitutionController::class, 'lowBalanceAlerts']);
         Route::get('/cash/consolidated', [ConsolidatedCashController::class, 'overview']);
         Route::get('/cash/forecast', [ConsolidatedCashController::class, 'forecast']);
+        Route::get('/leaderboard/cashiers', [LeaderboardController::class, 'cashiers']);
+        Route::get('/leaderboard/shops', [LeaderboardController::class, 'shops']);
     });
     Route::middleware('role:manager')->group(function () {
         Route::post('/help-requests/{id}/resolve', [HelpRequestController::class, 'resolve']);

@@ -16,6 +16,7 @@ class WhatsAppNotifier
     {
         return match (config('services.whatsapp.driver', 'none')) {
             'ultramsg' => $this->sendViaUltraMsg($phone, $message),
+            'makira' => $this->sendViaMakira($phone, $message),
             default => $this->skip($phone),
         };
     }
@@ -57,6 +58,47 @@ class WhatsAppNotifier
 
         if ($response->failed()) {
             Log::error('WhatsApp UltraMsg send failed.', [
+                'phone' => $phone,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function sendViaMakira(string $phone, string $message): bool
+    {
+        $endpoint = config('services.whatsapp.makira.endpoint');
+        $instanceId = config('services.whatsapp.makira.instance_id');
+        $apiKey = config('services.whatsapp.makira.api_key');
+
+        if (! $instanceId || ! $apiKey) {
+            Log::warning('WhatsApp driver "makira" selected but instance_id/api_key are missing.');
+
+            return false;
+        }
+
+        try {
+            $response = Http::withToken($apiKey)->post($endpoint, [
+                'instance_id' => $instanceId,
+                'to' => '+'.$this->normalizePhone($phone),
+                'message_type' => 'text',
+                'body' => $message,
+            ]);
+        } catch (\Throwable $exception) {
+            Log::error('WhatsApp Makira request threw an exception.', [
+                'phone' => $phone,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        if ($response->failed()) {
+            Log::error('WhatsApp Makira send failed.', [
                 'phone' => $phone,
                 'status' => $response->status(),
                 'body' => $response->body(),
