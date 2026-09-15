@@ -9,7 +9,8 @@
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
-        "types": "tsc --noEmit"
+        "types": "tsc --noEmit",
+        "mail:build": "node resources/mjml/build.cjs"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -23,6 +24,7 @@
         "eslint-config-prettier": "^10.0.1",
         "eslint-plugin-react-hooks": "^7.1.1",
         "laravel-vite-plugin": "^3.1.3",
+        "mjml": "^5.4.1",
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
