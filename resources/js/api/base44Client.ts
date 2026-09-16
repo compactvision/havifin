@@ -20,6 +20,7 @@ export interface Client {
     is_registered: boolean;
     operation_type: string;
     service: string;
+    institution_id?: number;
     currency_from?: string;
     currency_to?: string;
     amount?: number;
@@ -101,6 +102,23 @@ export interface RateHistoryEntry {
     cashier?: { id: number; name: string };
 }
 
+export interface FlexPayTransaction {
+    id: number;
+    client_id: number;
+    order_number?: string | null;
+    status:
+        | 'pending'
+        | 'success'
+        | 'failed'
+        | 'refund_pending'
+        | 'refunded'
+        | 'cancelled'
+        | 'timeout';
+    message?: string | null;
+    amount: number;
+    currency: string;
+}
+
 export interface Institution {
     id: number;
     name: string;
@@ -112,6 +130,7 @@ export interface Institution {
         required_fields: string[];
         withdrawal_agent_name?: string;
         withdrawal_agent_number?: string;
+        flexpay_required?: boolean;
         custom_fields?: {
             id: string;
             label: string;
@@ -442,6 +461,21 @@ export const base44 = {
                     .get<Transaction[]>('/api/transactions', { params })
                     .then(handleResponse<Transaction[]>),
         },
+        FlexPay: {
+            charge: (clientId: number, phone?: string) =>
+                axios
+                    .post<FlexPayTransaction>(
+                        `/api/clients/${clientId}/flexpay/charge`,
+                        phone ? { phone } : {},
+                    )
+                    .then(handleResponse<FlexPayTransaction>),
+            status: (clientId: number) =>
+                axios
+                    .get<{ transaction: FlexPayTransaction | null }>(
+                        `/api/clients/${clientId}/flexpay/status`,
+                    )
+                    .then((response) => response.data.transaction),
+        },
         ExchangeRate: {
             getAll: () =>
                 axios
@@ -471,13 +505,10 @@ export const base44 = {
                     .then(handleResponse<ExchangeRate[]>),
             history: (page = 1) =>
                 axios
-                    .get<PaginatedResponse<RateHistoryEntry>>(
-                        '/api/exchange-rates/history',
-                        { params: { page } },
-                    )
-                    .then(
-                        handleResponse<PaginatedResponse<RateHistoryEntry>>,
-                    ),
+                    .get<
+                        PaginatedResponse<RateHistoryEntry>
+                    >('/api/exchange-rates/history', { params: { page } })
+                    .then(handleResponse<PaginatedResponse<RateHistoryEntry>>),
         },
         Institution: {
             list: (params?: { type?: string; is_active?: boolean }) =>
@@ -502,9 +533,9 @@ export const base44 = {
                     .then(handleResponse<void>),
             lowBalanceAlerts: () =>
                 axios
-                    .get<LowBalanceAlert[]>(
-                        '/api/institutions/low-balance-alerts',
-                    )
+                    .get<
+                        LowBalanceAlert[]
+                    >('/api/institutions/low-balance-alerts')
                     .then(handleResponse<LowBalanceAlert[]>),
         },
         Session: {
@@ -808,9 +839,15 @@ export const base44 = {
                     .then(handleResponse<CashForecast>),
         },
         Leaderboard: {
-            cashiers: (params?: { shop_id?: number; start_date?: string; end_date?: string }) =>
+            cashiers: (params?: {
+                shop_id?: number;
+                start_date?: string;
+                end_date?: string;
+            }) =>
                 axios
-                    .get<CashierLeaderboard>('/api/leaderboard/cashiers', { params })
+                    .get<CashierLeaderboard>('/api/leaderboard/cashiers', {
+                        params,
+                    })
                     .then(handleResponse<CashierLeaderboard>),
             shops: (params?: { start_date?: string; end_date?: string }) =>
                 axios

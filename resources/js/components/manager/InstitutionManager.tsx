@@ -1,8 +1,8 @@
 import { base44, Institution } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { ImageCropperDialog } from '@/components/ui/ImageCropperDialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ImageCropperDialog } from '@/components/ui/ImageCropperDialog';
 import {
     Select,
     SelectContent,
@@ -29,6 +29,7 @@ import {
     Smartphone,
     Trash2,
     X,
+    Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -164,6 +165,26 @@ export default function InstitutionManager() {
             return axios.post(`/api/institutions/${institution.id}`, {
                 _method: 'PUT',
                 settings: { ...currentSettings, required_fields: newFields },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['institutions'] });
+            toast.success('Configuration mise à jour');
+        },
+    });
+
+    const toggleFlexPayRequiredMutation = useMutation({
+        mutationFn: (institution: Institution) => {
+            const currentSettings = institution.settings || {
+                required_fields: [],
+            };
+
+            return axios.post(`/api/institutions/${institution.id}`, {
+                _method: 'PUT',
+                settings: {
+                    ...currentSettings,
+                    flexpay_required: !currentSettings.flexpay_required,
+                },
             });
         },
         onSuccess: () => {
@@ -468,8 +489,8 @@ export default function InstitutionManager() {
                                     className="h-12 rounded-xl border-white/10 bg-white/5 font-black text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                                 <p className="ml-1 text-[10px] text-white/40">
-                                    Une alerte "seuil critique" apparaît dans
-                                    le journal d'activité dès que le flottant
+                                    Une alerte "seuil critique" apparaît dans le
+                                    journal d'activité dès que le flottant
                                     théorique de ce partenaire descend
                                     en-dessous de ce montant.
                                 </p>
@@ -969,6 +990,59 @@ export default function InstitutionManager() {
                                         ))}
                                     </div>
                                 </div>
+
+                                {institutions.find((i) => i.id === configId)
+                                    ?.type === 'mobile_money' && (
+                                    <div className="mt-8 space-y-3 border-t border-slate-100 pt-6">
+                                        <h4 className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
+                                            <Zap className="h-3 w-3" />
+                                            Prélèvement automatique FlexPay
+                                        </h4>
+                                        {(() => {
+                                            const inst = institutions.find(
+                                                (i) => i.id === configId,
+                                            );
+                                            const isRequired = Boolean(
+                                                inst?.settings
+                                                    ?.flexpay_required,
+                                            );
+
+                                            return (
+                                                <button
+                                                    onClick={() =>
+                                                        toggleFlexPayRequiredMutation.mutate(
+                                                            inst!,
+                                                        )
+                                                    }
+                                                    className={cn(
+                                                        'flex w-full items-center justify-between rounded-2xl border-2 p-5 transition-all',
+                                                        isRequired
+                                                            ? 'border-emerald-100 bg-emerald-50/50 text-emerald-900 shadow-sm'
+                                                            : 'border-slate-100 bg-slate-50/50 text-slate-500 hover:border-slate-200',
+                                                    )}
+                                                >
+                                                    <span className="text-left text-sm font-black tracking-tight">
+                                                        Obligatoire pour les
+                                                        dépôts
+                                                        <span className="mt-0.5 block text-[10px] font-medium tracking-normal text-slate-400 normal-case">
+                                                            Le caissier doit
+                                                            utiliser le
+                                                            prélèvement
+                                                            automatique — la
+                                                            saisie manuelle est
+                                                            désactivée.
+                                                        </span>
+                                                    </span>
+                                                    {isRequired ? (
+                                                        <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-emerald-600" />
+                                                    ) : (
+                                                        <div className="h-6 w-6 flex-shrink-0 rounded-full border-2 border-slate-200 bg-white" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
 
                                 <div className="mt-8 space-y-4 border-t border-slate-100 pt-6">
                                     <h4 className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">

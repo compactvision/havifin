@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CashSession;
 use App\Models\Client;
 use App\Models\ExchangeRate;
+use App\Models\Institution;
 use App\Models\Session;
 use App\Models\Transaction;
 use App\Services\CashService;
@@ -151,6 +152,13 @@ class TransactionController extends Controller
 
                 $operationType = $client->operation_type;
                 abort_unless(in_array($operationType, ['depot', 'retrait', 'change', 'paiement'], true), 422);
+
+                if ($operationType === 'depot' && $client->institution_id) {
+                    $institution = Institution::find($client->institution_id);
+                    if ($institution?->type === 'mobile_money' && ($institution->settings['flexpay_required'] ?? false)) {
+                        abort(409, 'Ce partenaire exige un prélèvement automatique via FlexPay pour les dépôts.');
+                    }
+                }
                 $ticketAmount = $operationType === 'change'
                     ? $client->amount_from
                     : ($client->amount ?? $client->amount_from);

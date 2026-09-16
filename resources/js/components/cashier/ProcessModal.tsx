@@ -1,4 +1,10 @@
-import { base44, Client, ExchangeRate } from '@/api/base44Client';
+import {
+    base44,
+    Client,
+    ExchangeRate,
+    FlexPayTransaction,
+    Institution,
+} from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -28,9 +34,12 @@ import {
     CheckCircle,
     CreditCard,
     Loader2,
+    Smartphone,
     Split,
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 const operationConfig = {
@@ -113,6 +122,66 @@ export default function ProcessModal({
             base44.entities.ExchangeRate.filter({ is_active: true } as any),
     });
 
+    const { data: institutions = [] } = useQuery<Institution[]>({
+        queryKey: ['institutions'],
+        queryFn: () => base44.entities.Institution.list(),
+    });
+    const institution = institutions.find(
+        (inst) => inst.id === client?.institution_id,
+    );
+    const isMobileMoneyDepot =
+        client?.operation_type === 'depot' &&
+        institution?.type === 'mobile_money';
+    const flexPayRequired = Boolean(
+        isMobileMoneyDepot && institution?.settings?.flexpay_required,
+    );
+
+    const { data: flexPayStatus } = useQuery<FlexPayTransaction | null>({
+        queryKey: ['flexpay-status', client?.id],
+        queryFn: () => base44.entities.FlexPay.status(client!.id),
+        enabled: Boolean(isMobileMoneyDepot && client),
+        refetchInterval: (query) =>
+            query.state.data?.status === 'pending' ? 3000 : false,
+    });
+    const handledFlexPayStatusId = useRef<string | null>(null);
+
+    const chargeMutation = useMutation({
+        mutationFn: () => base44.entities.FlexPay.charge(client!.id),
+        onSuccess: (data) => {
+            queryClient.setQueryData(['flexpay-status', client?.id], data);
+        },
+        onError: (error: any) => {
+            toast.error(
+                error.response?.data?.message ||
+                    'Impossible de lancer le prélèvement automatique',
+            );
+        },
+    });
+
+    useEffect(() => {
+        if (!flexPayStatus) return;
+        const statusKey = `${flexPayStatus.id}:${flexPayStatus.status}`;
+        if (
+            handledFlexPayStatusId.current === statusKey ||
+            flexPayStatus.status === 'pending'
+        ) {
+            return;
+        }
+        handledFlexPayStatusId.current = statusKey;
+
+        if (flexPayStatus.status === 'success') {
+            toast.success('Dépôt encaissé automatiquement avec succès');
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            onClose();
+        } else if (flexPayStatus.status !== 'refund_pending') {
+            toast.error(
+                flexPayStatus.message ||
+                    'Le prélèvement automatique a échoué. Vous pouvez réessayer.',
+            );
+        }
+    }, [flexPayStatus, onClose, queryClient]);
+
     useEffect(() => {
         if (client) {
             setFormData((prev) => ({
@@ -127,6 +196,7 @@ export default function ProcessModal({
             setUseSplitSettlement(false);
             setPrimaryCashAmount(requestedAmount(client));
             setSecondaryCurrency('');
+            handledFlexPayStatusId.current = null;
         }
     }, [client]);
 
@@ -370,320 +440,381 @@ export default function ProcessModal({
                         )}
                     </div>
 
-                    <div className="space-y-4">
-                        {/* Common Input: Main Amount */}
-                        <div>
-                            <Label>
-                                {client.operation_type === 'retrait'
-                                    ? 'Montant à retirer'
-                                    : "Montant de l'opération"}
-                            </Label>
-                            <div className="mt-1 flex items-center gap-2">
-                                <Input
-                                    type="number"
-                                    min="0.01"
-                                    step="0.01"
-                                    required
-                                    value={formData.amount_from}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            amount_from: e.target.value,
-                                        })
-                                    }
-                                    className="text-lg font-bold"
-                                />
-                                {['depot', 'transfert', 'retrait'].includes(
-                                    client.operation_type,
-                                ) && (
-                                    <Select
-                                        value={formData.currency_from}
-                                        onValueChange={(v) =>
+                    {isMobileMoneyDepot && (
+                        <div className="space-y-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+                            <div className="flex items-center gap-2 font-bold text-emerald-700">
+                                <Zap className="h-4 w-4" />
+                                Prélèvement automatique FlexPay
+                            </div>
+                            {flexPayStatus?.status === 'pending' ? (
+                                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    En attente de confirmation du client sur son
+                                    téléphone...
+                                </div>
+                            ) : (
+                                <>
+                                    {flexPayStatus &&
+                                        flexPayStatus.status !== 'success' &&
+                                        flexPayStatus.status !==
+                                            'refund_pending' && (
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-red-600">
+                                                <XCircle className="h-4 w-4" />
+                                                {flexPayStatus.message ||
+                                                    'Le prélèvement automatique a échoué.'}
+                                            </div>
+                                        )}
+                                    <Button
+                                        type="button"
+                                        onClick={() => chargeMutation.mutate()}
+                                        disabled={chargeMutation.isPending}
+                                        className="h-12 w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+                                    >
+                                        {chargeMutation.isPending ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Smartphone className="mr-2 h-4 w-4" />
+                                        )}
+                                        Prélever automatiquement
+                                    </Button>
+                                </>
+                            )}
+                            {flexPayRequired && (
+                                <p className="text-xs font-medium text-emerald-700/70">
+                                    Ce partenaire exige le prélèvement
+                                    automatique pour les dépôts — la saisie
+                                    manuelle est désactivée.
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {!flexPayRequired && (
+                        <div className="space-y-4">
+                            {/* Common Input: Main Amount */}
+                            <div>
+                                <Label>
+                                    {client.operation_type === 'retrait'
+                                        ? 'Montant à retirer'
+                                        : "Montant de l'opération"}
+                                </Label>
+                                <div className="mt-1 flex items-center gap-2">
+                                    <Input
+                                        type="number"
+                                        min="0.01"
+                                        step="0.01"
+                                        required
+                                        value={formData.amount_from}
+                                        onChange={(e) =>
                                             setFormData({
                                                 ...formData,
-                                                currency_from: v,
+                                                amount_from: e.target.value,
                                             })
                                         }
-                                    >
-                                        <SelectTrigger className="w-24">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="USD">
-                                                USD
-                                            </SelectItem>
-                                            <SelectItem value="CDF">
-                                                CDF
-                                            </SelectItem>
-                                            <SelectItem value="EUR">
-                                                EUR
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                )}
+                                        className="text-lg font-bold"
+                                    />
+                                    {['depot', 'transfert', 'retrait'].includes(
+                                        client.operation_type,
+                                    ) && (
+                                        <Select
+                                            value={formData.currency_from}
+                                            onValueChange={(v) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    currency_from: v,
+                                                })
+                                            }
+                                        >
+                                            <SelectTrigger className="w-24">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="USD">
+                                                    USD
+                                                </SelectItem>
+                                                <SelectItem value="CDF">
+                                                    CDF
+                                                </SelectItem>
+                                                <SelectItem value="EUR">
+                                                    EUR
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                </div>
                             </div>
-                        </div>
 
-                        {['depot', 'retrait'].includes(
-                            client.operation_type,
-                        ) && (
-                            <div className="space-y-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setUseSplitSettlement(
-                                            !useSplitSettlement,
-                                        );
-                                        setPrimaryCashAmount(
-                                            requestedAmount(client),
-                                        );
-                                        setSecondaryCurrency('');
-                                    }}
-                                    className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left font-bold transition-colors ${
-                                        useSplitSettlement
-                                            ? 'border-indigo-500 bg-indigo-600 text-white'
-                                            : 'border-indigo-100 bg-white text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-900'
-                                    }`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Split className="h-5 w-5" />
-                                        Règlement en deux devises
-                                    </span>
-                                    <span className="text-xs">
-                                        {useSplitSettlement
-                                            ? 'Activé'
-                                            : 'Configurer'}
-                                    </span>
-                                </button>
+                            {['depot', 'retrait'].includes(
+                                client.operation_type,
+                            ) && (
+                                <div className="space-y-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setUseSplitSettlement(
+                                                !useSplitSettlement,
+                                            );
+                                            setPrimaryCashAmount(
+                                                requestedAmount(client),
+                                            );
+                                            setSecondaryCurrency('');
+                                        }}
+                                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left font-bold transition-colors ${
+                                            useSplitSettlement
+                                                ? 'border-indigo-500 bg-indigo-600 text-white'
+                                                : 'border-indigo-100 bg-white text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-900'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Split className="h-5 w-5" />
+                                            Règlement en deux devises
+                                        </span>
+                                        <span className="text-xs">
+                                            {useSplitSettlement
+                                                ? 'Activé'
+                                                : 'Configurer'}
+                                        </span>
+                                    </button>
 
-                                {useSplitSettlement && (
-                                    <div className="space-y-4">
+                                    {useSplitSettlement && (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <Label>
+                                                    Montant{' '}
+                                                    {client.operation_type ===
+                                                    'retrait'
+                                                        ? 'remis'
+                                                        : 'reçu'}{' '}
+                                                    en {formData.currency_from}
+                                                </Label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    max={
+                                                        requestedSettlementAmount
+                                                    }
+                                                    step="0.01"
+                                                    value={primaryCashAmount}
+                                                    onChange={(event) =>
+                                                        setPrimaryCashAmount(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    className="mt-1 bg-white"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <Label>
+                                                    Deuxième devise pour les{' '}
+                                                    {remainingSettlementAmount.toLocaleString()}{' '}
+                                                    {formData.currency_from}{' '}
+                                                    restants
+                                                </Label>
+                                                <Select
+                                                    value={secondaryCurrency}
+                                                    onValueChange={
+                                                        setSecondaryCurrency
+                                                    }
+                                                >
+                                                    <SelectTrigger className="mt-1 bg-white">
+                                                        <SelectValue placeholder="Choisir la deuxième devise" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {settlementRates.map(
+                                                            (rate) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        rate.id
+                                                                    }
+                                                                    value={
+                                                                        rate.currency_to
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        rate.currency_to
+                                                                    }{' '}
+                                                                    — 1{' '}
+                                                                    {
+                                                                        rate.currency_from
+                                                                    }{' '}
+                                                                    ={' '}
+                                                                    {rate.rate}{' '}
+                                                                    {
+                                                                        rate.currency_to
+                                                                    }
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            {selectedSettlementRate ? (
+                                                <div className="rounded-xl bg-white p-4">
+                                                    <div className="text-xs font-bold tracking-wider text-slate-500 uppercase">
+                                                        Deuxième montant{' '}
+                                                        {client.operation_type ===
+                                                        'retrait'
+                                                            ? 'à remettre'
+                                                            : 'à recevoir'}
+                                                    </div>
+                                                    <div className="mt-1 text-2xl font-bold text-indigo-700">
+                                                        {secondarySettlementAmount.toLocaleString(
+                                                            undefined,
+                                                            {
+                                                                maximumFractionDigits: 2,
+                                                            },
+                                                        )}{' '}
+                                                        {secondaryCurrency}
+                                                    </div>
+                                                    <div className="mt-1 text-xs text-slate-500">
+                                                        Calculé avec le taux
+                                                        configuré par le
+                                                        manager.
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm font-semibold text-amber-700">
+                                                    Aucun taux direct disponible
+                                                    depuis{' '}
+                                                    {formData.currency_from}.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Depot / Transfert Specific: Amount Given & Change */}
+                            {['depot', 'transfert'].includes(
+                                client.operation_type,
+                            ) &&
+                                !(
+                                    useSplitSettlement &&
+                                    client.operation_type === 'depot'
+                                ) && (
+                                    <>
                                         <div>
                                             <Label>
-                                                Montant{' '}
-                                                {client.operation_type ===
-                                                'retrait'
-                                                    ? 'remis'
-                                                    : 'reçu'}{' '}
-                                                en {formData.currency_from}
+                                                Montant reçu du client
                                             </Label>
                                             <Input
                                                 type="number"
-                                                min="0"
-                                                max={requestedSettlementAmount}
-                                                step="0.01"
-                                                value={primaryCashAmount}
-                                                onChange={(event) =>
-                                                    setPrimaryCashAmount(
-                                                        event.target.value,
-                                                    )
+                                                value={formData.amount_given}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        amount_given:
+                                                            e.target.value,
+                                                    })
                                                 }
-                                                className="mt-1 bg-white"
+                                                className="mt-1"
+                                                placeholder="Combien le client a donné ?"
                                             />
                                         </div>
-
-                                        <div>
-                                            <Label>
-                                                Deuxième devise pour les{' '}
-                                                {remainingSettlementAmount.toLocaleString()}{' '}
-                                                {formData.currency_from}{' '}
-                                                restants
-                                            </Label>
-                                            <Select
-                                                value={secondaryCurrency}
-                                                onValueChange={
-                                                    setSecondaryCurrency
-                                                }
-                                            >
-                                                <SelectTrigger className="mt-1 bg-white">
-                                                    <SelectValue placeholder="Choisir la deuxième devise" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {settlementRates.map(
-                                                        (rate) => (
-                                                            <SelectItem
-                                                                key={rate.id}
-                                                                value={
-                                                                    rate.currency_to
-                                                                }
-                                                            >
-                                                                {
-                                                                    rate.currency_to
-                                                                }{' '}
-                                                                — 1{' '}
-                                                                {
-                                                                    rate.currency_from
-                                                                }{' '}
-                                                                = {rate.rate}{' '}
-                                                                {
-                                                                    rate.currency_to
-                                                                }
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        {selectedSettlementRate ? (
-                                            <div className="rounded-xl bg-white p-4">
-                                                <div className="text-xs font-bold tracking-wider text-slate-500 uppercase">
-                                                    Deuxième montant{' '}
-                                                    {client.operation_type ===
-                                                    'retrait'
-                                                        ? 'à remettre'
-                                                        : 'à recevoir'}
+                                        {calculatedAmount > 0 && (
+                                            <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+                                                <div className="mb-1 flex items-center gap-2 text-yellow-700">
+                                                    <Calculator className="h-4 w-4" />
+                                                    <span className="font-bold">
+                                                        A rendre au client
+                                                    </span>
                                                 </div>
-                                                <div className="mt-1 text-2xl font-bold text-indigo-700">
-                                                    {secondarySettlementAmount.toLocaleString(
-                                                        undefined,
-                                                        {
-                                                            maximumFractionDigits: 2,
-                                                        },
-                                                    )}{' '}
-                                                    {secondaryCurrency}
-                                                </div>
-                                                <div className="mt-1 text-xs text-slate-500">
-                                                    Calculé avec le taux
-                                                    configuré par le manager.
+                                                <div className="text-2xl font-bold text-yellow-600">
+                                                    {calculatedAmount.toLocaleString()}{' '}
+                                                    {formData.currency_from}
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <p className="text-sm font-semibold text-amber-700">
-                                                Aucun taux direct disponible
-                                                depuis {formData.currency_from}.
-                                            </p>
                                         )}
-                                    </div>
+                                    </>
                                 )}
-                            </div>
-                        )}
 
-                        {/* Depot / Transfert Specific: Amount Given & Change */}
-                        {['depot', 'transfert'].includes(
-                            client.operation_type,
-                        ) &&
-                            !(
-                                useSplitSettlement &&
-                                client.operation_type === 'depot'
-                            ) && (
-                                <>
+                            {/* Change Specific */}
+                            {client.operation_type === 'change' && (
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Label>Montant reçu du client</Label>
+                                        <Label>Devise Source</Label>
+                                        <Select
+                                            value={formData.currency_from}
+                                            onValueChange={(v) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    currency_from: v,
+                                                })
+                                            }
+                                        >
+                                            <SelectTrigger className="mt-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="USD">
+                                                    USD
+                                                </SelectItem>
+                                                <SelectItem value="CDF">
+                                                    CDF
+                                                </SelectItem>
+                                                <SelectItem value="EUR">
+                                                    EUR
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label>Devise Cible</Label>
+                                        <Select
+                                            value={formData.currency_to}
+                                            onValueChange={(v) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    currency_to: v,
+                                                })
+                                            }
+                                        >
+                                            <SelectTrigger className="mt-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="USD">
+                                                    USD
+                                                </SelectItem>
+                                                <SelectItem value="CDF">
+                                                    CDF
+                                                </SelectItem>
+                                                <SelectItem value="EUR">
+                                                    EUR
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Label>Taux de change</Label>
                                         <Input
                                             type="number"
-                                            value={formData.amount_given}
+                                            value={formData.exchange_rate}
                                             onChange={(e) =>
                                                 setFormData({
                                                     ...formData,
-                                                    amount_given:
+                                                    exchange_rate:
                                                         e.target.value,
                                                 })
                                             }
                                             className="mt-1"
-                                            placeholder="Combien le client a donné ?"
                                         />
                                     </div>
-                                    {calculatedAmount > 0 && (
-                                        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
-                                            <div className="mb-1 flex items-center gap-2 text-yellow-700">
-                                                <Calculator className="h-4 w-4" />
-                                                <span className="font-bold">
-                                                    A rendre au client
-                                                </span>
-                                            </div>
-                                            <div className="text-2xl font-bold text-yellow-600">
-                                                {calculatedAmount.toLocaleString()}{' '}
-                                                {formData.currency_from}
-                                            </div>
+                                    <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                                        <div className="mb-1 font-bold text-amber-700">
+                                            Montant à remettre
                                         </div>
-                                    )}
-                                </>
+                                        <div className="text-3xl font-bold text-amber-600">
+                                            {calculatedAmount.toLocaleString()}{' '}
+                                            {formData.currency_to}
+                                        </div>
+                                    </div>
+                                </div>
                             )}
-
-                        {/* Change Specific */}
-                        {client.operation_type === 'change' && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label>Devise Source</Label>
-                                    <Select
-                                        value={formData.currency_from}
-                                        onValueChange={(v) =>
-                                            setFormData({
-                                                ...formData,
-                                                currency_from: v,
-                                            })
-                                        }
-                                    >
-                                        <SelectTrigger className="mt-1">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="USD">
-                                                USD
-                                            </SelectItem>
-                                            <SelectItem value="CDF">
-                                                CDF
-                                            </SelectItem>
-                                            <SelectItem value="EUR">
-                                                EUR
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Devise Cible</Label>
-                                    <Select
-                                        value={formData.currency_to}
-                                        onValueChange={(v) =>
-                                            setFormData({
-                                                ...formData,
-                                                currency_to: v,
-                                            })
-                                        }
-                                    >
-                                        <SelectTrigger className="mt-1">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="USD">
-                                                USD
-                                            </SelectItem>
-                                            <SelectItem value="CDF">
-                                                CDF
-                                            </SelectItem>
-                                            <SelectItem value="EUR">
-                                                EUR
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="col-span-2">
-                                    <Label>Taux de change</Label>
-                                    <Input
-                                        type="number"
-                                        value={formData.exchange_rate}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                exchange_rate: e.target.value,
-                                            })
-                                        }
-                                        className="mt-1"
-                                    />
-                                </div>
-                                <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                                    <div className="mb-1 font-bold text-amber-700">
-                                        Montant à remettre
-                                    </div>
-                                    <div className="text-3xl font-bold text-amber-600">
-                                        {calculatedAmount.toLocaleString()}{' '}
-                                        {formData.currency_to}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     <div>
                         <Label>Notes (optionnel)</Label>
@@ -708,22 +839,24 @@ export default function ProcessModal({
                         >
                             Annuler
                         </Button>
-                        <Button
-                            onClick={() => completeMutation.mutate()}
-                            disabled={
-                                completeMutation.isPending ||
-                                !formData.amount_from ||
-                                !splitSettlementIsValid
-                            }
-                            className={`flex-1 text-white ${client.operation_type === 'depot' || client.operation_type === 'transfert' ? 'bg-green-600 hover:bg-green-700' : client.operation_type === 'retrait' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-500 hover:bg-amber-600'}`}
-                        >
-                            {completeMutation.isPending ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                            )}
-                            Valider {config.label}
-                        </Button>
+                        {!flexPayRequired && (
+                            <Button
+                                onClick={() => completeMutation.mutate()}
+                                disabled={
+                                    completeMutation.isPending ||
+                                    !formData.amount_from ||
+                                    !splitSettlementIsValid
+                                }
+                                className={`flex-1 text-white ${client.operation_type === 'depot' || client.operation_type === 'transfert' ? 'bg-green-600 hover:bg-green-700' : client.operation_type === 'retrait' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-500 hover:bg-amber-600'}`}
+                            >
+                                {completeMutation.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                )}
+                                Valider {config.label}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </DialogContent>

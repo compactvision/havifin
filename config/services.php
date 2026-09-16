@@ -62,4 +62,24 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | FlexPay Mobile Money Collections
+    |--------------------------------------------------------------------------
+    |
+    | Credentials for FlexPay's payment API, used to push an automatic mobile
+    | money debit ("prélèvement automatique") on deposit tickets. Left blank
+    | by default (safe: FlexPayService::isConfigured() gates the feature).
+    |
+    */
+
+    'flexpay' => [
+        'base_url' => env('FLEXPAY_BASE_URL'),
+        'merchant' => env('FLEXPAY_MERCHANT'),
+        'token' => env('FLEXPAY_TOKEN'),
+        'webhook_token' => env('FLEXPAY_WEBHOOK_TOKEN'),
+        'poll_interval_seconds' => (int) env('FLEXPAY_POLL_INTERVAL_SECONDS', 5),
+        'poll_max_attempts' => (int) env('FLEXPAY_POLL_MAX_ATTEMPTS', 36),
+    ],
+
 ];

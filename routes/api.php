@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\CashSessionController;
 use App\Http\Controllers\Api\ClientVerificationController;
 use App\Http\Controllers\Api\CounterController;
 use App\Http\Controllers\Api\ExchangeRateHistoryController;
+use App\Http\Controllers\Api\FlexPayController;
+use App\Http\Controllers\Api\FlexPayWebhookController;
 use App\Http\Controllers\Api\HelpRequestController;
 use App\Http\Controllers\Api\InstitutionController;
 use App\Http\Controllers\Api\LeaderboardController;
@@ -28,6 +30,11 @@ use Illuminate\Support\Facades\Route;
 // Authentication & Session-Based API Routes
 Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum', 'active']);
 Route::get('/auth/me', [AuthController::class, 'me'])->middleware(['auth:sanctum', 'active']);
+
+// Public webhook - FlexPay calls this back with the payment result. Not
+// behind auth:sanctum since FlexPay isn't a logged-in user; authenticated
+// instead via the token query param baked into the callback URL we give it.
+Route::post('/flexpay/callback', [FlexPayWebhookController::class, 'handle'])->name('api.flexpay.callback');
 
 // User administration is role-aware inside the controller:
 // Super Admins manage managers, Managers manage operational users.
@@ -82,6 +89,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::apiResource('clients', ClientController::class)->only(['index', 'show', 'update']);
         Route::apiResource('transactions', TransactionController::class)->only(['index']);
         Route::get('/transactions/{transaction}/receipt', [ReceiptController::class, 'show']);
+        Route::post('/clients/{client}/flexpay/charge', [FlexPayController::class, 'charge']);
+        Route::get('/clients/{client}/flexpay/status', [FlexPayController::class, 'status']);
     });
     Route::post('/transactions', [TransactionController::class, 'store'])
         ->middleware('role:cashier');
