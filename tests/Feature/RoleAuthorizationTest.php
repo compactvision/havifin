@@ -202,10 +202,12 @@ class RoleAuthorizationTest extends TestCase
         $this->getJson('/api/cash/registers')->assertForbidden();
         $this->getJson('/api/users')->assertForbidden();
         $this->getJson('/api/exchange-rates')->assertOk();
+        // Kiosk may link phones (see ClientLinkAccountTest); invalid ids are
+        // rejected by validation rather than role middleware.
         $this->postJson('/api/clients/add-phone', [
             'client_id' => 1,
             'phone_number' => '0990000000',
-        ])->assertForbidden();
+        ])->assertUnprocessable();
         $this->get('/display')->assertRedirect('/clientform');
     }
 

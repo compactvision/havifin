@@ -58,6 +58,7 @@ export default function ClientForm() {
         null,
     );
     const [isLinkVerifying, setIsLinkVerifying] = useState(false);
+    const [isLinkingAccount, setIsLinkingAccount] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Client[]>([]);
 
@@ -241,6 +242,8 @@ export default function ClientForm() {
     };
 
     const handleLinkAccount = async (client: Client) => {
+        if (isLinkingAccount) return;
+        setIsLinkingAccount(true);
         try {
             const response = (await base44.entities.Client.addPhone(
                 client.id,
@@ -254,14 +257,20 @@ export default function ClientForm() {
                 });
                 setShowLinkAccount(false);
                 setShowRegistration(false);
+                setLinkPhone('');
+                setLinkFoundClient(null);
                 setStep(2);
+                toast.success('Compte lié. Vous pouvez continuer.');
             }
         } catch (error: any) {
             console.error('Failed to link account', error);
             toast.error(
                 error.response?.data?.error ||
+                    error.response?.data?.message ||
                     "Impossible de lier ce numéro à ce compte.",
             );
+        } finally {
+            setIsLinkingAccount(false);
         }
     };
 
@@ -593,13 +602,17 @@ export default function ClientForm() {
                                                 </div>
 
                                                 {linkFoundClient && (
-                                                    <div
+                                                    <button
+                                                        type="button"
                                                         onClick={() =>
                                                             handleLinkAccount(
                                                                 linkFoundClient,
                                                             )
                                                         }
-                                                        className="flex cursor-pointer items-center justify-between rounded-xl border border-cyan-200 bg-cyan-50 p-4 transition-colors hover:border-cyan-300"
+                                                        disabled={
+                                                            isLinkingAccount
+                                                        }
+                                                        className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-cyan-200 bg-cyan-50 p-4 text-left transition-colors hover:border-cyan-300 disabled:cursor-wait disabled:opacity-70"
                                                     >
                                                         <div>
                                                             <p className="font-bold text-slate-900">
@@ -611,13 +624,17 @@ export default function ClientForm() {
                                                                 }
                                                             </p>
                                                             <p className="text-xs text-slate-500">
-                                                                C'est bien
-                                                                vous ? Touchez
-                                                                pour confirmer
+                                                                {isLinkingAccount
+                                                                    ? 'Liaison en cours...'
+                                                                    : 'C\'est bien vous ? Touchez pour confirmer'}
                                                             </p>
                                                         </div>
-                                                        <ArrowRight className="h-4 w-4 text-brand-cyan" />
-                                                    </div>
+                                                        {isLinkingAccount ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin text-brand-cyan" />
+                                                        ) : (
+                                                            <ArrowRight className="h-4 w-4 text-brand-cyan" />
+                                                        )}
+                                                    </button>
                                                 )}
                                             </>
                                         ) : (

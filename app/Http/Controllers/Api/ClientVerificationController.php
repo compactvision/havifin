@@ -183,7 +183,22 @@ class ClientVerificationController extends Controller
         $creator = $request->user();
         $client = Client::findOrFail($request->client_id);
         TenantAccess::authorizeShop($creator, $client->shop_id);
+        abort_unless($client->is_registered, 409, 'Ce compte n’est pas un client enregistré.');
         $phoneNumber = preg_replace('/[\s().-]+/', '', (string) $request->phone_number);
+
+        // A phone already used as another registered client's identity cannot
+        // be attached here — that would merge two real accounts.
+        $takenByOther = Client::where('phone', $phoneNumber)
+            ->where('is_registered', true)
+            ->whereKeyNot($client->id)
+            ->whereIn('shop_id', TenantAccess::shopIds($creator))
+            ->exists()
+            || ClientPhone::where('phone_number', $phoneNumber)
+                ->where('client_id', '!=', $client->id)
+                ->whereIn('shop_id', TenantAccess::shopIds($creator))
+                ->exists();
+
+        abort_if($takenByOther, 409, 'Ce numéro est déjà associé à un autre compte.');
 
         $existingPhone = ClientPhone::where('client_id', $client->id)
             ->where('phone_number', $phoneNumber)
