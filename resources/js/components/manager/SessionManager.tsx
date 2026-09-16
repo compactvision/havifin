@@ -88,6 +88,28 @@ export default function SessionManager() {
     const sessions = sessionData?.data || [];
     const pagination = sessionData;
 
+    // Today's row for the selected shop — independent of history pagination,
+    // so a closed-today day still drives the hero (reopen) instead of a
+    // doomed create that would 409 on the unique (shop, date).
+    const today = moment().format('YYYY-MM-DD');
+    const { data: todaySessionData } = useQuery({
+        queryKey: ['sessions', 'today-shop', selectedShopId, today],
+        queryFn: () =>
+            base44.entities.Session.list({
+                shop_id: selectedShopId?.toString(),
+                date: today,
+                per_page: 1,
+            }),
+        enabled: !!selectedShopId,
+    });
+    const todaySession = todaySessionData?.data?.[0] ?? null;
+    const activeSession =
+        todaySession?.status === 'open'
+            ? todaySession
+            : sessions.find((s) => s.status === 'open') ?? null;
+    const closedTodaySession =
+        todaySession?.status === 'closed' ? todaySession : null;
+
     // Fetch Report for Modal
     const { data: sessionReport, isLoading: loadingReport } =
         useQuery<SessionReport>({
@@ -98,8 +120,6 @@ export default function SessionManager() {
                 ) as Promise<SessionReport>,
             enabled: !!selectedSessionId,
         });
-
-    const activeSession = sessions.find((s) => s.status === 'open');
 
     // Opening a day is also when the manager confirms the rates for it.
     // Read the operative table (ExchangeRate) rather than the history one:
@@ -138,11 +158,15 @@ export default function SessionManager() {
                 } as any);
             }
 
-            await base44.entities.Session.create({
-                session_date: moment().format('YYYY-MM-DD'),
-                shop_id: selectedShopId,
-                notes,
-            });
+            if (closedTodaySession) {
+                await base44.entities.Session.reopen(closedTodaySession.id);
+            } else {
+                await base44.entities.Session.create({
+                    session_date: moment().format('YYYY-MM-DD'),
+                    shop_id: selectedShopId,
+                    notes,
+                });
+            }
 
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
             queryClient.invalidateQueries({ queryKey: ['exchange-rates'] });
@@ -151,9 +175,13 @@ export default function SessionManager() {
             setRateDrafts({});
             setIsEditingRates(false);
             toast.success(
-                editedRates.length > 0
-                    ? `Session ouverte avec ${editedRates.length} taux mis à jour. Les caissiers peuvent ouvrir leur caisse.`
-                    : 'Session journalière ouverte. Les caissiers peuvent maintenant ouvrir leur caisse.',
+                closedTodaySession
+                    ? editedRates.length > 0
+                        ? `Journée réouverte avec ${editedRates.length} taux mis à jour.`
+                        : 'Journée réouverte. Les caissiers peuvent ouvrir leur caisse.'
+                    : editedRates.length > 0
+                      ? `Session ouverte avec ${editedRates.length} taux mis à jour. Les caissiers peuvent ouvrir leur caisse.`
+                      : 'Session journalière ouverte. Les caissiers peuvent maintenant ouvrir leur caisse.',
             );
         } catch (error: any) {
             const message =
@@ -373,19 +401,38 @@ export default function SessionManager() {
                                     </div>
                                     <div>
                                         <h4 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">
-                                            Prêt pour l'ouverture ?
+                                            {closedTodaySession
+                                                ? 'Journée clôturée'
+                                                : "Prêt pour l'ouverture ?"}
                                         </h4>
                                         <p className="max-w-lg leading-relaxed font-medium text-slate-500">
-                                            Aucune session n'est ouverte pour{' '}
-                                            <span className="font-semibold text-indigo-600">
-                                                {currentShop?.name}
-                                            </span>{' '}
-                                            aujourd'hui.
+                                            {closedTodaySession ? (
+                                                <>
+                                                    La journée de{' '}
+                                                    <span className="font-semibold text-indigo-600">
+                                                        {currentShop?.name}
+                                                    </span>{' '}
+                                                    est déjà clôturée
+                                                    aujourd'hui. Réouvrez-la
+                                                    pour reprendre les
+                                                    opérations.
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Aucune session n'est ouverte
+                                                    pour{' '}
+                                                    <span className="font-semibold text-indigo-600">
+                                                        {currentShop?.name}
+                                                    </span>{' '}
+                                                    aujourd'hui.
+                                                </>
+                                            )}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* What opening actually does, in order. */}
+                                {!closedTodaySession && (
                                 <div className="max-w-xl rounded-3xl border border-slate-100 bg-slate-50/70 p-6">
                                     <p className="mb-4 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
                                         Ce que fait l'ouverture
@@ -408,6 +455,7 @@ export default function SessionManager() {
                                         ))}
                                     </ol>
                                 </div>
+                                )}
 
                                 {/* Confirm or adjust the day's rates */}
                                 <div className="max-w-xl rounded-3xl border border-slate-200 bg-white p-6">
@@ -498,12 +546,15 @@ export default function SessionManager() {
                                             <p className="pt-1 text-xs text-slate-400">
                                                 {isEditingRates
                                                     ? 'Les taux modifiés seront enregistrés au moment de l’ouverture.'
-                                                    : 'La session s’ouvrira avec ces taux.'}
+                                                    : closedTodaySession
+                                                      ? 'La réouverture s’appliquera avec ces taux.'
+                                                      : 'La session s’ouvrira avec ces taux.'}
                                             </p>
                                         </div>
                                     )}
                                 </div>
 
+                                {!closedTodaySession && (
                                 <div className="max-w-xl space-y-4">
                                     <Label className="ml-6 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
                                         Commentaire d'ouverture
@@ -517,6 +568,7 @@ export default function SessionManager() {
                                         className="h-16 rounded-3xl border-slate-200 bg-slate-50 px-8 font-medium text-slate-700 transition-colors focus:bg-white"
                                     />
                                 </div>
+                                )}
                             </div>
 
                             <div className="group relative w-full overflow-hidden rounded-[3rem] bg-indigo-600 p-8 text-white shadow-2xl shadow-indigo-600/20 lg:w-96">
@@ -549,10 +601,14 @@ export default function SessionManager() {
                                                 <Play className="h-5 w-5 fill-indigo-600" />
                                             </span>
                                         )}
-                                        Ouvrir Session
+                                        {closedTodaySession
+                                            ? 'Rouvrir la journée'
+                                            : 'Ouvrir Session'}
                                     </Button>
                                     <p className="text-center text-[9px] font-black tracking-widest uppercase opacity-60">
-                                        Active le terminal client immédiatement
+                                        {closedTodaySession
+                                            ? 'Reprend le flux déjà ouvert ce jour'
+                                            : 'Active le terminal client immédiatement'}
                                     </p>
                                 </div>
                             </div>

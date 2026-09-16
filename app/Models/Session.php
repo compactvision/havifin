@@ -21,6 +21,7 @@ class Session extends Model
         'opened_at',
         'closed_at',
         'status',
+        'force_closed',
         'notes',
         'shop_id',
         'owner_id',
@@ -30,6 +31,7 @@ class Session extends Model
         'session_date' => 'date',
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
+        'force_closed' => 'boolean',
         'shop_id' => 'integer',
         'owner_id' => 'integer',
     ];

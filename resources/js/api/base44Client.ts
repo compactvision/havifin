@@ -119,7 +119,9 @@ export interface Institution {
             operation_type?: 'depot' | 'retrait' | 'both';
         }[];
     };
-    low_balance_threshold?: number | string | null;
+    low_balance_thresholds?: Partial<
+        Record<'USD' | 'CDF' | 'EUR', number | string>
+    > | null;
 }
 
 export interface ConsolidatedCashOverview {
@@ -508,15 +510,16 @@ export const base44 = {
                     .then(handleResponse<LowBalanceAlert[]>),
         },
         Session: {
-            current: () =>
+            current: (params?: { shop_id?: number | string }) =>
                 axios
-                    .get<Session | null>('/api/sessions/current')
+                    .get<Session | null>('/api/sessions/current', { params })
                     .then(handleResponse<Session | null>),
             list: (params?: {
                 status?: string;
                 shop_id?: string;
                 date?: string;
                 page?: string;
+                per_page?: string | number;
             }) =>
                 axios
                     .get<

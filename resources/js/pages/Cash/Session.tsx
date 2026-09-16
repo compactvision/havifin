@@ -53,6 +53,7 @@ interface BalanceCardProps {
     totalIn?: number;
     totalOut?: number;
     lowBalanceThreshold?: number | null;
+    forceClosed?: boolean;
 }
 
 // Shared by the "Cash" tab (per-currency) and the operator tabs
@@ -69,6 +70,7 @@ function BalanceCard({
     totalIn,
     totalOut,
     lowBalanceThreshold,
+    forceClosed = false,
 }: BalanceCardProps) {
     const hasMismatch = Math.abs(difference ?? 0) > 0.01;
     const isBelowThreshold =
@@ -164,6 +166,16 @@ function BalanceCard({
                                 </p>
                             </div>
                         </div>
+                    </div>
+                )}
+                {closingReal === null && forceClosed && (
+                    <div className="bg-amber-50 p-4">
+                        <p className="text-xs font-semibold text-amber-700 uppercase">
+                            Réel non compté
+                        </p>
+                        <p className="text-sm font-medium text-amber-900">
+                            Clôture forcée — écart à régulariser manuellement.
+                        </p>
                     </div>
                 )}
             </CardContent>
@@ -380,6 +392,12 @@ export default function CashSessionDetail({ id }: Props) {
                                     )}
                                     {isOpen ? 'OUVERTE' : 'CLÔTURÉE'}
                                 </Badge>
+                                {!isOpen && session.force_closed && (
+                                    <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                                        <AlertTriangle className="mr-1 h-3 w-3" />
+                                        À RÉGULARISER
+                                    </Badge>
+                                )}
                             </div>
                             <p className="text-xs font-bold text-pink-500 uppercase">
                                 {session.register?.name} •{' '}
@@ -565,6 +583,7 @@ export default function CashSessionDetail({ id }: Props) {
                                 difference={stat.difference}
                                 totalIn={stat.totalIn}
                                 totalOut={stat.totalOut}
+                                forceClosed={!!session.force_closed}
                             />
                         ))}
                     </TabsContent>
@@ -594,13 +613,24 @@ export default function CashSessionDetail({ id }: Props) {
                                         : null
                                 }
                                 lowBalanceThreshold={
-                                    balance.institution?.low_balance_threshold != null
+                                    balance.institution?.low_balance_thresholds?.[
+                                        balance.currency as
+                                            | 'USD'
+                                            | 'CDF'
+                                            | 'EUR'
+                                    ] != null
                                         ? Number(
                                               balance.institution
-                                                  .low_balance_threshold,
+                                                  .low_balance_thresholds[
+                                                  balance.currency as
+                                                      | 'USD'
+                                                      | 'CDF'
+                                                      | 'EUR'
+                                              ],
                                           )
                                         : null
                                 }
+                                forceClosed={!!session.force_closed}
                             />
                         ))}
                     </TabsContent>
@@ -630,13 +660,24 @@ export default function CashSessionDetail({ id }: Props) {
                                         : null
                                 }
                                 lowBalanceThreshold={
-                                    balance.institution?.low_balance_threshold != null
+                                    balance.institution?.low_balance_thresholds?.[
+                                        balance.currency as
+                                            | 'USD'
+                                            | 'CDF'
+                                            | 'EUR'
+                                    ] != null
                                         ? Number(
                                               balance.institution
-                                                  .low_balance_threshold,
+                                                  .low_balance_thresholds[
+                                                  balance.currency as
+                                                      | 'USD'
+                                                      | 'CDF'
+                                                      | 'EUR'
+                                              ],
                                           )
                                         : null
                                 }
+                                forceClosed={!!session.force_closed}
                             />
                         ))}
                     </TabsContent>
@@ -666,13 +707,24 @@ export default function CashSessionDetail({ id }: Props) {
                                         : null
                                 }
                                 lowBalanceThreshold={
-                                    balance.institution?.low_balance_threshold != null
+                                    balance.institution?.low_balance_thresholds?.[
+                                        balance.currency as
+                                            | 'USD'
+                                            | 'CDF'
+                                            | 'EUR'
+                                    ] != null
                                         ? Number(
                                               balance.institution
-                                                  .low_balance_threshold,
+                                                  .low_balance_thresholds[
+                                                  balance.currency as
+                                                      | 'USD'
+                                                      | 'CDF'
+                                                      | 'EUR'
+                                              ],
                                           )
                                         : null
                                 }
+                                forceClosed={!!session.force_closed}
                             />
                         ))}
                     </TabsContent>

@@ -1,11 +1,11 @@
 {
-  "_LowBalanceAlertsBanner-DFn9-HC4.js": {
-    "file": "assets/LowBalanceAlertsBanner-DFn9-HC4.js",
+  "_LowBalanceAlertsBanner-CeQmgBno.js": {
+    "file": "assets/LowBalanceAlertsBanner-CeQmgBno.js",
     "name": "LowBalanceAlertsBanner",
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
+      "_base44Client-FJED2x66.js",
       "_button-DGcsO3n1.js",
       "_utils-BTCdVlRL.js",
       "_activity-DWO2GkT7.js",
@@ -22,7 +22,7 @@
       "_badge-CAx0srr7.js",
       "_moment-Cb4qLRHv.js",
       "_dialog-CNXSKR0g.js",
-      "_xlsxExport-D1jPX-sh.js"
+      "_xlsxExport-B4nBvkxu.js"
     ]
   },
   "_TransactionsTable-CKPwPxVH.js": {
@@ -122,8 +122,8 @@
       "_createLucideIcon-CMcw626d.js"
     ]
   },
-  "_base44Client-c-KMtG9_.js": {
-    "file": "assets/base44Client-c-KMtG9_.js",
+  "_base44Client-FJED2x66.js": {
+    "file": "assets/base44Client-FJED2x66.js",
     "name": "base44Client",
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
@@ -501,8 +501,8 @@
       "_createLucideIcon-CMcw626d.js"
     ]
   },
-  "_useMutation-DJHYSZim.js": {
-    "file": "assets/useMutation-DJHYSZim.js",
+  "_useMutation-C_idCnOy.js": {
+    "file": "assets/useMutation-C_idCnOy.js",
     "name": "useMutation",
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
@@ -534,8 +534,8 @@
     "file": "assets/utils-BTCdVlRL.js",
     "name": "utils"
   },
-  "_xlsxExport-D1jPX-sh.js": {
-    "file": "assets/xlsxExport-D1jPX-sh.js",
+  "_xlsxExport-B4nBvkxu.js": {
+    "file": "assets/xlsxExport-B4nBvkxu.js",
     "name": "xlsxExport",
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
@@ -3278,7 +3278,7 @@
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-CfBcq8Ye.js",
+    "file": "assets/app-CVq-Nuqf.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -3925,14 +3925,14 @@
     ]
   },
   "resources/js/pages/Cash/Dashboard.tsx": {
-    "file": "assets/Dashboard-CpgWxVlL.js",
+    "file": "assets/Dashboard-DUG9qGPJ.js",
     "name": "Dashboard",
     "src": "resources/js/pages/Cash/Dashboard.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
+      "_base44Client-FJED2x66.js",
       "resources/js/app.tsx",
       "_button-DGcsO3n1.js",
       "_input-BfVzAh1m.js",
@@ -3952,13 +3952,13 @@
     ]
   },
   "resources/js/pages/Cash/RegisterHistory.tsx": {
-    "file": "assets/RegisterHistory-D5usZcgW.js",
+    "file": "assets/RegisterHistory-CcV_CHDW.js",
     "name": "RegisterHistory",
     "src": "resources/js/pages/Cash/RegisterHistory.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
+      "_base44Client-FJED2x66.js",
       "_button-DGcsO3n1.js",
       "_arrow-left-CldEAgFF.js",
       "_eye-ZdPD19Dx.js",
@@ -3971,14 +3971,14 @@
     ]
   },
   "resources/js/pages/Cash/Session.tsx": {
-    "file": "assets/Session-DZ0JleYj.js",
+    "file": "assets/Session-DFYFpRz7.js",
     "name": "Session",
     "src": "resources/js/pages/Cash/Session.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
+      "_base44Client-FJED2x66.js",
       "resources/js/app.tsx",
       "_button-DGcsO3n1.js",
       "_input-BfVzAh1m.js",
@@ -4002,20 +4002,20 @@
       "_dialog-CNXSKR0g.js",
       "_textarea-Dsj09ROq.js",
       "_table-nQVMDtNc.js",
-      "_xlsxExport-D1jPX-sh.js",
+      "_xlsxExport-B4nBvkxu.js",
       "_tabs--BTAHX7W.js"
     ]
   },
   "resources/js/pages/Cashier.tsx": {
-    "file": "assets/Cashier-DTkOfqd9.js",
+    "file": "assets/Cashier-BO9_zxhJ.js",
     "name": "Cashier",
     "src": "resources/js/pages/Cashier.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
-      "_useMutation-DJHYSZim.js",
+      "_base44Client-FJED2x66.js",
+      "_useMutation-C_idCnOy.js",
       "resources/js/app.tsx",
       "_button-DGcsO3n1.js",
       "_utils-BTCdVlRL.js",
@@ -4045,13 +4045,13 @@
     ]
   },
   "resources/js/pages/Cashier/TodaySession.tsx": {
-    "file": "assets/TodaySession-CK0cHIt7.js",
+    "file": "assets/TodaySession-NsNDUIh8.js",
     "name": "TodaySession",
     "src": "resources/js/pages/Cashier/TodaySession.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
+      "_base44Client-FJED2x66.js",
       "_button-DGcsO3n1.js",
       "_createLucideIcon-CMcw626d.js",
       "_arrow-right-DQUbWGOq.js",
@@ -4065,15 +4065,15 @@
     ]
   },
   "resources/js/pages/ClientForm.tsx": {
-    "file": "assets/ClientForm-BxwPiqOu.js",
+    "file": "assets/ClientForm-tnjfhobo.js",
     "name": "ClientForm",
     "src": "resources/js/pages/ClientForm.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
-      "_useMutation-DJHYSZim.js",
+      "_base44Client-FJED2x66.js",
+      "_useMutation-C_idCnOy.js",
       "_button-DGcsO3n1.js",
       "_utils-BTCdVlRL.js",
       "_input-BfVzAh1m.js",
@@ -4102,14 +4102,14 @@
     ]
   },
   "resources/js/pages/Display.tsx": {
-    "file": "assets/Display-BhWIw1z2.js",
+    "file": "assets/Display-Dvv9jb_g.js",
     "name": "Display",
     "src": "resources/js/pages/Display.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
+      "_base44Client-FJED2x66.js",
       "_utils-BTCdVlRL.js",
       "_proxy-aUnrxJqF.js",
       "_users-BHZY4B6M.js",
@@ -4125,15 +4125,15 @@
     ]
   },
   "resources/js/pages/Manager.tsx": {
-    "file": "assets/Manager-PUpkMYfQ.js",
+    "file": "assets/Manager-pAPMbziK.js",
     "name": "Manager",
     "src": "resources/js/pages/Manager.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
-      "_useMutation-DJHYSZim.js",
+      "_base44Client-FJED2x66.js",
+      "_useMutation-C_idCnOy.js",
       "resources/js/app.tsx",
       "_button-DGcsO3n1.js",
       "_utils-BTCdVlRL.js",
@@ -4177,22 +4177,22 @@
       "_moment-Cb4qLRHv.js",
       "_dialog-CNXSKR0g.js",
       "_table-nQVMDtNc.js",
-      "_xlsxExport-D1jPX-sh.js",
+      "_xlsxExport-B4nBvkxu.js",
       "_tabs--BTAHX7W.js",
       "_skeleton-Dr7gkEx9.js",
       "_fr-BwkDiJE7.js",
-      "_LowBalanceAlertsBanner-DFn9-HC4.js"
+      "_LowBalanceAlertsBanner-CeQmgBno.js"
     ]
   },
   "resources/js/pages/Manager/ClientDetail.tsx": {
-    "file": "assets/ClientDetail-D9iVrZNo.js",
+    "file": "assets/ClientDetail-DEpRTdII.js",
     "name": "ClientDetail",
     "src": "resources/js/pages/Manager/ClientDetail.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
+      "_base44Client-FJED2x66.js",
       "_button-DGcsO3n1.js",
       "_createLucideIcon-CMcw626d.js",
       "_arrow-down-left-DhGBg8Aa.js",
@@ -4211,7 +4211,7 @@
     ]
   },
   "resources/js/pages/Manager/Guide.tsx": {
-    "file": "assets/Guide-Cf4WG4Pa.js",
+    "file": "assets/Guide-DuSRz2gq.js",
     "name": "Guide",
     "src": "resources/js/pages/Manager/Guide.tsx",
     "isDynamicEntry": true,
@@ -4233,15 +4233,15 @@
     ]
   },
   "resources/js/pages/Manager/ManagerShopDetail.tsx": {
-    "file": "assets/ManagerShopDetail-g6CTA5Oe.js",
+    "file": "assets/ManagerShopDetail-CkO9q_tW.js",
     "name": "ManagerShopDetail",
     "src": "resources/js/pages/Manager/ManagerShopDetail.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
-      "_useMutation-DJHYSZim.js",
+      "_base44Client-FJED2x66.js",
+      "_useMutation-C_idCnOy.js",
       "resources/js/app.tsx",
       "_button-DGcsO3n1.js",
       "_utils-BTCdVlRL.js",
@@ -4264,14 +4264,14 @@
     ]
   },
   "resources/js/pages/Manager/ManagerShops.tsx": {
-    "file": "assets/ManagerShops-B8F4SL2s.js",
+    "file": "assets/ManagerShops-BgQ3vJ5e.js",
     "name": "ManagerShops",
     "src": "resources/js/pages/Manager/ManagerShops.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
+      "_base44Client-FJED2x66.js",
       "resources/js/app.tsx",
       "_button-DGcsO3n1.js",
       "_proxy-aUnrxJqF.js",
@@ -4330,15 +4330,15 @@
     ]
   },
   "resources/js/pages/SuperAdmin/ShopDetail.tsx": {
-    "file": "assets/ShopDetail-Dx46gnLX.js",
+    "file": "assets/ShopDetail-D__6hLs3.js",
     "name": "ShopDetail",
     "src": "resources/js/pages/SuperAdmin/ShopDetail.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
-      "_useMutation-DJHYSZim.js",
+      "_base44Client-FJED2x66.js",
+      "_useMutation-C_idCnOy.js",
       "resources/js/app.tsx",
       "_button-DGcsO3n1.js",
       "_input-BfVzAh1m.js",
@@ -4357,20 +4357,20 @@
       "_badge-CAx0srr7.js",
       "_moment-Cb4qLRHv.js",
       "_dialog-CNXSKR0g.js",
-      "_xlsxExport-D1jPX-sh.js",
-      "_LowBalanceAlertsBanner-DFn9-HC4.js"
+      "_xlsxExport-B4nBvkxu.js",
+      "_LowBalanceAlertsBanner-CeQmgBno.js"
     ]
   },
   "resources/js/pages/SuperAdmin/Shops.tsx": {
-    "file": "assets/Shops-D2Z7svZ4.js",
+    "file": "assets/Shops-BnlJMKXa.js",
     "name": "Shops",
     "src": "resources/js/pages/SuperAdmin/Shops.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-DAXXjFlN.js",
       "_jsx-runtime-DZxz51cQ.js",
-      "_base44Client-c-KMtG9_.js",
-      "_useMutation-DJHYSZim.js",
+      "_base44Client-FJED2x66.js",
+      "_useMutation-C_idCnOy.js",
       "resources/js/app.tsx",
       "_button-DGcsO3n1.js",
       "_input-BfVzAh1m.js",

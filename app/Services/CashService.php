@@ -156,6 +156,52 @@ class CashService
     }
 
     /**
+     * Overnight / stale close: mark the till closed without claiming a
+     * physical count. Real amount and difference stay null so reconciliation
+     * cannot treat "theoretical = counted" as a clean close.
+     */
+    public function forceCloseSession(CashSession $session, string $notes): CashSession
+    {
+        return DB::transaction(function () use ($session, $notes) {
+            $lockedSession = CashSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
+            if ($lockedSession->status !== 'open') {
+                throw new InvalidArgumentException('Session is already closed.');
+            }
+
+            $lockedSession->loadMissing(['amounts', 'institutionBalances', 'register']);
+
+            $oldValues = $lockedSession->toArray();
+            $lockedSession->update([
+                'status' => 'closed',
+                'force_closed' => true,
+                'closed_at' => now(),
+                'closing_notes' => $notes,
+                'closed_by' => null,
+            ]);
+
+            foreach ($lockedSession->amounts as $amount) {
+                $theoreticalBalance = $this->getBalance($lockedSession->register, $amount->currency);
+                $amount->update([
+                    'closing_amount_real' => null,
+                    'closing_amount_theoretical' => $theoreticalBalance,
+                    'difference' => null,
+                ]);
+            }
+
+            foreach ($lockedSession->institutionBalances as $row) {
+                $row->update([
+                    'closing_amount_real' => null,
+                    'difference' => null,
+                ]);
+            }
+
+            $this->audit('force_closed_session', $lockedSession, $oldValues, $lockedSession->fresh()->toArray());
+
+            return $lockedSession;
+        });
+    }
+
+    /**
      * Record a movement of cash.
      */
     public function recordMovement(
@@ -382,7 +428,7 @@ class CashService
     private function maybeAlertLowBalance(CashSession $session, CashSessionInstitutionBalance $row, float $before, float $after): void
     {
         $institution = Institution::find($row->institution_id);
-        $threshold = $institution?->low_balance_threshold;
+        $threshold = $institution?->thresholdFor($row->currency);
 
         if ($threshold === null || $after >= (float) $threshold || $before < (float) $threshold) {
             return;

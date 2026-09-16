@@ -31,29 +31,22 @@ class CloseStaleSessions extends Command
 
                 $openCashSessions = CashSession::where('work_session_id', $session->id)
                     ->where('status', 'open')
-                    ->with('amounts', 'register')
+                    ->with(['amounts', 'institutionBalances', 'register'])
                     ->get();
 
-                foreach ($openCashSessions as $cashSession) {
-                    $closingAmounts = $cashSession->amounts
-                        ->mapWithKeys(fn ($amount) => [
-                            $amount->currency => $cashService->getBalance($cashSession->register, $amount->currency),
-                        ])
-                        ->toArray();
+                $forceNote = 'Clôturée automatiquement : la journée a dépassé sa date sans clôture manuelle. Montant réel non compté — à régulariser.';
 
-                    $cashService->closeSession(
-                        $cashSession,
-                        $closingAmounts,
-                        'Clôturée automatiquement : la journée a dépassé sa date sans clôture manuelle. Montant théorique repris tel quel, à régulariser si besoin.',
-                    );
+                foreach ($openCashSessions as $cashSession) {
+                    $cashService->forceCloseSession($cashSession, $forceNote);
                 }
 
                 $session->update([
                     'status' => 'closed',
+                    'force_closed' => true,
                     'closed_at' => now(),
                     'closed_by' => null,
                     'notes' => trim(($session->notes ? $session->notes."\n" : '')
-                        .'Clôturée automatiquement le '.now()->toDateTimeString().' (dépassement de journée).'),
+                        .'Clôturée automatiquement le '.now()->toDateTimeString().' (dépassement de journée, force_closed).'),
                 ]);
 
                 Log::warning('Session auto-closed for exceeding its day', [
@@ -61,6 +54,7 @@ class CloseStaleSessions extends Command
                     'shop_id' => $session->shop_id,
                     'session_date' => $session->session_date->toDateString(),
                     'cash_sessions_force_closed' => $openCashSessions->count(),
+                    'force_closed' => true,
                 ]);
             });
 

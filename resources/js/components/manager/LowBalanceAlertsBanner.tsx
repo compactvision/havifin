@@ -64,7 +64,8 @@ export default function LowBalanceAlertsBanner() {
                                 {alert.currency}
                             </span>
                             <span className="ml-2 text-xs text-slate-400">
-                                (seuil {numberFmt.format(alert.threshold)})
+                                (seuil {numberFmt.format(alert.threshold)}{' '}
+                                {alert.currency})
                             </span>
                         </div>
                     </Link>

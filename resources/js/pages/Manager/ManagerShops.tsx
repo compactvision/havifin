@@ -37,7 +37,11 @@ export default function ManagerShops() {
     const today = moment().format('YYYY-MM-DD');
     const { data: todaySessionData } = useQuery({
         queryKey: ['sessions', 'today', today],
-        queryFn: () => base44.entities.Session.list({ date: today }),
+        queryFn: () =>
+            base44.entities.Session.list({
+                date: today,
+                per_page: 100,
+            }),
     });
     const openSessionByShop = new Map<number, any>(
         (todaySessionData?.data ?? []).map((session: any) => [
@@ -381,7 +385,7 @@ export default function ManagerShops() {
                                                                     ? 'Clôture...'
                                                                     : 'Clôturer la journée'}
                                                             </Button>
-                                                        ) : (
+                                                        ) : shop.is_active ? (
                                                             <Button
                                                                 onClick={() =>
                                                                     handleOpenDay(
@@ -401,6 +405,13 @@ export default function ManagerShops() {
                                                                       ? 'Rouvrir la journée'
                                                                       : 'Ouvrir la journée'}
                                                             </Button>
+                                                        ) : (
+                                                            <p className="rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-medium text-slate-500">
+                                                                Boutique
+                                                                inactive —
+                                                                ouverture
+                                                                impossible
+                                                            </p>
                                                         )}
                                                     </div>
                                                 );

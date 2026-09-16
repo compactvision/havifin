@@ -17,14 +17,25 @@ class Institution extends Model
         'is_active',
         'owner_id',
         'settings',
-        'low_balance_threshold',
+        'low_balance_thresholds',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'settings' => 'array',
-        'low_balance_threshold' => 'decimal:4',
+        'low_balance_thresholds' => 'array',
     ];
+
+    /**
+     * The configured alert floor for this institution's float in a given
+     * currency, or null if none is set for that currency.
+     */
+    public function thresholdFor(string $currency): ?float
+    {
+        $value = $this->low_balance_thresholds[$currency] ?? null;
+
+        return $value !== null ? (float) $value : null;
+    }
 
     /**
      * Scope to get only active institutions.

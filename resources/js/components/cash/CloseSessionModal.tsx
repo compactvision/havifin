@@ -10,9 +10,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { CashSession } from '@/types/cash';
-import { useState } from 'react';
+import { CashSession, CashSessionInstitutionBalance } from '@/types/cash';
+import { Landmark, MoreHorizontal, Smartphone, Wallet } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 interface Props {
@@ -37,11 +39,37 @@ export default function CloseSessionModal({
         EUR: '0',
     });
     const [notes, setNotes] = useState('');
+    // Keyed by balance.id (not institution_id) - an operator can have both a
+    // USD and a CDF float row in the same session, and keying by
+    // institution_id alone made one currency's input silently overwrite the
+    // other's in this state.
     const [institutionAmounts, setInstitutionAmounts] = useState<
         Record<number, string>
     >({});
 
     const institutionBalances = session?.institution_balances ?? [];
+
+    const mobileMoneyBalances = useMemo(
+        () =>
+            institutionBalances.filter(
+                (b) => b.institution?.type === 'mobile_money',
+            ),
+        [institutionBalances],
+    );
+    const bankBalances = useMemo(
+        () =>
+            institutionBalances.filter((b) => b.institution?.type === 'bank'),
+        [institutionBalances],
+    );
+    const otherBalances = useMemo(
+        () =>
+            institutionBalances.filter(
+                (b) =>
+                    b.institution?.type !== 'mobile_money' &&
+                    b.institution?.type !== 'bank',
+            ),
+        [institutionBalances],
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,11 +86,11 @@ export default function CloseSessionModal({
         setIsLoading(true);
         try {
             const closing_institution_balances = institutionBalances
-                .filter((b) => institutionAmounts[b.institution_id] !== undefined)
+                .filter((b) => institutionAmounts[b.id] !== undefined)
                 .map((b) => ({
                     institution_id: b.institution_id,
                     currency: b.currency,
-                    amount: Number(institutionAmounts[b.institution_id] || 0),
+                    amount: Number(institutionAmounts[b.id] || 0),
                 }));
 
             await base44.entities.CashSession.close(session.id, {
@@ -82,9 +110,48 @@ export default function CloseSessionModal({
         }
     };
 
+    const renderInstitutionRows = (
+        balances: CashSessionInstitutionBalance[],
+    ) => (
+        <div className="grid gap-3">
+            <p className="-mt-1 text-xs text-slate-400">
+                Comptez le solde restant sur chaque compte partenaire pour
+                vérifier l'équivalence.
+            </p>
+            {balances.map((balance) => (
+                <div
+                    key={balance.id}
+                    className="grid grid-cols-4 items-center gap-4"
+                >
+                    <Label className="text-right text-sm font-medium">
+                        {balance.institution?.name}
+                        <span className="block text-[10px] font-normal text-slate-400">
+                            Théo. {balance.current_theoretical}{' '}
+                            {balance.currency}
+                        </span>
+                    </Label>
+                    <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={institutionAmounts[balance.id] ?? ''}
+                        onChange={(e) =>
+                            setInstitutionAmounts({
+                                ...institutionAmounts,
+                                [balance.id]: e.target.value,
+                            })
+                        }
+                        placeholder="0"
+                        className="col-span-3"
+                    />
+                </div>
+            ))}
+        </div>
+    );
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>Clôture de Caisse</DialogTitle>
                     <DialogDescription>
@@ -93,80 +160,83 @@ export default function CloseSessionModal({
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid gap-4">
-                        {CURRENCIES.map((currency) => (
-                            <div
-                                key={currency}
-                                className="grid grid-cols-4 items-center gap-4"
-                            >
-                                <Label
-                                    htmlFor={`close-amount-${currency}`}
-                                    className="text-right font-bold"
+                    <Tabs defaultValue="cash">
+                        <TabsList>
+                            <TabsTrigger value="cash" className="gap-1.5">
+                                <Wallet className="h-3.5 w-3.5" />
+                                Espèces
+                            </TabsTrigger>
+                            {mobileMoneyBalances.length > 0 && (
+                                <TabsTrigger
+                                    value="mobile_money"
+                                    className="gap-1.5"
                                 >
-                                    {currency}
-                                </Label>
-                                <Input
-                                    id={`close-amount-${currency}`}
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={amounts[currency]}
-                                    onChange={(e) =>
-                                        setAmounts({
-                                            ...amounts,
-                                            [currency]: e.target.value,
-                                        })
-                                    }
-                                    className="col-span-3"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                    {institutionBalances.length > 0 && (
-                        <div className="grid gap-3 border-t pt-4">
-                            <p className="text-sm font-semibold text-slate-700">
-                                Fonds opérateurs (M-Pesa, Orange Money, ...)
-                            </p>
-                            <p className="-mt-2 text-xs text-slate-400">
-                                Comptez le solde restant sur chaque compte
-                                partenaire pour vérifier l'équivalence.
-                            </p>
-                            {institutionBalances.map((balance) => (
+                                    <Smartphone className="h-3.5 w-3.5" />
+                                    Mobile Money
+                                </TabsTrigger>
+                            )}
+                            {bankBalances.length > 0 && (
+                                <TabsTrigger value="bank" className="gap-1.5">
+                                    <Landmark className="h-3.5 w-3.5" />
+                                    Banque
+                                </TabsTrigger>
+                            )}
+                            {otherBalances.length > 0 && (
+                                <TabsTrigger value="other" className="gap-1.5">
+                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                    Autre
+                                </TabsTrigger>
+                            )}
+                        </TabsList>
+
+                        <TabsContent value="cash" className="grid gap-4 pt-2">
+                            {CURRENCIES.map((currency) => (
                                 <div
-                                    key={balance.id}
+                                    key={currency}
                                     className="grid grid-cols-4 items-center gap-4"
                                 >
-                                    <Label className="text-right text-sm font-medium">
-                                        {balance.institution?.name}
-                                        <span className="block text-[10px] font-normal text-slate-400">
-                                            Théo.{' '}
-                                            {balance.current_theoretical}{' '}
-                                            {balance.currency}
-                                        </span>
+                                    <Label
+                                        htmlFor={`close-amount-${currency}`}
+                                        className="text-right font-bold"
+                                    >
+                                        {currency}
                                     </Label>
                                     <Input
+                                        id={`close-amount-${currency}`}
                                         type="number"
                                         min="0"
                                         step="0.01"
-                                        value={
-                                            institutionAmounts[
-                                                balance.institution_id
-                                            ] ?? ''
-                                        }
+                                        value={amounts[currency]}
                                         onChange={(e) =>
-                                            setInstitutionAmounts({
-                                                ...institutionAmounts,
-                                                [balance.institution_id]:
-                                                    e.target.value,
+                                            setAmounts({
+                                                ...amounts,
+                                                [currency]: e.target.value,
                                             })
                                         }
-                                        placeholder="0"
                                         className="col-span-3"
                                     />
                                 </div>
                             ))}
-                        </div>
-                    )}
+                        </TabsContent>
+
+                        {mobileMoneyBalances.length > 0 && (
+                            <TabsContent value="mobile_money" className="pt-2">
+                                {renderInstitutionRows(mobileMoneyBalances)}
+                            </TabsContent>
+                        )}
+
+                        {bankBalances.length > 0 && (
+                            <TabsContent value="bank" className="pt-2">
+                                {renderInstitutionRows(bankBalances)}
+                            </TabsContent>
+                        )}
+
+                        {otherBalances.length > 0 && (
+                            <TabsContent value="other" className="pt-2">
+                                {renderInstitutionRows(otherBalances)}
+                            </TabsContent>
+                        )}
+                    </Tabs>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="close-notes" className="text-right">
                             Notes
