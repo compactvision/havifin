@@ -613,10 +613,20 @@ export default function CashSessionDetail({ id }: Props) {
                                         : null
                                 }
                                 lowBalanceThreshold={
-                                    balance.institution?.low_balance_threshold != null
+                                    balance.institution?.low_balance_thresholds?.[
+                                        balance.currency as
+                                            | 'USD'
+                                            | 'CDF'
+                                            | 'EUR'
+                                    ] != null
                                         ? Number(
                                               balance.institution
-                                                  .low_balance_threshold,
+                                                  .low_balance_thresholds[
+                                                  balance.currency as
+                                                      | 'USD'
+                                                      | 'CDF'
+                                                      | 'EUR'
+                                              ],
                                           )
                                         : null
                                 }
@@ -650,10 +660,20 @@ export default function CashSessionDetail({ id }: Props) {
                                         : null
                                 }
                                 lowBalanceThreshold={
-                                    balance.institution?.low_balance_threshold != null
+                                    balance.institution?.low_balance_thresholds?.[
+                                        balance.currency as
+                                            | 'USD'
+                                            | 'CDF'
+                                            | 'EUR'
+                                    ] != null
                                         ? Number(
                                               balance.institution
-                                                  .low_balance_threshold,
+                                                  .low_balance_thresholds[
+                                                  balance.currency as
+                                                      | 'USD'
+                                                      | 'CDF'
+                                                      | 'EUR'
+                                              ],
                                           )
                                         : null
                                 }
@@ -687,10 +707,20 @@ export default function CashSessionDetail({ id }: Props) {
                                         : null
                                 }
                                 lowBalanceThreshold={
-                                    balance.institution?.low_balance_threshold != null
+                                    balance.institution?.low_balance_thresholds?.[
+                                        balance.currency as
+                                            | 'USD'
+                                            | 'CDF'
+                                            | 'EUR'
+                                    ] != null
                                         ? Number(
                                               balance.institution
-                                                  .low_balance_threshold,
+                                                  .low_balance_thresholds[
+                                                  balance.currency as
+                                                      | 'USD'
+                                                      | 'CDF'
+                                                      | 'EUR'
+                                              ],
                                           )
                                         : null
                                 }

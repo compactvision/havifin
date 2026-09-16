@@ -59,7 +59,8 @@ class InstitutionController extends Controller
             'logo' => 'nullable|image|max:2048', // Allow image upload
             'is_active' => 'boolean',
             'settings' => 'nullable|array',
-            'low_balance_threshold' => 'nullable|numeric|min:0',
+            'low_balance_thresholds' => 'nullable|array',
+            'low_balance_thresholds.*' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -110,7 +111,8 @@ class InstitutionController extends Controller
             'logo' => $logoValidation,
             'is_active' => 'sometimes', // Can be boolean or "1"/"0" string from FormData
             'settings' => 'sometimes|nullable|array',
-            'low_balance_threshold' => 'sometimes|nullable|numeric|min:0',
+            'low_balance_thresholds' => 'sometimes|nullable|array',
+            'low_balance_thresholds.*' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -183,25 +185,25 @@ class InstitutionController extends Controller
 
         $alerts = CashSessionInstitutionBalance::query()
             ->with([
-                'institution:id,name,type,low_balance_threshold',
+                'institution:id,name,type,low_balance_thresholds',
                 'session.register.shop:id,name',
                 'session.user:id,name',
             ])
             ->whereHas('session', fn ($query) => $query
                 ->where('status', 'open')
                 ->whereHas('register', fn ($registerQuery) => $registerQuery->whereIn('shop_id', $shopIds)))
-            ->whereHas('institution', fn ($query) => $query->whereNotNull('low_balance_threshold'))
             ->get()
-            ->filter(fn ($balance) => (float) $balance->current_theoretical < (float) $balance->institution->low_balance_threshold)
-            ->map(fn ($balance) => [
-                'id' => $balance->id,
-                'institution' => $balance->institution->name,
-                'currency' => $balance->currency,
-                'current_theoretical' => (float) $balance->current_theoretical,
-                'threshold' => (float) $balance->institution->low_balance_threshold,
-                'shop' => $balance->session->register->shop->name ?? null,
-                'cashier' => $balance->session->user->name ?? null,
-                'cash_session_id' => $balance->cash_session_id,
+            ->map(fn ($balance) => [$balance, $balance->institution?->thresholdFor($balance->currency)])
+            ->filter(fn ($pair) => $pair[1] !== null && (float) $pair[0]->current_theoretical < $pair[1])
+            ->map(fn ($pair) => [
+                'id' => $pair[0]->id,
+                'institution' => $pair[0]->institution->name,
+                'currency' => $pair[0]->currency,
+                'current_theoretical' => (float) $pair[0]->current_theoretical,
+                'threshold' => $pair[1],
+                'shop' => $pair[0]->session->register->shop->name ?? null,
+                'cashier' => $pair[0]->session->user->name ?? null,
+                'cash_session_id' => $pair[0]->cash_session_id,
             ])
             ->values();
 

@@ -119,7 +119,9 @@ export interface Institution {
             operation_type?: 'depot' | 'retrait' | 'both';
         }[];
     };
-    low_balance_threshold?: number | string | null;
+    low_balance_thresholds?: Partial<
+        Record<'USD' | 'CDF' | 'EUR', number | string>
+    > | null;
 }
 
 export interface ConsolidatedCashOverview {

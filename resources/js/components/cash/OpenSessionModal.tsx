@@ -10,10 +10,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { CashRegister } from '@/types/cash';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { Landmark, Smartphone, Wallet } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -72,6 +74,15 @@ export default function OpenSessionModal({
         [institutions],
     );
 
+    const mobileMoneyInstitutions = useMemo(
+        () => floatInstitutions.filter((inst) => inst.type === 'mobile_money'),
+        [floatInstitutions],
+    );
+    const bankInstitutions = useMemo(
+        () => floatInstitutions.filter((inst) => inst.type === 'bank'),
+        [floatInstitutions],
+    );
+
     useEffect(() => {
         if (!isOpen) return;
         setInstitutionCurrencies((prev) => {
@@ -115,9 +126,58 @@ export default function OpenSessionModal({
         }
     };
 
+    const renderInstitutionRows = (insts: Institution[]) => (
+        <div className="grid gap-3">
+            <p className="-mt-1 text-xs text-slate-400">
+                Optionnel - déclarez le solde que vous avez sur chaque compte
+                partenaire pour suivre son équivalence en fin de journée.
+            </p>
+            {insts.map((inst) => (
+                <div
+                    key={inst.id}
+                    className="grid grid-cols-4 items-center gap-4"
+                >
+                    <Label className="text-right text-sm font-medium">
+                        {inst.name}
+                    </Label>
+                    <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={institutionAmounts[inst.id] ?? ''}
+                        onChange={(e) =>
+                            setInstitutionAmounts({
+                                ...institutionAmounts,
+                                [inst.id]: e.target.value,
+                            })
+                        }
+                        placeholder="0"
+                        className="col-span-2"
+                    />
+                    <select
+                        value={institutionCurrencies[inst.id] || 'CDF'}
+                        onChange={(e) =>
+                            setInstitutionCurrencies({
+                                ...institutionCurrencies,
+                                [inst.id]: e.target.value,
+                            })
+                        }
+                        className="col-span-1 h-9 rounded-md border border-slate-200 text-sm"
+                    >
+                        {CURRENCIES.map((c) => (
+                            <option key={c} value={c}>
+                                {c}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            ))}
+        </div>
+    );
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>
                         Ouverture de Caisse - Fond de Caisse
@@ -131,90 +191,73 @@ export default function OpenSessionModal({
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid gap-4">
-                        {CURRENCIES.map((currency) => (
-                            <div
-                                key={currency}
-                                className="grid grid-cols-4 items-center gap-4"
-                            >
-                                <Label
-                                    htmlFor={`amount-${currency}`}
-                                    className="text-right font-bold"
+                    <Tabs defaultValue="cash">
+                        <TabsList>
+                            <TabsTrigger value="cash" className="gap-1.5">
+                                <Wallet className="h-3.5 w-3.5" />
+                                Espèces
+                            </TabsTrigger>
+                            {mobileMoneyInstitutions.length > 0 && (
+                                <TabsTrigger
+                                    value="mobile_money"
+                                    className="gap-1.5"
                                 >
-                                    {currency}
-                                </Label>
-                                <Input
-                                    id={`amount-${currency}`}
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={amounts[currency]}
-                                    onChange={(e) =>
-                                        setAmounts({
-                                            ...amounts,
-                                            [currency]: e.target.value,
-                                        })
-                                    }
-                                    className="col-span-3"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                    {floatInstitutions.length > 0 && (
-                        <div className="grid gap-3 border-t pt-4">
-                            <p className="text-sm font-semibold text-slate-700">
-                                Fonds opérateurs (M-Pesa, Orange Money, ...)
-                            </p>
-                            <p className="-mt-2 text-xs text-slate-400">
-                                Optionnel - déclarez le solde que vous avez
-                                sur chaque compte partenaire pour suivre son
-                                équivalence en fin de journée.
-                            </p>
-                            {floatInstitutions.map((inst) => (
+                                    <Smartphone className="h-3.5 w-3.5" />
+                                    Mobile Money
+                                </TabsTrigger>
+                            )}
+                            {bankInstitutions.length > 0 && (
+                                <TabsTrigger value="bank" className="gap-1.5">
+                                    <Landmark className="h-3.5 w-3.5" />
+                                    Banque
+                                </TabsTrigger>
+                            )}
+                        </TabsList>
+
+                        <TabsContent value="cash" className="grid gap-4 pt-2">
+                            {CURRENCIES.map((currency) => (
                                 <div
-                                    key={inst.id}
+                                    key={currency}
                                     className="grid grid-cols-4 items-center gap-4"
                                 >
-                                    <Label className="text-right text-sm font-medium">
-                                        {inst.name}
+                                    <Label
+                                        htmlFor={`amount-${currency}`}
+                                        className="text-right font-bold"
+                                    >
+                                        {currency}
                                     </Label>
                                     <Input
+                                        id={`amount-${currency}`}
                                         type="number"
                                         min="0"
                                         step="0.01"
-                                        value={institutionAmounts[inst.id] ?? ''}
+                                        value={amounts[currency]}
                                         onChange={(e) =>
-                                            setInstitutionAmounts({
-                                                ...institutionAmounts,
-                                                [inst.id]: e.target.value,
+                                            setAmounts({
+                                                ...amounts,
+                                                [currency]: e.target.value,
                                             })
                                         }
-                                        placeholder="0"
-                                        className="col-span-2"
+                                        className="col-span-3"
                                     />
-                                    <select
-                                        value={
-                                            institutionCurrencies[inst.id] ||
-                                            'CDF'
-                                        }
-                                        onChange={(e) =>
-                                            setInstitutionCurrencies({
-                                                ...institutionCurrencies,
-                                                [inst.id]: e.target.value,
-                                            })
-                                        }
-                                        className="col-span-1 h-9 rounded-md border border-slate-200 text-sm"
-                                    >
-                                        {CURRENCIES.map((c) => (
-                                            <option key={c} value={c}>
-                                                {c}
-                                            </option>
-                                        ))}
-                                    </select>
                                 </div>
                             ))}
-                        </div>
-                    )}
+                        </TabsContent>
+
+                        {mobileMoneyInstitutions.length > 0 && (
+                            <TabsContent value="mobile_money" className="pt-2">
+                                {renderInstitutionRows(
+                                    mobileMoneyInstitutions,
+                                )}
+                            </TabsContent>
+                        )}
+
+                        {bankInstitutions.length > 0 && (
+                            <TabsContent value="bank" className="pt-2">
+                                {renderInstitutionRows(bankInstitutions)}
+                            </TabsContent>
+                        )}
+                    </Tabs>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="notes" className="text-right">
                             Notes

@@ -46,13 +46,13 @@ export default function InstitutionManager() {
         type: 'bank' | 'mobile_money' | 'payment' | 'other';
         code: string;
         logo: File | null;
-        low_balance_threshold: string;
+        low_balance_thresholds: { USD: string; CDF: string; EUR: string };
     }>({
         name: '',
         type: 'bank',
         code: '',
         logo: null,
-        low_balance_threshold: '',
+        low_balance_thresholds: { USD: '', CDF: '', EUR: '' },
     });
     const [cropperImage, setCropperImage] = useState<{
         src: string;
@@ -79,12 +79,12 @@ export default function InstitutionManager() {
             formData.append('name', data.name);
             formData.append('type', data.type);
             formData.append('code', data.code);
-            if (data.low_balance_threshold) {
+            (['USD', 'CDF', 'EUR'] as const).forEach((currency) => {
                 formData.append(
-                    'low_balance_threshold',
-                    data.low_balance_threshold,
+                    `low_balance_thresholds[${currency}]`,
+                    data.low_balance_thresholds[currency],
                 );
-            }
+            });
             if (data.logo) {
                 formData.append('logo', data.logo);
             }
@@ -125,10 +125,12 @@ export default function InstitutionManager() {
             formData.append('name', data.name);
             formData.append('type', data.type);
             formData.append('code', data.code);
-            formData.append(
-                'low_balance_threshold',
-                data.low_balance_threshold,
-            );
+            (['USD', 'CDF', 'EUR'] as const).forEach((currency) => {
+                formData.append(
+                    `low_balance_thresholds[${currency}]`,
+                    data.low_balance_thresholds[currency],
+                );
+            });
             if (data.logo) {
                 formData.append('logo', data.logo);
             }
@@ -178,7 +180,7 @@ export default function InstitutionManager() {
             type: 'bank',
             code: '',
             logo: null,
-            low_balance_threshold: '',
+            low_balance_thresholds: { USD: '', CDF: '', EUR: '' },
         });
         setEditingId(null);
         setShowAddForm(false);
@@ -190,10 +192,20 @@ export default function InstitutionManager() {
             type: inst.type as 'bank' | 'mobile_money' | 'payment' | 'other',
             code: inst.code,
             logo: null,
-            low_balance_threshold:
-                inst.low_balance_threshold != null
-                    ? String(inst.low_balance_threshold)
-                    : '',
+            low_balance_thresholds: {
+                USD:
+                    inst.low_balance_thresholds?.USD != null
+                        ? String(inst.low_balance_thresholds.USD)
+                        : '',
+                CDF:
+                    inst.low_balance_thresholds?.CDF != null
+                        ? String(inst.low_balance_thresholds.CDF)
+                        : '',
+                EUR:
+                    inst.low_balance_thresholds?.EUR != null
+                        ? String(inst.low_balance_thresholds.EUR)
+                        : '',
+            },
         });
         setEditingId(inst.id);
         setShowAddForm(true);
@@ -450,28 +462,54 @@ export default function InstitutionManager() {
 
                             <div className="mt-6 space-y-2">
                                 <Label className="ml-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                    Seuil d'alerte critique (Optionnel)
+                                    Seuils d'alerte critique par devise
+                                    (Optionnel)
                                 </Label>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    placeholder="ex: 20000"
-                                    value={newInstitution.low_balance_threshold}
-                                    onChange={(e) =>
-                                        setNewInstitution({
-                                            ...newInstitution,
-                                            low_balance_threshold:
-                                                e.target.value,
-                                        })
-                                    }
-                                    className="h-12 rounded-xl border-white/10 bg-white/5 font-black text-white outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
+                                <div className="grid grid-cols-3 gap-3">
+                                    {(['USD', 'CDF', 'EUR'] as const).map(
+                                        (currency) => (
+                                            <div
+                                                key={currency}
+                                                className="space-y-1"
+                                            >
+                                                <Label className="ml-1 text-[9px] font-bold text-white/50">
+                                                    {currency}
+                                                </Label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    placeholder="ex: 20000"
+                                                    value={
+                                                        newInstitution
+                                                            .low_balance_thresholds[
+                                                            currency
+                                                        ]
+                                                    }
+                                                    onChange={(e) =>
+                                                        setNewInstitution({
+                                                            ...newInstitution,
+                                                            low_balance_thresholds:
+                                                                {
+                                                                    ...newInstitution.low_balance_thresholds,
+                                                                    [currency]:
+                                                                        e.target
+                                                                            .value,
+                                                                },
+                                                        })
+                                                    }
+                                                    className="h-12 rounded-xl border-white/10 bg-white/5 font-black text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                        ),
+                                    )}
+                                </div>
                                 <p className="ml-1 text-[10px] text-white/40">
                                     Une alerte "seuil critique" apparaît dans
                                     le journal d'activité dès que le flottant
-                                    théorique de ce partenaire descend
-                                    en-dessous de ce montant.
+                                    théorique de ce partenaire, dans une de
+                                    ces devises, descend en-dessous du seuil
+                                    correspondant.
                                 </p>
                             </div>
 

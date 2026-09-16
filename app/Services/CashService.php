@@ -428,7 +428,7 @@ class CashService
     private function maybeAlertLowBalance(CashSession $session, CashSessionInstitutionBalance $row, float $before, float $after): void
     {
         $institution = Institution::find($row->institution_id);
-        $threshold = $institution?->low_balance_threshold;
+        $threshold = $institution?->thresholdFor($row->currency);
 
         if ($threshold === null || $after >= (float) $threshold || $before < (float) $threshold) {
             return;

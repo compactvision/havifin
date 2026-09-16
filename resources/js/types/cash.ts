@@ -56,7 +56,9 @@ export interface CashSessionInstitutionBalance {
         id: number;
         name: string;
         type: string;
-        low_balance_threshold?: string | number | null;
+        low_balance_thresholds?: Partial<
+            Record<'USD' | 'CDF' | 'EUR', number | string>
+        > | null;
     };
     currency: string;
     opening_amount: string;
