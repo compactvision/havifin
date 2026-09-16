@@ -153,10 +153,12 @@ class TransactionController extends Controller
                 $operationType = $client->operation_type;
                 abort_unless(in_array($operationType, ['depot', 'retrait', 'change', 'paiement'], true), 422);
 
-                if ($operationType === 'depot' && $client->institution_id) {
+                if (in_array($operationType, ['depot', 'retrait'], true) && $client->institution_id) {
                     $institution = Institution::find($client->institution_id);
-                    if ($institution?->type === 'mobile_money' && ($institution->settings['flexpay_required'] ?? false)) {
-                        abort(409, 'Ce partenaire exige un prélèvement automatique via FlexPay pour les dépôts.');
+                    $requiredKey = $operationType === 'depot' ? 'flexpay_required_depot' : 'flexpay_required_retrait';
+                    if ($institution?->type === 'mobile_money' && ($institution->settings[$requiredKey] ?? false)) {
+                        $label = $operationType === 'depot' ? 'les dépôts' : 'les retraits';
+                        abort(409, "Ce partenaire exige un prélèvement automatique via FlexPay pour {$label}.");
                     }
                 }
                 $ticketAmount = $operationType === 'change'

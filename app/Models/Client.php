@@ -15,6 +15,7 @@ class Client extends Model
     protected $fillable = [
         'ticket_number',
         'phone',
+        'flexpay_phone',
         'first_name',
         'last_name',
         'email',

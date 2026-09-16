@@ -15,9 +15,10 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /**
- * Starts and settles FlexPay auto-debit attempts on deposit tickets. This is
- * the single place a charge gets finalized, so the polling job and the
- * inbound webhook can race each other without double-crediting the till.
+ * Starts and settles FlexPay auto-debit attempts on deposit and withdrawal
+ * mobile money tickets. This is the single place a charge gets finalized, so
+ * the polling job and the inbound webhook can race each other without
+ * double-crediting the till.
  */
 class FlexPayCollectionService
 {
@@ -30,7 +31,7 @@ class FlexPayCollectionService
     {
         throw_unless($this->flexPay->isConfigured(), InvalidArgumentException::class, "FlexPay n'est pas configuré sur cette instance.");
 
-        throw_unless($client->operation_type === 'depot', InvalidArgumentException::class, 'Le prélèvement automatique est réservé aux dépôts.');
+        throw_unless(in_array($client->operation_type, ['depot', 'retrait'], true), InvalidArgumentException::class, 'Le prélèvement automatique est réservé aux dépôts et retraits.');
         throw_unless(in_array($client->status, ['called', 'calling'], true), InvalidArgumentException::class, 'Ce ticket doit être en cours pour être prélevé.');
 
         $client->loadMissing('institution');
@@ -56,7 +57,7 @@ class FlexPayCollectionService
             ->first();
         throw_unless($cashSession, InvalidArgumentException::class, 'Ouvrez votre session de caisse avant de lancer un prélèvement automatique.');
 
-        $phone = $phone ?: $client->phone;
+        $phone = $phone ?: ($client->flexpay_phone ?: $client->phone);
         $reference = 'HVF-'.$client->ticket_number.'-'.Str::upper(Str::random(6));
         $currency = strtoupper((string) $client->currency_from);
 
@@ -170,25 +171,49 @@ class FlexPayCollectionService
                 return;
             }
 
-            $transaction = Transaction::create([
-                'client_id' => $client->id,
-                'operation_type' => 'depot',
-                'service' => $client->service,
-                'institution_id' => $client->institution_id,
-                'currency_from' => $locked->currency,
-                'currency_to' => $locked->currency,
-                'amount_from' => (float) $locked->amount,
-                'amount_to' => (float) $locked->amount,
-                'exchange_rate' => 1,
-                'commission' => 0,
-                'cashier_email' => $locked->cashier?->email,
-                'shop_id' => $locked->shop_id,
-                'ticket_number' => $client->ticket_number,
-                'client_phone' => $client->phone,
-                'session_id' => $locked->session_id,
-            ]);
+            try {
+                // Nested (savepoint) transaction: if the caisse sync fails
+                // (e.g. insufficient till balance), only this part rolls
+                // back - the CashierActivity alert below still needs to
+                // commit with the outer transaction.
+                $transaction = DB::transaction(function () use ($client, $locked, $cashSession) {
+                    $transaction = Transaction::create([
+                        'client_id' => $client->id,
+                        'operation_type' => $client->operation_type,
+                        'service' => $client->service,
+                        'institution_id' => $client->institution_id,
+                        'currency_from' => $locked->currency,
+                        'currency_to' => $locked->currency,
+                        'amount_from' => (float) $locked->amount,
+                        'amount_to' => (float) $locked->amount,
+                        'exchange_rate' => 1,
+                        'commission' => 0,
+                        'cashier_email' => $locked->cashier?->email,
+                        'shop_id' => $locked->shop_id,
+                        'ticket_number' => $client->ticket_number,
+                        'client_phone' => $client->phone,
+                        'session_id' => $locked->session_id,
+                    ]);
 
-            $this->cashService->syncTransaction($transaction, $cashSession);
+                    $this->cashService->syncTransaction($transaction, $cashSession);
+
+                    return $transaction;
+                });
+            } catch (\Throwable $exception) {
+                // Never let a caisse-side failure silently swallow a
+                // confirmed FlexPay charge - flag it for manual
+                // reconciliation instead.
+                CashierActivity::create([
+                    'cashier_id' => $locked->cashier_id,
+                    'session_id' => $locked->session_id,
+                    'client_id' => $client->id,
+                    'activity_type' => 'flexpay_unsynced_success',
+                    'description' => "Prélèvement FlexPay confirmé pour le ticket #{$client->ticket_number} mais la synchronisation de caisse a échoué ({$exception->getMessage()}). Intervention manuelle requise.",
+                    'created_at' => now(),
+                ]);
+
+                return;
+            }
 
             $client->update([
                 'status' => 'completed',

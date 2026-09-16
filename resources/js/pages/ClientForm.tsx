@@ -1,9 +1,4 @@
-import {
-    base44,
-    Client,
-    ClientPhone,
-    ExchangeRate,
-} from '@/api/base44Client';
+import { base44, Client, ClientPhone, ExchangeRate } from '@/api/base44Client';
 import ExchangeCalculator from '@/components/client/ExchangeCalculator';
 import MultiPhoneSelector from '@/components/client/MultiPhoneSelector';
 import OperationSelector from '@/components/client/OperationSelector';
@@ -29,6 +24,7 @@ import {
     Search,
     ShieldCheck,
     Store as StoreIcon,
+    Zap,
 } from 'lucide-react';
 import moment from 'moment';
 import { useEffect, useState } from 'react';
@@ -43,9 +39,7 @@ export default function ClientForm() {
     const [detailStep, setDetailStep] = useState<'partner' | 'fields'>(
         'partner',
     );
-    const [selectedRate, setSelectedRate] = useState<ExchangeRate | null>(
-        null,
-    );
+    const [selectedRate, setSelectedRate] = useState<ExchangeRate | null>(null);
     const [ticketNumber, setTicketNumber] = useState<string | null>(null);
     const [waitingAhead, setWaitingAhead] = useState<number>(0);
     const [isVerifying, setIsVerifying] = useState(false);
@@ -54,9 +48,7 @@ export default function ClientForm() {
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [showLinkAccount, setShowLinkAccount] = useState(false);
     const [linkPhone, setLinkPhone] = useState('');
-    const [linkFoundClient, setLinkFoundClient] = useState<Client | null>(
-        null,
-    );
+    const [linkFoundClient, setLinkFoundClient] = useState<Client | null>(null);
     const [isLinkVerifying, setIsLinkVerifying] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Client[]>([]);
@@ -79,6 +71,7 @@ export default function ClientForm() {
 
     const [formData, setFormData] = useState({
         phone: '',
+        flexpay_phone: '',
         operation_type: '',
         institution_id: undefined as number | undefined,
         first_name: '',
@@ -260,7 +253,7 @@ export default function ClientForm() {
             console.error('Failed to link account', error);
             toast.error(
                 error.response?.data?.error ||
-                    "Impossible de lier ce numéro à ce compte.",
+                    'Impossible de lier ce numéro à ce compte.',
             );
         }
     };
@@ -322,6 +315,10 @@ export default function ClientForm() {
                     amount: operationAmount,
                     amount_from: operationAmount,
                     exchange_rate: undefined,
+                    flexpay_phone:
+                        formData.operation_type === 'retrait'
+                            ? formData.flexpay_phone || formData.phone
+                            : undefined,
                     notes: `Motif: ${formData.reason}${formData.beneficiary ? ` | Bénéficiaire: ${formData.beneficiary}` : ''}${formData.beneficiary_number ? ` | Numéro Bénéficiaire: ${formData.beneficiary_number}` : ''}${formData.account_number ? ` | Compte: ${formData.account_number}` : ''}`,
                 });
             }
@@ -336,7 +333,7 @@ export default function ClientForm() {
     const handleBackToOperations = () => {
         setOperationStep('select');
         setDetailStep('partner');
-            setSelectedRate(null);
+        setSelectedRate(null);
         setFormData((prev) => ({
             ...prev,
             operation_type: '',
@@ -346,7 +343,7 @@ export default function ClientForm() {
 
     const handleBackToPartner = () => {
         setDetailStep('partner');
-            setSelectedRate(null);
+        setSelectedRate(null);
         setFormData((prev) => ({
             ...prev,
             institution_id: undefined,
@@ -356,7 +353,7 @@ export default function ClientForm() {
     const toggleReset = () => {
         setOperationStep('select');
         setDetailStep('partner');
-            setSelectedRate(null);
+        setSelectedRate(null);
         setTicketNumber(null);
         setExistingClient(null);
         setShowRegistration(false);
@@ -367,6 +364,7 @@ export default function ClientForm() {
         setSearchResults([]);
         setFormData({
             phone: '',
+            flexpay_phone: '',
             operation_type: '',
             institution_id: undefined,
             first_name: '',
@@ -420,8 +418,18 @@ export default function ClientForm() {
                 );
                 const hasAmount = Number(formData.amount) >= 0.01;
 
-                // For withdrawals, only amount is required
                 if (formData.operation_type === 'retrait') {
+                    const requiresFlexPayPhone =
+                        inst?.type === 'mobile_money' &&
+                        inst?.settings?.flexpay_required_retrait;
+                    if (requiresFlexPayPhone) {
+                        return (
+                            hasAmount &&
+                            (formData.flexpay_phone || formData.phone).trim()
+                                .length > 0
+                        );
+                    }
+
                     return hasAmount;
                 }
 
@@ -547,7 +555,7 @@ export default function ClientForm() {
                                             </h3>
                                             <p className="text-sm text-slate-500">
                                                 {auth.user?.role === 'client'
-                                                    ? "Entrez un de vos numéros déjà enregistrés pour confirmer votre identité"
+                                                    ? 'Entrez un de vos numéros déjà enregistrés pour confirmer votre identité'
                                                     : 'Recherchez le client propriétaire de ce numéro'}
                                             </p>
                                         </div>
@@ -579,8 +587,7 @@ export default function ClientForm() {
                                                         }
                                                         disabled={
                                                             isLinkVerifying ||
-                                                            linkPhone.length <
-                                                                8
+                                                            linkPhone.length < 8
                                                         }
                                                         className="h-12 rounded-xl bg-cyan-600 text-white hover:bg-cyan-700"
                                                     >
@@ -611,9 +618,9 @@ export default function ClientForm() {
                                                                 }
                                                             </p>
                                                             <p className="text-xs text-slate-500">
-                                                                C'est bien
-                                                                vous ? Touchez
-                                                                pour confirmer
+                                                                C'est bien vous
+                                                                ? Touchez pour
+                                                                confirmer
                                                             </p>
                                                         </div>
                                                         <ArrowRight className="h-4 w-4 text-brand-cyan" />
@@ -795,9 +802,7 @@ export default function ClientForm() {
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        onClick={() =>
-                                            setShowLinkAccount(true)
-                                        }
+                                        onClick={() => setShowLinkAccount(true)}
                                         className="h-14 w-full rounded-2xl border-2 border-dashed border-brand-cyan/40 bg-brand-cyan/10 font-bold text-brand-cyan hover:bg-brand-cyan/20"
                                     >
                                         Déjà client ? Lier ce numéro
@@ -1265,110 +1270,196 @@ export default function ClientForm() {
                                                                         )}
                                                                     </div>
                                                                     {formData.operation_type ===
-                                                                        'retrait' && (
-                                                                        <div className="rounded-[2.5rem] border-2 border-indigo-100/50 bg-white/40 p-10 shadow-[0_20px_50px_rgba(79,70,229,0.1)] backdrop-blur-2xl transition-all hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)]">
-                                                                            <div className="mb-8 flex items-center justify-between">
-                                                                                <div className="flex items-center gap-4">
-                                                                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-600/20">
-                                                                                        <Building2 className="h-7 w-7 text-white" />
-                                                                                    </div>
-                                                                                    <div className="text-left">
-                                                                                        <h4 className="text-base font-bold tracking-tight text-slate-900 uppercase">
-                                                                                            Infos
-                                                                                            de
-                                                                                            l'Agent
-                                                                                        </h4>
-                                                                                        <p className="text-xs font-bold tracking-widest text-indigo-600 uppercase">
-                                                                                            Transaction
-                                                                                            Sécurisée
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-black tracking-widest text-slate-700 uppercase">
-                                                                                    {
-                                                                                        inst?.name
-                                                                                    }
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="grid gap-6 md:grid-cols-2">
-                                                                                <div className="group flex flex-col gap-2 text-left">
-                                                                                    <span className="ml-2 text-xs font-black tracking-[0.15em] text-slate-600 uppercase">
-                                                                                        Nom
-                                                                                        de
-                                                                                        l'Agent
-                                                                                    </span>
-                                                                                    <div className="flex h-16 items-center rounded-2xl border-2 border-slate-100 bg-white/80 px-6 text-lg font-black tracking-tight text-slate-900 shadow-sm transition-all group-hover:border-indigo-100 group-hover:bg-white">
-                                                                                        {settings?.withdrawal_agent_name ||
-                                                                                            'NON CONFIGURÉ'}
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className="group flex flex-col gap-2 text-left">
-                                                                                    <div className="mb-0 flex items-center justify-between px-2">
-                                                                                        <span className="text-xs font-black tracking-[0.15em] text-slate-600 uppercase">
-                                                                                            Numéro
-                                                                                            Agent
-                                                                                        </span>
-                                                                                        <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-black text-emerald-700 uppercase">
-                                                                                            <ShieldCheck className="h-2.5 w-2.5" />
-                                                                                            Vérifié
+                                                                        'retrait' &&
+                                                                        (inst?.type ===
+                                                                            'mobile_money' &&
+                                                                        settings?.flexpay_required_retrait ? (
+                                                                            <div className="rounded-[2.5rem] border-2 border-emerald-100/50 bg-white/40 p-10 shadow-[0_20px_50px_rgba(16,185,129,0.1)] backdrop-blur-2xl transition-all hover:shadow-[0_20px_50px_rgba(16,185,129,0.15)]">
+                                                                                <div className="mb-8 flex items-center justify-between">
+                                                                                    <div className="flex items-center gap-4">
+                                                                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 shadow-xl shadow-emerald-600/20">
+                                                                                            <Zap className="h-7 w-7 text-white" />
+                                                                                        </div>
+                                                                                        <div className="text-left">
+                                                                                            <h4 className="text-base font-bold tracking-tight text-slate-900 uppercase">
+                                                                                                Prélèvement
+                                                                                                Automatique
+                                                                                            </h4>
+                                                                                            <p className="text-xs font-bold tracking-widest text-emerald-600 uppercase">
+                                                                                                Transaction
+                                                                                                Sécurisée
+                                                                                            </p>
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div className="flex h-16 items-center justify-between rounded-2xl border-2 border-slate-100 bg-white/50 px-6 shadow-sm backdrop-blur-sm transition-all group-hover:border-indigo-100 group-hover:bg-white">
-                                                                                        <span className="text-xl font-black tracking-[0.2em] text-indigo-900">
-                                                                                            {settings?.withdrawal_agent_number ||
-                                                                                                '---'}
-                                                                                        </span>
-                                                                                        <Button
-                                                                                            variant="ghost"
-                                                                                            size="icon"
-                                                                                            className="h-10 w-10 shrink-0 rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
-                                                                                            onClick={() => {
-                                                                                                if (
-                                                                                                    settings?.withdrawal_agent_number
-                                                                                                ) {
-                                                                                                    navigator.clipboard.writeText(
-                                                                                                        settings.withdrawal_agent_number,
-                                                                                                    );
-                                                                                                    toast.success(
-                                                                                                        'Copié !',
-                                                                                                    );
-                                                                                                }
-                                                                                            }}
-                                                                                        >
-                                                                                            <Copy className="h-5 w-5" />
-                                                                                        </Button>
+                                                                                    <div className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-black tracking-widest text-slate-700 uppercase">
+                                                                                        {
+                                                                                            inst?.name
+                                                                                        }
                                                                                     </div>
                                                                                 </div>
-                                                                            </div>
-                                                                            <div className="mt-8 flex items-start gap-4 rounded-3xl border border-indigo-100/30 bg-indigo-50/50 p-5 text-left">
-                                                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
-                                                                                    <Info className="h-4 w-4 text-indigo-500" />
+                                                                                <div className="space-y-2 text-left">
+                                                                                    <Label className="ml-2 font-bold text-slate-800">
+                                                                                        Numéro
+                                                                                        à
+                                                                                        débiter
+                                                                                    </Label>
+                                                                                    <Input
+                                                                                        type="tel"
+                                                                                        inputMode="numeric"
+                                                                                        value={
+                                                                                            formData.flexpay_phone ||
+                                                                                            formData.phone
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            setFormData(
+                                                                                                {
+                                                                                                    ...formData,
+                                                                                                    flexpay_phone:
+                                                                                                        e
+                                                                                                            .target
+                                                                                                            .value,
+                                                                                                },
+                                                                                            )
+                                                                                        }
+                                                                                        placeholder="Numéro mobile money"
+                                                                                        className="h-14 rounded-2xl border-2 border-white/30 bg-white/40 text-lg font-black tracking-tight text-slate-900 shadow-xl backdrop-blur-xl placeholder:font-normal placeholder:text-slate-400 focus:border-white/60 focus:bg-white/60 focus:ring-4 focus:ring-emerald-400/30"
+                                                                                    />
                                                                                 </div>
-                                                                                <p className="text-[11px] leading-relaxed font-semibold text-indigo-900/70">
-                                                                                    Veuillez
-                                                                                    effectuer
-                                                                                    votre
-                                                                                    retrait
-                                                                                    vers
-                                                                                    ce
-                                                                                    numéro
-                                                                                    d'agent.
-                                                                                    Une
-                                                                                    fois
-                                                                                    terminé,
-                                                                                    indiquez
-                                                                                    le
-                                                                                    montant
-                                                                                    ci-dessous
-                                                                                    pour
-                                                                                    validation
-                                                                                    par
-                                                                                    notre
-                                                                                    équipe.
-                                                                                </p>
+                                                                                <div className="mt-8 flex items-start gap-4 rounded-3xl border border-emerald-100/30 bg-emerald-50/50 p-5 text-left">
+                                                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+                                                                                        <Info className="h-4 w-4 text-emerald-500" />
+                                                                                    </div>
+                                                                                    <p className="text-[11px] leading-relaxed font-semibold text-emerald-900/70">
+                                                                                        Confirmez
+                                                                                        ou
+                                                                                        corrigez
+                                                                                        le
+                                                                                        numéro
+                                                                                        mobile
+                                                                                        money
+                                                                                        sur
+                                                                                        lequel
+                                                                                        le
+                                                                                        retrait
+                                                                                        sera
+                                                                                        prélevé
+                                                                                        automatiquement.
+                                                                                        Aucun
+                                                                                        déplacement
+                                                                                        vers
+                                                                                        un
+                                                                                        agent
+                                                                                        n'est
+                                                                                        nécessaire.
+                                                                                    </p>
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    )}
+                                                                        ) : (
+                                                                            <div className="rounded-[2.5rem] border-2 border-indigo-100/50 bg-white/40 p-10 shadow-[0_20px_50px_rgba(79,70,229,0.1)] backdrop-blur-2xl transition-all hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)]">
+                                                                                <div className="mb-8 flex items-center justify-between">
+                                                                                    <div className="flex items-center gap-4">
+                                                                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-600/20">
+                                                                                            <Building2 className="h-7 w-7 text-white" />
+                                                                                        </div>
+                                                                                        <div className="text-left">
+                                                                                            <h4 className="text-base font-bold tracking-tight text-slate-900 uppercase">
+                                                                                                Infos
+                                                                                                de
+                                                                                                l'Agent
+                                                                                            </h4>
+                                                                                            <p className="text-xs font-bold tracking-widest text-indigo-600 uppercase">
+                                                                                                Transaction
+                                                                                                Sécurisée
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-black tracking-widest text-slate-700 uppercase">
+                                                                                        {
+                                                                                            inst?.name
+                                                                                        }
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="grid gap-6 md:grid-cols-2">
+                                                                                    <div className="group flex flex-col gap-2 text-left">
+                                                                                        <span className="ml-2 text-xs font-black tracking-[0.15em] text-slate-600 uppercase">
+                                                                                            Nom
+                                                                                            de
+                                                                                            l'Agent
+                                                                                        </span>
+                                                                                        <div className="flex h-16 items-center rounded-2xl border-2 border-slate-100 bg-white/80 px-6 text-lg font-black tracking-tight text-slate-900 shadow-sm transition-all group-hover:border-indigo-100 group-hover:bg-white">
+                                                                                            {settings?.withdrawal_agent_name ||
+                                                                                                'NON CONFIGURÉ'}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="group flex flex-col gap-2 text-left">
+                                                                                        <div className="mb-0 flex items-center justify-between px-2">
+                                                                                            <span className="text-xs font-black tracking-[0.15em] text-slate-600 uppercase">
+                                                                                                Numéro
+                                                                                                Agent
+                                                                                            </span>
+                                                                                            <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-black text-emerald-700 uppercase">
+                                                                                                <ShieldCheck className="h-2.5 w-2.5" />
+                                                                                                Vérifié
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div className="flex h-16 items-center justify-between rounded-2xl border-2 border-slate-100 bg-white/50 px-6 shadow-sm backdrop-blur-sm transition-all group-hover:border-indigo-100 group-hover:bg-white">
+                                                                                            <span className="text-xl font-black tracking-[0.2em] text-indigo-900">
+                                                                                                {settings?.withdrawal_agent_number ||
+                                                                                                    '---'}
+                                                                                            </span>
+                                                                                            <Button
+                                                                                                variant="ghost"
+                                                                                                size="icon"
+                                                                                                className="h-10 w-10 shrink-0 rounded-xl bg-slate-50 text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                                                                                                onClick={() => {
+                                                                                                    if (
+                                                                                                        settings?.withdrawal_agent_number
+                                                                                                    ) {
+                                                                                                        navigator.clipboard.writeText(
+                                                                                                            settings.withdrawal_agent_number,
+                                                                                                        );
+                                                                                                        toast.success(
+                                                                                                            'Copié !',
+                                                                                                        );
+                                                                                                    }
+                                                                                                }}
+                                                                                            >
+                                                                                                <Copy className="h-5 w-5" />
+                                                                                            </Button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="mt-8 flex items-start gap-4 rounded-3xl border border-indigo-100/30 bg-indigo-50/50 p-5 text-left">
+                                                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+                                                                                        <Info className="h-4 w-4 text-indigo-500" />
+                                                                                    </div>
+                                                                                    <p className="text-[11px] leading-relaxed font-semibold text-indigo-900/70">
+                                                                                        Veuillez
+                                                                                        effectuer
+                                                                                        votre
+                                                                                        retrait
+                                                                                        vers
+                                                                                        ce
+                                                                                        numéro
+                                                                                        d'agent.
+                                                                                        Une
+                                                                                        fois
+                                                                                        terminé,
+                                                                                        indiquez
+                                                                                        le
+                                                                                        montant
+                                                                                        ci-dessous
+                                                                                        pour
+                                                                                        validation
+                                                                                        par
+                                                                                        notre
+                                                                                        équipe.
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
                                                                     {isVisible(
                                                                         'reason',
                                                                     ) && (

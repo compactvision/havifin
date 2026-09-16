@@ -174,7 +174,13 @@ export default function InstitutionManager() {
     });
 
     const toggleFlexPayRequiredMutation = useMutation({
-        mutationFn: (institution: Institution) => {
+        mutationFn: ({
+            institution,
+            field,
+        }: {
+            institution: Institution;
+            field: 'flexpay_required_depot' | 'flexpay_required_retrait';
+        }) => {
             const currentSettings = institution.settings || {
                 required_fields: [],
             };
@@ -183,7 +189,7 @@ export default function InstitutionManager() {
                 _method: 'PUT',
                 settings: {
                     ...currentSettings,
-                    flexpay_required: !currentSettings.flexpay_required,
+                    [field]: !currentSettings[field],
                 },
             });
         },
@@ -998,20 +1004,35 @@ export default function InstitutionManager() {
                                             <Zap className="h-3 w-3" />
                                             Prélèvement automatique FlexPay
                                         </h4>
-                                        {(() => {
+                                        {[
+                                            {
+                                                field: 'flexpay_required_depot' as const,
+                                                label: 'Obligatoire pour les dépôts',
+                                                hint: 'Le caissier doit utiliser le prélèvement automatique — la saisie manuelle est désactivée.',
+                                            },
+                                            {
+                                                field: 'flexpay_required_retrait' as const,
+                                                label: 'Obligatoire pour les retraits',
+                                                hint: "Le client saisit son numéro au kiosque et le caissier lance le prélèvement — les infos de l'agent ne sont plus affichées.",
+                                            },
+                                        ].map(({ field, label, hint }) => {
                                             const inst = institutions.find(
                                                 (i) => i.id === configId,
                                             );
                                             const isRequired = Boolean(
-                                                inst?.settings
-                                                    ?.flexpay_required,
+                                                inst?.settings?.[field],
                                             );
 
                                             return (
                                                 <button
+                                                    key={field}
                                                     onClick={() =>
                                                         toggleFlexPayRequiredMutation.mutate(
-                                                            inst!,
+                                                            {
+                                                                institution:
+                                                                    inst!,
+                                                                field,
+                                                            },
                                                         )
                                                     }
                                                     className={cn(
@@ -1022,15 +1043,9 @@ export default function InstitutionManager() {
                                                     )}
                                                 >
                                                     <span className="text-left text-sm font-black tracking-tight">
-                                                        Obligatoire pour les
-                                                        dépôts
+                                                        {label}
                                                         <span className="mt-0.5 block text-[10px] font-medium tracking-normal text-slate-400 normal-case">
-                                                            Le caissier doit
-                                                            utiliser le
-                                                            prélèvement
-                                                            automatique — la
-                                                            saisie manuelle est
-                                                            désactivée.
+                                                            {hint}
                                                         </span>
                                                     </span>
                                                     {isRequired ? (
@@ -1040,7 +1055,7 @@ export default function InstitutionManager() {
                                                     )}
                                                 </button>
                                             );
-                                        })()}
+                                        })}
                                     </div>
                                 )}
 

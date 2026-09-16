@@ -21,6 +21,7 @@ export interface Client {
     operation_type: string;
     service: string;
     institution_id?: number;
+    flexpay_phone?: string;
     currency_from?: string;
     currency_to?: string;
     amount?: number;
@@ -130,7 +131,8 @@ export interface Institution {
         required_fields: string[];
         withdrawal_agent_name?: string;
         withdrawal_agent_number?: string;
-        flexpay_required?: boolean;
+        flexpay_required_depot?: boolean;
+        flexpay_required_retrait?: boolean;
         custom_fields?: {
             id: string;
             label: string;
@@ -471,9 +473,9 @@ export const base44 = {
                     .then(handleResponse<FlexPayTransaction>),
             status: (clientId: number) =>
                 axios
-                    .get<{ transaction: FlexPayTransaction | null }>(
-                        `/api/clients/${clientId}/flexpay/status`,
-                    )
+                    .get<{
+                        transaction: FlexPayTransaction | null;
+                    }>(`/api/clients/${clientId}/flexpay/status`)
                     .then((response) => response.data.transaction),
         },
         ExchangeRate: {

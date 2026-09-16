@@ -129,17 +129,28 @@ export default function ProcessModal({
     const institution = institutions.find(
         (inst) => inst.id === client?.institution_id,
     );
-    const isMobileMoneyDepot =
-        client?.operation_type === 'depot' &&
-        institution?.type === 'mobile_money';
+    const isMobileMoneyInstitution = institution?.type === 'mobile_money';
+    const flexPayRequiredFlag =
+        client?.operation_type === 'depot'
+            ? institution?.settings?.flexpay_required_depot
+            : institution?.settings?.flexpay_required_retrait;
+    // Deposits always offer auto-debit as an option (the client's own phone
+    // is already known). Withdrawals only offer it when the manager enabled
+    // it for this partner, since the debit phone is only collected at kiosk
+    // time when that flag is on - so for retrait it's on-or-nothing.
+    const isFlexPayEligible =
+        isMobileMoneyInstitution &&
+        (client?.operation_type === 'depot' ||
+            (client?.operation_type === 'retrait' && flexPayRequiredFlag));
     const flexPayRequired = Boolean(
-        isMobileMoneyDepot && institution?.settings?.flexpay_required,
+        isFlexPayEligible &&
+        (client?.operation_type === 'depot' ? flexPayRequiredFlag : true),
     );
 
     const { data: flexPayStatus } = useQuery<FlexPayTransaction | null>({
         queryKey: ['flexpay-status', client?.id],
         queryFn: () => base44.entities.FlexPay.status(client!.id),
-        enabled: Boolean(isMobileMoneyDepot && client),
+        enabled: Boolean(isFlexPayEligible && client),
         refetchInterval: (query) =>
             query.state.data?.status === 'pending' ? 3000 : false,
     });
@@ -170,7 +181,11 @@ export default function ProcessModal({
         handledFlexPayStatusId.current = statusKey;
 
         if (flexPayStatus.status === 'success') {
-            toast.success('Dépôt encaissé automatiquement avec succès');
+            toast.success(
+                client?.operation_type === 'retrait'
+                    ? 'Retrait prélevé automatiquement avec succès'
+                    : 'Dépôt encaissé automatiquement avec succès',
+            );
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
             onClose();
@@ -180,7 +195,7 @@ export default function ProcessModal({
                     'Le prélèvement automatique a échoué. Vous pouvez réessayer.',
             );
         }
-    }, [flexPayStatus, onClose, queryClient]);
+    }, [flexPayStatus, onClose, queryClient, client?.operation_type]);
 
     useEffect(() => {
         if (client) {
@@ -440,7 +455,7 @@ export default function ProcessModal({
                         )}
                     </div>
 
-                    {isMobileMoneyDepot && (
+                    {isFlexPayEligible && (
                         <div className="space-y-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
                             <div className="flex items-center gap-2 font-bold text-emerald-700">
                                 <Zap className="h-4 w-4" />
@@ -482,8 +497,11 @@ export default function ProcessModal({
                             {flexPayRequired && (
                                 <p className="text-xs font-medium text-emerald-700/70">
                                     Ce partenaire exige le prélèvement
-                                    automatique pour les dépôts — la saisie
-                                    manuelle est désactivée.
+                                    automatique pour{' '}
+                                    {client.operation_type === 'retrait'
+                                        ? 'les retraits'
+                                        : 'les dépôts'}{' '}
+                                    — la saisie manuelle est désactivée.
                                 </p>
                             )}
                         </div>

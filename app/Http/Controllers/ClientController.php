@@ -112,6 +112,7 @@ class ClientController extends Controller
     {
         $validated = $request->validate([
             'phone' => 'required|string',
+            'flexpay_phone' => 'nullable|string|max:30',
             'operation_type' => ['required', Rule::in(['depot', 'retrait', 'change', 'paiement'])],
             'service' => 'required|string|max:100',
             'institution_id' => 'nullable|integer|exists:institutions,id',
